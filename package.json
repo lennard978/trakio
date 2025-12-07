@@ -1,9 +1,9 @@
 {
-	"name": "subscription-tracker",
+	"name": "trakio",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
-	"homepage": "https://lennard978.github.io/subscription-tracker",
+	"homepage": "https://lennard978.github.io/trakio",
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",

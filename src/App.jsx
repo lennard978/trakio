@@ -31,7 +31,6 @@ const TrialExpired = lazy(() => import("./pages/TrialExpired"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 import { Analytics } from "@vercel/analytics/react"
-
 // Loading skeleton
 function LoadingSkeleton() {
   return (
