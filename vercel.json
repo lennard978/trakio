@@ -1,0 +1,10 @@
+{
+	"redirects": [
+		{
+			"source": "/(.*)",
+			"has": [{ "type": "host", "value": "www.trakio.de" }],
+			"destination": "https://trakio.de/$1",
+			"permanent": true
+		}
+	]
+}
