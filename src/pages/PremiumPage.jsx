@@ -3,16 +3,12 @@ import { useTranslation } from "react-i18next";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { usePremiumContext } from "../context/PremiumContext";
-import { useAuth } from "../hooks/useAuth";
 
 export default function PremiumPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const premium = usePremiumContext();
-  const { user } = useAuth();
-  const email = user?.email || "";
-
 
   const reason = new URLSearchParams(location.search).get("reason");
 
@@ -25,6 +21,12 @@ export default function PremiumPage() {
     t("premium_feature_priority_support"),
   ];
 
+  const handleUpgrade = () => {
+    premium.activatePremium();
+    alert("Premium activated!");
+    navigate("/dashboard");
+  };
+
   const handleStartTrial = () => {
     premium.startTrial();
     alert(t("premium_trial_started"));
@@ -32,83 +34,104 @@ export default function PremiumPage() {
   };
 
   return (
-    <div className="min-h-screen px-6 py-10 bg-gradient-to-b from-blue-600 to-blue-900 text-white">
-      <div className="max-w-2xl mx-auto text-center">
-        <h1 className="text-4xl font-bold mb-4 drop-shadow-lg">
-          {t("premium_title")}
-        </h1>
+    <div className="w-full px-4 py-6 sm:py-10">
+      {/* Gradient card only around the content, not full screen */}
+      <div className="max-w-3xl mx-auto rounded-3xl bg-gradient-to-b from-blue-600 to-blue-900 text-white shadow-2xl p-6 sm:p-10">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 drop-shadow-lg">
+            {t("premium_title")}
+          </h1>
 
-        <p className="text-lg text-blue-100 mb-4">
-          {t("premium_subtitle")}
-        </p>
+          <p className="text-sm sm:text-base text-blue-100 mb-3 sm:mb-4">
+            {t("premium_subtitle")}
+          </p>
 
-        {reason === "limit" && (
-          <p className="text-blue-200 mb-4">{t("premium_reason_limit")}</p>
-        )}
+          {reason === "limit" && (
+            <p className="text-xs sm:text-sm text-blue-200 mb-3">
+              {t("premium_reason_limit")}
+            </p>
+          )}
 
-        {reason === "currency" && (
-          <p className="text-blue-200 mb-4">{t("premium_reason_currency")}</p>
-        )}
+          {reason === "currency" && (
+            <p className="text-xs sm:text-sm text-blue-200 mb-3">
+              {t("premium_reason_currency")}
+            </p>
+          )}
+        </div>
 
         {/* Features */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">{t("premium_whats_included")}</h2>
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-inner border border-white/20 mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 text-center">
+            {t("premium_whats_included")}
+          </h2>
 
-          <ul className="space-y-3 text-blue-100 text-left mx-auto max-w-sm">
+          <ul className="space-y-2 sm:space-y-3 text-blue-100 text-sm sm:text-base max-w-md mx-auto">
             {features.map((f, i) => (
-              <li key={i} className="flex items-center gap-3">
-                <CheckCircleIcon className="w-5 h-5 text-green-400" />
-                <span className="text-base">{f}</span>
+              <li key={i} className="flex items-center gap-2 sm:gap-3">
+                <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" />
+                <span>{f}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Pricing */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-          {/* Monthly */}
-          <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-xl hover:scale-[1.02] transition">
-            <h3 className="text-xl font-semibold mb-2">{t("premium_monthly")}</h3>
-            <div className="text-5xl font-bold mb-1">€4</div>
-            <div className="text-blue-200 mb-4 text-sm">{t("premium_month")}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-semibold mb-1">
+              {t("premium_monthly")}
+            </h3>
+            <div className="text-3xl sm:text-5xl font-bold mb-1">€4</div>
+            <div className="text-blue-200 text-xs sm:text-sm mb-3">
+              {t("premium_month")}
+            </div>
 
             <button
-              onClick={() => premium.startCheckout("monthly", email)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-lg transition active:scale-95"
+              onClick={handleUpgrade}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}
             </button>
           </div>
 
-          {/* Yearly */}
-          <div className="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-xl hover:scale-[1.02] transition">
-            <h3 className="text-xl font-semibold mb-2">{t("premium_yearly")}</h3>
-            <div className="text-5xl font-bold mb-1">€40</div>
-            <div className="text-blue-200 mb-4 text-sm">{t("premium_year")}</div>
+          <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-semibold mb-1">
+              {t("premium_yearly")}
+            </h3>
+            <div className="text-3xl sm:text-5xl font-bold mb-1">€40</div>
+            <div className="text-blue-200 text-xs sm:text-sm mb-3">
+              {t("premium_year")}
+            </div>
 
             <button
-              onClick={() => premium.startCheckout("yearly", email)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-lg transition active:scale-95"
+              onClick={handleUpgrade}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}
             </button>
           </div>
         </div>
 
-        {/* Trial */}
-        <p className="mt-2 text-blue-200 text-sm mb-4">{t("premium_7day_trial")}</p>
+        {/* Trial + testimonial */}
+        <div className="bg-white/10 backdrop-blur-md p-4 sm:p-6 rounded-xl text-xs sm:text-sm border border-white/20 max-w-lg mx-auto mb-4 sm:mb-6 text-center">
+          <p>“{t("premium_testimonial")}”</p>
+        </div>
 
-        <button
-          onClick={handleStartTrial}
-          className="text-sm underline text-blue-100 hover:text-white"
-        >
-          {t("premium_start_trial")}
-        </button>
+        <p className="mt-1 mb-3 text-xs sm:text-sm text-blue-200 text-center">
+          {t("premium_7day_trial")}
+        </p>
 
-        <div className="mt-6">
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={handleStartTrial}
+            className="text-xs sm:text-sm underline text-blue-100 hover:text-white"
+          >
+            {t("premium_start_trial")}
+          </button>
+
           <button
             onClick={() => navigate(-1)}
-            className="text-xs text-blue-100 underline"
+            className="text-[11px] sm:text-xs text-blue-100 underline"
           >
             {t("button_back") || "Back"}
           </button>
