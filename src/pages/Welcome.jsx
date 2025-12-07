@@ -7,19 +7,24 @@ export default function Welcome() {
   const { user } = useAuth();
   const { t } = useTranslation();
 
+  //
+  // LOGGED IN VIEW
+  //
   if (user) {
     return (
-      <div className="flex justify-center mt-20 px-4">
-        <div className="max-w-md w-full p-8 rounded-2xl shadow-xl 
-        bg-gradient-to-br from-blue-100 to-indigo-200 text-gray-900 
+      <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#0d1117]">
+        <div className="max-w-md w-full p-8 rounded-2xl shadow-xl
+        bg-gradient-to-br from-blue-100 to-indigo-200 text-gray-900
         dark:from-blue-600 dark:to-indigo-700 dark:text-white text-center">
 
-          <p className="mb-4 text-lg font-semibold">{t("toast_login_success")}</p>
+          <p className="mb-4 text-lg font-semibold">
+            {t("toast_login_success")}
+          </p>
 
           <Link
             to="/dashboard"
-            className="inline-block px-5 py-2 mt-2 bg-white text-blue-600 font-medium rounded-md 
-            hover:bg-gray-100 transition dark:bg-gray-900 dark:text-white dark:border dark:border-white 
+            className="inline-block px-5 py-2 mt-2 bg-white text-blue-600 font-medium rounded-md
+            hover:bg-gray-100 transition dark:bg-gray-900 dark:text-white dark:border dark:border-white
             dark:hover:bg-gray-800"
           >
             {t("success_back")}
@@ -29,13 +34,15 @@ export default function Welcome() {
     );
   }
 
-
-
-
+  //
+  // GUEST WELCOME VIEW
+  //
   return (
-    <div className="flex justify-center mt-16">
-      <div className="max-w-lg w-full p-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl">
-        <h1 className="text-3xl font-bold mb-4 text-center tracking-tight">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-[#0d1117]">
+      <div className="max-w-md w-full p-10 rounded-2xl shadow-xl
+      bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+
+        <h1 className="text-2xl font-bold mb-4 text-center tracking-tight">
           {t("welcome_title")}
         </h1>
 
@@ -53,7 +60,8 @@ export default function Welcome() {
 
           <Link
             to="/signup"
-            className="px-6 py-2 border border-white text-white font-medium rounded-md hover:bg-white hover:text-blue-600 transition"
+            className="px-6 py-2 border border-white text-white font-medium rounded-md
+            hover:bg-white hover:text-blue-600 transition"
           >
             {t("button_sign_up")}
           </Link>
