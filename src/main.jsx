@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
+
 import {
   BrowserRouter,
   HashRouter
@@ -12,8 +13,9 @@ import { AuthProvider } from "./hooks/useAuth";
 import { PremiumProvider } from "./context/PremiumContext";
 import "./i18n.js";
 
-// GitHub Pages requires HashRouter
-const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
+// Use BrowserRouter ALWAYS on Vercel.
+// HashRouter was only needed for GitHub Pages (you no longer need it).
+const Router = BrowserRouter;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -29,39 +31,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </React.StrictMode>
 );
 
-// Register Service Worker
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register(
-        import.meta.env.PROD
-          ? "/subscription-tracker/serviceWorker.js"
-          : "/serviceWorker.js"
-      )
-      .then((reg) => console.log("SW registered", reg))
-      .catch((err) => console.error("SW registration failed", err));
-  });
-}
-
-// SW Update notifications
-if (import.meta.env.PROD) {
-  import("./context/ToastContext").then(({ useToast }) => {
-    const toastRoot = document.createElement("div");
-    toastRoot.id = "toast-hook";
-    document.body.appendChild(toastRoot);
-
-    const Temp = () => {
-      const { showToast } = useToast();
-      React.useEffect(() => {
-        registerSWUpdateListener(showToast);
-      }, []);
-      return null;
-    };
-
-    ReactDOM.createRoot(toastRoot).render(
-      <ToastProvider>
-        <Temp />
-      </ToastProvider>
-    );
-  });
-}
+// REMOVE ALL CUSTOM SERVICE WORKER LOGIC.
+// VitePWA injects its own service worker automatically.

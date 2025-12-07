@@ -30,6 +30,7 @@ const Signup = lazy(() => import("./pages/Signup"));
 const TrialExpired = lazy(() => import("./pages/TrialExpired"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
+import { Analytics } from "@vercel/analytics/react"
 
 // Loading skeleton
 function LoadingSkeleton() {
@@ -150,6 +151,7 @@ export default function App() {
         ${dir === "rtl" ? "text-right" : "text-left"}
       `}
     >
+      <Analytics />
       {/* HEADER */}
       <header className="w-full sticky top-0 z-20 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">

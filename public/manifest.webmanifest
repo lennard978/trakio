@@ -1,11 +1,13 @@
 {
-	"name": "Subscription Tracker",
-	"short_name": "SubsTracker",
+	"name": "Trakio — Subscription Tracker",
+	"short_name": "Trakio",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
-	"background_color": "#111827",
-	"theme_color": "#2563eb",
+	"background_color": "#0d1117",
+	"theme_color": "#0d1117",
+	"orientation": "portrait",
+	"description": "Track your subscriptions effortlessly. Monitor costs, avoid surprises, and stay in control.",
 	"icons": [
 		{
 			"src": "/icon-192.png",
