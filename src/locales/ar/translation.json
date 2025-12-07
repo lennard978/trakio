@@ -1,0 +1,217 @@
+{
+	"app_name": "متتبع الاشتراكات",
+	"welcome_title": "تتبع اشتراكاتك بسهولة",
+	"welcome_message": "راقب المصاريف، تجنب المفاجآت، وتحكم في نفقاتك المتكررة.",
+	"button_sign_in": "تسجيل الدخول",
+	"button_sign_up": "إنشاء حساب",
+
+	"login_title": "تسجيل الدخول",
+	"login_email": "البريد الإلكتروني",
+	"login_password": "كلمة المرور",
+	"button_log_in": "تسجيل الدخول",
+	"login_no_account": "ليس لديك حساب؟",
+	"login_signup_link": "إنشاء حساب جديد",
+
+	"signup_title": "إنشاء حساب",
+	"signup_email": "البريد الإلكتروني",
+	"signup_password": "كلمة المرور",
+	"signup_button": "إنشاء حساب",
+	"signup_have_account": "هل لديك حساب بالفعل؟",
+	"signup_login_link": "تسجيل الدخول",
+
+	"dashboard_title": "اشتراكاتك",
+	"dashboard_total_monthly": "إجمالي التكلفة الشهرية",
+	"dashboard_empty": "لم تتم إضافة أي اشتراكات بعد.",
+	"dashboard_empty_cta": "أضف أول اشتراك لك",
+	"dashboard_add_button": "+ إضافة اشتراك",
+
+	"analytics_title": "التحليلات",
+	"analytics_monthly_category": "التكلفة الشهرية حسب الفئة",
+	"analytics_total_spend": "إجمالي الإنفاق الشهري",
+
+	"subscription_edit": "تعديل",
+	"subscription_delete": "حذف",
+
+	"add_title": "إضافة اشتراك",
+	"edit_title": "تعديل الاشتراك",
+
+	"field_name": "الاسم",
+	"field_price": "السعر",
+	"field_category": "الفئة",
+	"field_frequency": "دورة الفوترة",
+
+	"frequency_monthly": "شهري",
+	"frequency_yearly": "سنوي",
+
+	"button_save": "حفظ",
+	"button_cancel": "إلغاء",
+
+	"trial_banner_day": "تنتهي الفترة التجريبية غداً.",
+	"trial_banner_days_left": "تنتهي الفترة التجريبية خلال {{count}} يومًا.",
+
+	"trial_expired_title": "انتهت الفترة التجريبية",
+	"trial_expired_message": "للمتابعة واستخدام جميع الميزات، يرجى الترقية إلى بريميوم.",
+	"trial_expired_button": "الانتقال إلى الإعدادات",
+
+	"settings_title": "الإعدادات",
+	"settings_language": "اللغة",
+	"settings_language_info": "قم بتغيير لغة التطبيق فوراً.",
+	"settings_account": "الحساب",
+	"settings_email": "البريد الإلكتروني",
+	"settings_trial": "الحالة التجريبية",
+
+	"settings_premium_title": "اشتراك بريميوم",
+	"settings_premium_none": "غير مشترك حتى الآن.",
+
+	"settings_notifications": "الإشعارات",
+	"settings_notifications_enable": "تفعيل الإشعارات",
+	"settings_notifications_info": "ضروري لإشعارك قبل تجديد الاشتراكات.",
+	"settings_logout": "تسجيل الخروج",
+
+	"success_title": "تم الدفع بنجاح",
+	"success_message": "شكراً لك! تم تفعيل اشتراكك.",
+	"success_back": "العودة إلى لوحة التحكم",
+
+	"cancel_title": "تم إلغاء الدفع",
+	"cancel_message": "لم يتم تفعيل اشتراكك.",
+	"cancel_back": "إعادة المحاولة",
+
+	"error_required": "هذا الحقل مطلوب",
+	"error_email_invalid": "يرجى إدخال بريد إلكتروني صالح",
+	"error_password_short": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+
+	"toast_login_success": "تم تسجيل الدخول بنجاح!",
+	"toast_signup_success": "تم إنشاء الحساب بنجاح!",
+	"toast_logout_success": "تم تسجيل الخروج بنجاح",
+
+	"button_settings": "الإعدادات",
+
+	"language": "اللغة",
+	"lang_en": "الإنجليزية",
+	"lang_de": "الألمانية",
+	"change_language_info": "يمكنك تغيير لغة التطبيق في أي وقت.",
+
+	"button_login": "تسجيل الدخول",
+	"button_logout": "تسجيل الخروج",
+
+	"add_subscription": "إضافة اشتراك",
+
+	"subscription_category": "الفئة",
+	"subscription_monthly": "شهرياً",
+	"subscription_yearly": "سنوياً",
+
+	"form_name": "الاسم",
+	"form_price": "السعر",
+	"form_frequency": "دورة الفوترة",
+	"form_monthly": "شهري",
+	"form_yearly": "سنوي",
+	"form_category": "الفئة",
+	"form_save": "حفظ",
+	"form_cancel": "إلغاء",
+
+	"trial_banner_one_day": "تنتهي الفترة التجريبية غداً.",
+
+	"settings_trial_status": "الحالة التجريبية",
+	"settings_premium": "اشتراك بريميوم",
+	"settings_enable_notifications": "تفعيل الإشعارات",
+
+	"toast_paid_set": "تم تسجيل الدفع بتاريخ {{date}}",
+
+	"label_renews_in": "يتجدد خلال {{days}} يوم",
+	"label_overdue": "متأخر بـ {{days}} يوم",
+	"label_renews_on": "يتجدد في: {{date}}",
+	"label_last_paid": "آخر عملية دفع: {{date}}",
+	"label_select_paid_date": "اختر تاريخ الدفع الأخير",
+	"label_monthly": "شهري",
+
+	"frequency_month": "شهر",
+	"frequency_year": "سنة",
+
+	"category_other": "أخرى",
+	"button_paid": "تم الدفع",
+	"button_edit": "تعديل",
+	"button_delete": "حذف",
+
+	"analytics_no_data": "أضف اشتراكات لعرض التحليلات.",
+	"analytics_total_label": "إجمالي التكلفة الشهرية",
+
+	"settings_trial_not_started": "الفترة التجريبية لم تبدأ بعد",
+	"settings_trial_expired": "انتهت الفترة التجريبية في",
+	"settings_trial_ends": "تنتهي الفترة التجريبية في",
+
+	"settings_notifications_enabled": "الإشعارات مفعلة",
+	"settings_notifications_blocked": "الإشعارات محظورة",
+
+	"settings_premium_info": "سيظهر هنا بيانات اشتراك Stripe بمجرد دمج الخادم الخلفي.",
+	"settings_back_to_dashboard": "العودة إلى لوحة التحكم",
+
+	"error_price_invalid": "يجب أن يكون السعر رقمًا موجبًا",
+	"error_paid_date_required": "يرجى اختيار تاريخ الدفع الأخير",
+
+	"toast_updated": "تم تحديث الاشتراك",
+	"toast_added": "تمت إضافة الاشتراك",
+
+	"category_streaming": "بث",
+	"category_fitness": "لياقة بدنية",
+	"category_software": "برمجيات",
+	"category_productivity": "إنتاجية",
+	"category_gaming": "ألعاب",
+	"category_bills": "فواتير",
+	"category_education": "تعليم",
+	"category_transport": "مواصلات",
+	"category_food": "طعام",
+
+	"dashboard_top_category": "الفئة الأعلى",
+	"dashboard_highest_sub": "الأعلى تكلفة",
+	"dashboard_common_frequency": "أكثر دورة شائعة",
+
+	"button_show_insights": "عرض التحليلات",
+	"button_hide_insights": "إخفاء التحليلات",
+
+	"form_weekly": "أسبوعي",
+	"form_biweekly": "كل أسبوعين",
+	"form_quarterly": "كل 3 أشهر",
+	"form_semiannual": "كل 6 أشهر",
+	"form_nine_months": "كل 9 أشهر",
+	"form_biennial": "كل سنتين",
+	"form_triennial": "كل 3 سنوات",
+
+	"frequency_weekly": "أسبوعي",
+	"frequency_biweekly": "كل أسبوعين",
+	"frequency_quarterly": "كل 3 أشهر",
+	"frequency_semiannual": "كل 6 أشهر",
+	"frequency_nine_months": "كل 9 أشهر",
+	"frequency_biennial": "كل سنتين",
+	"frequency_triennial": "كل 3 سنوات",
+
+	"premium_title": "الترقية إلى بريميوم",
+	"premium_subtitle": "افتح الميزات القوية وسيطر على اشتراكاتك.",
+	"premium_whats_included": "ما الذي ستحصل عليه",
+	"premium_feature_unlimited_subs": "عدد غير محدود من الاشتراكات",
+	"premium_feature_advanced_intervals": "فترات فوترة متقدمة",
+	"premium_feature_multi_currency": "دعم عملات متعددة",
+	"premium_feature_cloud_backup": "نسخ احتياطي سحابي (قريبًا)",
+	"premium_feature_sync": "مزامنة بين الأجهزة (قريبًا)",
+	"premium_feature_priority_support": "دعم أولوية",
+	"premium_monthly": "الخطة الشهرية",
+	"premium_yearly": "الخطة السنوية",
+	"premium_month": "شهري",
+	"premium_year": "سنوي",
+	"premium_button_upgrade": "ترقية الآن",
+	"premium_7day_trial": "يتضمن فترة تجريبية لمدة 7 أيام.",
+	"premium_testimonial": "هذا التطبيق غير طريقة تتبعي للاشتراكات — يستحق فعلاً!",
+	"premium_locked_currency": "يتطلب بريميوم لتغيير العملة",
+	"premium_reason_limit": "لقد وصلت إلى حد الخطة المجانية (7 اشتراكات).",
+	"premium_reason_currency": "تغيير العملة ميزة ضمن بريميوم.",
+	"premium_start_trial": "ابدأ الفترة التجريبية",
+	"premium_trial_started": "بدأت فترتك التجريبية!",
+	"button_back": "رجوع",
+
+	"premium_button": "بريميوم",
+	"premium_upgrade": "ترقية",
+
+	"form_currency": "العملة",
+
+	"settings_premium_trial_active": "أنت حالياً في فترة تجريبية.",
+	"settings_premium_trial_ends": "تنتهي الفترة التجريبية في {{date}}."
+}

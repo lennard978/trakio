@@ -1,0 +1,225 @@
+{
+	"app_name": "Správce předplatného",
+
+	"welcome_title": "Sledujte svá předplatná snadno",
+	"welcome_message": "Kontrolujte výdaje, vyhněte se překvapením a mějte přehled o pravidelných platbách.",
+
+	"button_sign_in": "Přihlásit se",
+	"button_sign_up": "Vytvořit účet",
+
+	"login_title": "Přihlášení",
+	"login_email": "E-mail",
+	"login_password": "Heslo",
+	"button_log_in": "Přihlásit se",
+	"login_no_account": "Nemáte účet?",
+	"login_signup_link": "Zaregistrovat se",
+
+	"signup_title": "Vytvořit účet",
+	"signup_email": "E-mail",
+	"signup_password": "Heslo",
+	"signup_button": "Vytvořit účet",
+	"signup_have_account": "Máte již účet?",
+	"signup_login_link": "Přihlásit se",
+
+	"dashboard_title": "Vaše předplatná",
+	"dashboard_total_monthly": "Celková měsíční cena",
+	"dashboard_empty": "Zatím nemáte žádná předplatná.",
+	"dashboard_empty_cta": "Přidat první předplatné",
+	"dashboard_add_button": "+ Přidat předplatné",
+
+	"analytics_title": "Analytika",
+	"analytics_monthly_category": "Měsíční náklady podle kategorií",
+	"analytics_total_spend": "Celkové měsíční výdaje",
+
+	"subscription_edit": "Upravit",
+	"subscription_delete": "Smazat",
+
+	"add_title": "Přidat předplatné",
+	"edit_title": "Upravit předplatné",
+
+	"field_name": "Název",
+	"field_price": "Cena",
+	"field_category": "Kategorie",
+	"field_frequency": "Frekvence účtování",
+
+	"frequency_monthly": "Měsíčně",
+	"frequency_yearly": "Ročně",
+
+	"button_save": "Uložit",
+	"button_cancel": "Zrušit",
+
+	"trial_banner_day": "Vaše zkušební období končí zítra.",
+	"trial_banner_days_left": "Vaše zkušební období končí za {{count}} dny.",
+
+	"trial_expired_title": "Zkušební období skončilo",
+	"trial_expired_message": "Pro pokračování prosím přejděte na Premium.",
+	"trial_expired_button": "Přejít do nastavení",
+
+	"settings_title": "Nastavení",
+	"settings_language": "Jazyk",
+	"settings_language_info": "Změňte jazyk aplikace okamžitě.",
+	"settings_account": "Účet",
+	"settings_email": "E-mail",
+	"settings_trial": "Zkušební verze",
+
+	"settings_premium_title": "Předplatné Premium",
+	"settings_premium_none": "Zatím neaktivní.",
+
+	"settings_notifications": "Upozornění",
+	"settings_notifications_enable": "Povolit upozornění",
+	"settings_notifications_info": "Nutné pro upozornění před obnovením předplatného.",
+	"settings_logout": "Odhlásit se",
+
+	"success_title": "Platba úspěšná",
+	"success_message": "Děkujeme! Vaše předplatné je nyní aktivní.",
+	"success_back": "Zpět na přehled",
+
+	"cancel_title": "Platba zrušena",
+	"cancel_message": "Vaše předplatné nebylo aktivováno.",
+	"cancel_back": "Zkusit znovu",
+
+	"error_required": "Toto pole je povinné",
+	"error_email_invalid": "Zadejte platný e-mail",
+	"error_password_short": "Heslo musí mít alespoň 6 znaků",
+
+	"toast_login_success": "Přihlášení úspěšné!",
+	"toast_signup_success": "Úspěšná registrace!",
+	"toast_logout_success": "Odhlášení úspěšné",
+
+	"button_settings": "Nastavení",
+
+	"language": "Jazyk",
+	"lang_en": "Angličtina",
+	"lang_de": "Němčina",
+
+	"change_language_info": "Jazyk aplikace lze změnit kdykoli.",
+
+	"button_login": "Přihlásit se",
+	"button_logout": "Odhlásit se",
+
+	"add_subscription": "Přidat předplatné",
+
+	"subscription_category": "Kategorie",
+	"subscription_monthly": "měsíčně",
+	"subscription_yearly": "ročně",
+
+	"form_name": "Název",
+	"form_price": "Cena",
+	"form_frequency": "Frekvence účtování",
+	"form_monthly": "Měsíčně",
+	"form_yearly": "Ročně",
+	"form_category": "Kategorie",
+	"form_save": "Uložit",
+	"form_cancel": "Zrušit",
+
+	"trial_banner_one_day": "Vaše zkušební období končí zítra.",
+
+	"settings_trial_status": "Stav zkušební verze",
+	"settings_premium": "Premium předplatné",
+	"settings_enable_notifications": "Povolit upozornění",
+
+	"toast_paid_set": "Datum platby nastaveno na {{date}}",
+
+	"label_renews_in": "Obnoví se za {{days}} dní",
+	"label_overdue": "Po splatnosti o {{days}} dní",
+	"label_renews_on": "Obnovuje se: {{date}}",
+	"label_last_paid": "Poslední platba: {{date}}",
+	"label_select_paid_date": "Vyberte datum poslední platby",
+	"label_monthly": "měsíčně",
+
+	"frequency_month": "měsíc",
+	"frequency_year": "rok",
+
+	"category_other": "Ostatní",
+	"button_paid": "Zaplaceno",
+	"button_edit": "Upravit",
+	"button_delete": "Smazat",
+
+	"analytics_no_data": "Přidejte předplatná pro zobrazení analytiky.",
+	"analytics_total_label": "Celkové měsíční náklady",
+
+	"settings_trial_not_started": "Zkušební období nezačalo",
+	"settings_trial_expired": "Zkušební období skončilo dne",
+	"settings_trial_ends": "Zkušební období končí dne",
+
+	"settings_notifications_enabled": "Upozornění povolena",
+	"settings_notifications_blocked": "Upozornění zablokována",
+
+	"settings_premium_info": "Data předplatného Stripe budou zobrazena po implementaci backendu.",
+	"settings_back_to_dashboard": "Zpět na přehled",
+
+	"error_price_invalid": "Cena musí být kladná hodnota",
+	"error_paid_date_required": "Vyberte datum poslední platby",
+
+	"toast_updated": "Předplatné upraveno",
+	"toast_added": "Předplatné přidáno",
+
+	"category_streaming": "Streamování",
+	"category_fitness": "Fitness",
+	"category_software": "Software",
+	"category_productivity": "Produktivita",
+	"category_gaming": "Hry",
+	"category_bills": "Účty",
+	"category_education": "Vzdělávání",
+	"category_transport": "Doprava",
+	"category_food": "Jídlo",
+
+	"dashboard_top_category": "Nejvyšší kategorie",
+	"dashboard_highest_sub": "Nejdražší předplatné",
+	"dashboard_common_frequency": "Nejčastější frekvence",
+
+	"button_show_insights": "Zobrazit statistiky",
+	"button_hide_insights": "Skrýt statistiky",
+
+	"form_weekly": "Týdně",
+	"form_biweekly": "Každé 2 týdny",
+	"form_quarterly": "Čtvrtletně",
+	"form_semiannual": "Půlročně",
+	"form_nine_months": "Každých 9 měsíců",
+	"form_biennial": "Každé 2 roky",
+	"form_triennial": "Každé 3 roky",
+
+	"frequency_weekly": "týdně",
+	"frequency_biweekly": "každé 2 týdny",
+	"frequency_quarterly": "čtvrtletně",
+	"frequency_semiannual": "půlročně",
+	"frequency_nine_months": "každých 9 měsíců",
+	"frequency_biennial": "každé 2 roky",
+	"frequency_triennial": "každé 3 roky",
+
+	"premium_title": "Přejít na Premium",
+	"premium_subtitle": "Odemkněte pokročilé funkce a mějte kontrolu nad svými předplatnými.",
+	"premium_whats_included": "Co získáte",
+	"premium_feature_unlimited_subs": "Neomezená předplatná",
+	"premium_feature_advanced_intervals": "Pokročilé intervaly účtování",
+	"premium_feature_multi_currency": "Podpora více měn",
+	"premium_feature_cloud_backup": "Záloha do cloudu (brzy)",
+	"premium_feature_sync": "Synchronizace mezi zařízeními (brzy)",
+	"premium_feature_priority_support": "Přednostní podpora",
+
+	"premium_monthly": "Měsíční tarif",
+	"premium_yearly": "Roční tarif",
+	"premium_month": "měsíčně",
+	"premium_year": "ročně",
+
+	"premium_button_upgrade": "Aktivovat Premium",
+	"premium_7day_trial": "Obsahuje 7denní zkušební období.",
+	"premium_testimonial": "Tato aplikace změnila způsob, jak sleduji svá předplatná — stojí to za to!",
+
+	"premium_locked_currency": "Změna měny je dostupná jen v Premium verzi",
+	"premium_reason_limit": "Dosáhli jste limitu 7 předplatných ve verzi zdarma.",
+	"premium_reason_currency": "Změna měny je funkce Premium.",
+
+	"premium_start_trial": "Spustit zkušební období",
+	"premium_trial_started": "Zkušební období bylo zahájeno!",
+
+	"button_back": "Zpět",
+
+	"premium_button": "PREMIUM",
+	"premium_upgrade": "UPGRADE",
+
+	"form_currency": "Měna",
+
+	"settings_premium_trial_active": "Aktuálně používáte zkušební verzi.",
+	"settings_premium_trial_ends": "Zkušební období končí {{date}}."
+}

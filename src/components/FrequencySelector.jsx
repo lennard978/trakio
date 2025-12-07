@@ -1,0 +1,92 @@
+// src/components/FrequencySelector.jsx
+import React, { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
+const OPTIONS = [
+  { value: "weekly", labelKey: "form_weekly", premiumOnly: false },
+  { value: "biweekly", labelKey: "form_biweekly", premiumOnly: false },
+  { value: "monthly", labelKey: "form_monthly", premiumOnly: false },
+  { value: "quarterly", labelKey: "form_quarterly", premiumOnly: true },
+  { value: "semiannual", labelKey: "form_semiannual", premiumOnly: true },
+  { value: "nine_months", labelKey: "form_nine_months", premiumOnly: true },
+  { value: "yearly", labelKey: "form_yearly", premiumOnly: false },
+  { value: "biennial", labelKey: "form_biennial", premiumOnly: true },
+  { value: "triennial", labelKey: "form_triennial", premiumOnly: true },
+];
+
+export default function FrequencySelector({
+  value,
+  onChange,
+  isPremium,
+  onRequirePremium,
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close on click outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selectedOption =
+    OPTIONS.find((opt) => opt.value === value) || OPTIONS[2]; // default monthly
+
+  const handleSelect = (opt) => {
+    if (opt.premiumOnly && !isPremium) {
+      onRequirePremium();
+      return;
+    }
+    onChange(opt.value);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* BUTTON */}
+      <button
+        type="button"
+        onClick={() => setOpen((x) => !x)}
+        className="form-field cursor-pointer"
+      >
+        <span>{t(selectedOption.labelKey)}</span>
+        <span className="form-arrow">▾</span>
+      </button>
+
+      {/* DROPDOWN */}
+      {open && (
+        <div
+          className="
+            absolute left-0 right-0 mt-2 rounded-xl shadow-xl z-40
+            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
+            max-h-64 overflow-y-auto
+          "
+        >
+          {OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleSelect(opt)}
+              className={`
+                w-full px-4 py-3 text-left text-sm flex items-center justify-between
+                hover:bg-gray-100 dark:hover:bg-gray-800 transition
+                ${opt.premiumOnly && !isPremium ? "opacity-70" : ""}
+              `}
+            >
+              <span>{t(opt.labelKey)}</span>
+              {opt.premiumOnly && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/80 text-black font-semibold">
+                  PRO
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
