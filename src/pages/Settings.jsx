@@ -13,9 +13,13 @@ export default function Settings() {
   const { t } = useTranslation();
   const premium = usePremiumContext();
 
+
   const handleManageSubscription = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?.email) {
+    // Load user from localStorage
+    const stored = JSON.parse(localStorage.getItem("user"));
+    const email = stored?.email;
+
+    if (!email) {
       alert("Please log in again.");
       return;
     }
@@ -23,7 +27,7 @@ export default function Settings() {
     const res = await fetch("/api/stripe/customer-portal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email }),   // NOW email is defined
     });
 
     let data;
@@ -36,10 +40,13 @@ export default function Settings() {
       return;
     }
 
-    window.location.href = data.url;
-
-
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Could not open customer portal.");
+    }
   };
+
 
   const handleLogout = () => {
     logout();
