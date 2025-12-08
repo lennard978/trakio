@@ -198,24 +198,15 @@ export default function Dashboard() {
               </button>
             )}
 
-            {/* PREMIUM-ONLY INSIGHTS TOGGLE */}
-            {premium.isPremium && (
-              <button
-                onClick={handleToggleInsights}
-                className="text-sm px-3 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                {showInsightsView
-                  ? t("button_hide_insights")
-                  : t("button_show_insights")}
-              </button>
-            )}
           </div>
           <div className="w-full flex justify-end mb-3">
             <button
-              onClick={() => navigate("/analytics")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition active:scale-95"
+              onClick={handleToggleInsights}
+              className="text-sm px-3 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              {t("insights_button")}
+              {showInsightsView
+                ? t("button_hide_insights")
+                : t("button_show_insights")}
             </button>
           </div>
 
