@@ -1,6 +1,6 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+
 import {
   CurrencyEuroIcon,
   TagIcon,
@@ -18,40 +18,75 @@ import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const premium = usePremium();
+
   const [subscriptions, setSubscriptions] = useState([]);
   const [currency, setCurrency] = useState(
     () => localStorage.getItem("selected_currency") || "EUR"
   );
   const [rates, setRates] = useState(null);
 
-  // Controls which "screen" is visible (List vs Insights)
+  // Two-screen layout: LIST (false) or INSIGHTS (true)
   const [isInsightsActive, setIsInsightsActive] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const premium = usePremium();
   const insightsRef = useRef(null);
 
-  // Load subscriptions once
+  /* ---------------------------------------------------------
+     1. INITIAL LOAD
+  --------------------------------------------------------- */
+
   useEffect(() => {
     const saved = localStorage.getItem("subscriptions");
     if (saved) setSubscriptions(JSON.parse(saved));
   }, []);
 
-  // Load FX rates
   useEffect(() => {
-    fetchRates("EUR").then((r) => {
-      if (r) setRates(r);
-    });
+    fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
-  // Notifications for upcoming renewals
   useNotifications(subscriptions);
 
   const hasSubscriptions = subscriptions.length > 0;
   const canShowInsights = premium.isPremium && hasSubscriptions;
 
-  // FREQUENCY MAP
+  /* ---------------------------------------------------------
+     2. SYNC BOTTOM TAB STATE VIA ?insights=1
+  --------------------------------------------------------- */
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const openInsights = params.get("insights") === "1";
+
+    if (openInsights && premium.isPremium) {
+      setIsInsightsActive(true);
+    } else {
+      setIsInsightsActive(false);
+    }
+  }, [location.search, premium.isPremium]);
+
+  /* ---------------------------------------------------------
+     3. CURRENCY HANDLING
+  --------------------------------------------------------- */
+
+  const preferredCurrency = premium.isPremium ? currency : "EUR";
+
+  const handleCurrencyChange = (val) => {
+    if (!premium.isPremium) {
+      navigate("/premium?reason=currency");
+      return;
+    }
+    setCurrency(val);
+    localStorage.setItem("selected_currency", val);
+  };
+
+  /* ---------------------------------------------------------
+     4. COST + RENEWAL LOGIC
+  --------------------------------------------------------- */
+
   const freqMap = {
     weekly: { days: 7, monthlyFactor: 4.345 },
     biweekly: { days: 14, monthlyFactor: 2.1725 },
@@ -64,9 +99,6 @@ export default function Dashboard() {
     triennial: { months: 36, monthlyFactor: 1 / 36 },
   };
 
-  const preferredCurrency = premium.isPremium ? currency : "EUR";
-
-  // Monthly cost helper
   const getMonthlyCost = (item) => {
     const cfg = freqMap[item.frequency] || freqMap.monthly;
     const baseCurrency = item.currency || "EUR";
@@ -84,14 +116,17 @@ export default function Dashboard() {
     0
   );
 
-  // Renewal sorting
   const getNextRenewalDate = (item) => {
     if (!item.datePaid) return new Date(8640000000000000);
+
     const paid = new Date(item.datePaid);
     const next = new Date(paid);
+
     const cfg = freqMap[item.frequency] || freqMap.monthly;
+
     if (cfg.months) next.setMonth(next.getMonth() + cfg.months);
     if (cfg.days) next.setDate(next.getDate() + cfg.days);
+
     return next;
   };
 
@@ -99,7 +134,10 @@ export default function Dashboard() {
     .slice()
     .sort((a, b) => getNextRenewalDate(a) - getNextRenewalDate(b));
 
-  // Insights calculations
+  /* ---------------------------------------------------------
+     5. INSIGHTS SUMMARY
+  --------------------------------------------------------- */
+
   const categoryTotals = subscriptions.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + getMonthlyCost(item);
     return acc;
@@ -135,71 +173,36 @@ export default function Dashboard() {
       ? "-"
       : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
 
-  // Currency change
-  const handleCurrencyChange = (val) => {
-    if (!premium.isPremium) {
-      navigate("/premium?reason=currency");
-      return;
-    }
-    setCurrency(val);
-    localStorage.setItem("selected_currency", val);
-  };
+  /* ---------------------------------------------------------
+     6. ANIMATION HANDLING (IOS SLIDE + FADE)
+  --------------------------------------------------------- */
 
-  // Toggle Insights with iOS-style horizontal slide
-  const handleToggleInsights = () => {
-    setIsInsightsActive((prev) => {
-      const next = !prev;
-      if (next && insightsRef.current) {
-        insightsRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-      return next;
-    });
-  };
+  const sliderClass = `
+  flex w-[200%]
+  transition-transform duration-600
+  ease-[cubic-bezier(.25,.8,.25,1)]
+  will-change-transform
+  ${isInsightsActive ? "-translate-x-1/2" : "translate-x-0"}
+`;
+
+
+  const fadeOverlayClass = `
+  absolute inset-0 pointer-events-none
+  bg-gradient-to-b from-transparent to-black/5
+  transition-opacity duration-500
+  ${isInsightsActive ? "opacity-0" : "opacity-0"}
+`;
+
+
+  /* ---------------------------------------------------------
+     7. RENDER
+  --------------------------------------------------------- */
 
   return (
-    <div style={{ touchAction: "pan-y" }}>
+    <div className="mt-2 mb-20 relative">
       <TrialBanner />
 
-      {/* HEADER + INSIGHTS TOGGLE + CURRENCY */}
-      {hasSubscriptions && (
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
-
-          <div className="flex items-center gap-2">
-            {/* PREMIUM-ONLY CURRENCY SELECTOR */}
-            {premium.isPremium ? (
-              <CurrencySelector
-                value={preferredCurrency}
-                onChange={handleCurrencyChange}
-              />
-            ) : (
-              <button
-                onClick={() => navigate("/premium?reason=currency")}
-                className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800"
-              >
-                EUR · {t("premium_locked_currency")}
-              </button>
-            )}
-
-            {/* INSIGHTS TOGGLE – only for premium & if there is data */}
-            {canShowInsights && (
-              <button
-                onClick={handleToggleInsights}
-                className="text-xs sm:text-sm px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                {isInsightsActive
-                  ? t("button_hide_insights")
-                  : t("button_show_insights")}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MAIN CONTENT */}
+      {/* ------------------------------ EMPTY STATE ------------------------------ */}
       {!hasSubscriptions && (
         <div className="text-center text-gray-500 mt-10">
           <p className="mb-3">{t("dashboard_empty")}</p>
@@ -209,19 +212,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* If premium + data → slide between LIST and INSIGHTS.
-          Otherwise just show the LIST. */}
-      {hasSubscriptions && canShowInsights ? (
+      {/* ------------------------------ PREMIUM INSIGHTS HANDLER ------------------------------ */}
+      {canShowInsights && (
         <div
           ref={insightsRef}
-          className="relative mt-2 overflow-hidden rounded-lg"
+          className="relative mt-2 overflow-hidden rounded-lg min-h-[600px]"
         >
-          {/* SLIDER CONTAINER: 2 screens (list + insights) */}
-          <div
-            className={`flex w-[200%] transition-transform duration-300 ease-out ${isInsightsActive ? "-translate-x-1/2" : "translate-x-0"
-              }`}
-          >
-            {/* LEFT SCREEN: SUBSCRIPTION LIST */}
+          {/* Main slider: 2 screens side-by-side */}
+          <div className={sliderClass}>
+            {/* LEFT SCREEN: LIST */}
             <div className="w-1/2 pr-2">
               <div className="space-y-3">
                 {sorted.map((sub) => (
@@ -244,10 +243,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* RIGHT SCREEN: INSIGHTS + ANALYTICS */}
+            {/* RIGHT SCREEN: INSIGHTS */}
             <div className="w-1/2 pl-2">
               <div className="space-y-4">
-                {/* Summary cards */}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
                   <InsightsCard
                     title={t("dashboard_total_monthly")}
@@ -284,24 +282,18 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {/* Analytics charts */}
                 <Analytics subscriptions={subscriptions} />
-
-                {/* Close insights button */}
-                <div className="mt-4 flex justify-center pb-4">
-                  <button
-                    onClick={handleToggleInsights}
-                    className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                  >
-                    {t("button_hide_insights")}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
+
+          {/* Fade overlay (iOS style subtle overlay) */}
+          <div className={fadeOverlayClass} />
         </div>
-      ) : hasSubscriptions ? (
-        // Non-premium OR premium without data → normal list only
+      )}
+
+      {/* ------------------------------ NON-PREMIUM LIST ------------------------------ */}
+      {!premium.isPremium && hasSubscriptions && (
         <div className="mt-2 space-y-3">
           {sorted.map((sub) => (
             <SubscriptionItem
@@ -313,20 +305,18 @@ export default function Dashboard() {
               onDelete={(id) => {
                 const updated = subscriptions.filter((s) => s.id !== id);
                 setSubscriptions(updated);
-                localStorage.setItem(
-                  "subscriptions",
-                  JSON.stringify(updated)
-                );
+                localStorage.setItem("subscriptions", JSON.stringify(updated));
               }}
             />
           ))}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
-// Insight card helper
+/* ------------------------------ INSIGHTS CARD ------------------------------ */
+
 function InsightsCard({ title, value, Icon }) {
   return (
     <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 w-full transition-all">
