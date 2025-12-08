@@ -23,12 +23,22 @@ export default function Settings() {
     const res = await fetch("/api/stripe/customer-portal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user.email }),
+      body: JSON.stringify({ email }),
     });
 
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else alert("Failed to open portal.");
+    let data;
+    try {
+      data = await res.json();
+    } catch (err) {
+      const raw = await res.text();
+      console.error("RAW RESPONSE:", raw);
+      alert("Server error");
+      return;
+    }
+
+    window.location.href = data.url;
+
+
   };
 
   const handleLogout = () => {
