@@ -1,4 +1,4 @@
-import { getPremiumRecord } from "../../premiumStore.js";
+import { getPremiumRecord } from "../utils/premiumStore.js";
 
 export default async function handler(req, res) {
   const { email } = req.query;

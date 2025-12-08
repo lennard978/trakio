@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { setPremiumRecord } from "../premiumStore.js";
+import { setPremiumRecord } from "../utils/premiumStore.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
