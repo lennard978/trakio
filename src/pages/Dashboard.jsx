@@ -146,7 +146,6 @@ export default function Dashboard() {
 
   // Toggle Insights with fade-out → switch → fade-in
   const handleToggleInsights = () => {
-    if (!premium.isPremium || !hasSubscriptions) return;
 
     // Fade out current content
     setIsFadingOut(true);
