@@ -1,3 +1,4 @@
+// src/pages/Dashboard.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -23,16 +24,15 @@ export default function Dashboard() {
   );
   const [rates, setRates] = useState(null);
 
-  // Controls which view is visible
+  // Controls which "screen" is visible (List vs Insights)
   const [isInsightsActive, setIsInsightsActive] = useState(false);
-  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const navigate = useNavigate();
   const { t } = useTranslation();
   const premium = usePremium();
   const insightsRef = useRef(null);
 
-  // Load subscriptions
+  // Load subscriptions once
   useEffect(() => {
     const saved = localStorage.getItem("subscriptions");
     if (saved) setSubscriptions(JSON.parse(saved));
@@ -49,6 +49,7 @@ export default function Dashboard() {
   useNotifications(subscriptions);
 
   const hasSubscriptions = subscriptions.length > 0;
+  const canShowInsights = premium.isPremium && hasSubscriptions;
 
   // FREQUENCY MAP
   const freqMap = {
@@ -144,46 +145,31 @@ export default function Dashboard() {
     localStorage.setItem("selected_currency", val);
   };
 
-  // Toggle Insights with fade-out → switch → fade-in
+  // Toggle Insights with iOS-style horizontal slide
   const handleToggleInsights = () => {
-
-    // Fade out current content
-    setIsFadingOut(true);
-
-    setTimeout(() => {
-      // Switch view
-      setIsInsightsActive((prev) => {
-        const next = !prev;
-        // When switching INTO insights, scroll into view
-        if (next && insightsRef.current) {
-          insightsRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-        return next;
-      });
-
-      // Then fade in new content
-      setIsFadingOut(false);
-    }, 250); // match .blur-fade-out / .blur-fade-in timing
+    setIsInsightsActive((prev) => {
+      const next = !prev;
+      if (next && insightsRef.current) {
+        insightsRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+      return next;
+    });
   };
-
-  const showInsightsView =
-    premium.isPremium && hasSubscriptions && isInsightsActive;
 
   return (
     <div style={{ touchAction: "pan-y" }}>
       <TrialBanner />
 
-      {/* HEADER + INSIGHTS TOGGLE */}
+      {/* HEADER + INSIGHTS TOGGLE + CURRENCY */}
       {hasSubscriptions && (
-        <>
-          {/* HEADER ROW */}
-          <div className="flex justify-between items-center mb-3">
-            <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
 
-            {/* CURRENCY SELECTOR */}
+          <div className="flex items-center gap-2">
+            {/* PREMIUM-ONLY CURRENCY SELECTOR */}
             {premium.isPremium ? (
               <CurrencySelector
                 value={preferredCurrency}
@@ -197,92 +183,46 @@ export default function Dashboard() {
                 EUR · {t("premium_locked_currency")}
               </button>
             )}
-          </div>
 
-          {/* INSIGHTS TOGGLE BUTTON (separate row for correct layout) */}
-          <div className="w-full flex justify-end mb-4">
-            <button
-              onClick={handleToggleInsights}
-              className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
-              {showInsightsView
-                ? t("button_hide_insights")
-                : t("button_show_insights")}
-            </button>
-          </div>
-        </>
-      )}
-
-
-      {/* CONTENT AREA: EITHER LIST OR INSIGHTS (CROSSFADE) */}
-      <div
-        ref={insightsRef}
-        className={`mt-2 ${isFadingOut ? "blur-fade-out" : "blur-fade-in"}`}
-      >
-        {showInsightsView ? (
-          // 👉 INSIGHTS VIEW (list hidden)
-          <div className="space-y-4">
-            {/* Summary cards */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
-              <InsightsCard
-                title={t("dashboard_total_monthly")}
-                value={`${preferredCurrency} ${totalMonthly.toFixed(2)}`}
-                Icon={CurrencyEuroIcon}
-              />
-
-              <InsightsCard
-                title={t("dashboard_top_category")}
-                value={topCategory}
-                Icon={TagIcon}
-              />
-
-              <InsightsCard
-                title={t("dashboard_highest_sub")}
-                value={
-                  highestSub.name === "-"
-                    ? "-"
-                    : `${highestSub.name} (${preferredCurrency} ${highestSubPriceConverted.toFixed(
-                      2
-                    )})`
-                }
-                Icon={ArrowTrendingUpIcon}
-              />
-
-              <InsightsCard
-                title={t("dashboard_common_frequency")}
-                value={
-                  mostCommonFreqKey === "-"
-                    ? "-"
-                    : t(`frequency_${mostCommonFreqKey}`)
-                }
-                Icon={ArrowPathIcon}
-              />
-            </div>
-
-            {/* Analytics charts */}
-            <Analytics subscriptions={subscriptions} />
-
-            {/* Close insights button */}
-            <div className="mt-4 flex justify-center pb-4">
+            {/* INSIGHTS TOGGLE – only for premium & if there is data */}
+            {canShowInsights && (
               <button
                 onClick={handleToggleInsights}
-                className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="text-xs sm:text-sm px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               >
-                {t("button_hide_insights")}
+                {isInsightsActive
+                  ? t("button_hide_insights")
+                  : t("button_show_insights")}
               </button>
-            </div>
+            )}
           </div>
-        ) : (
-          // 👉 SUBSCRIPTION LIST VIEW
-          <>
-            {!hasSubscriptions ? (
-              <div className="text-center text-gray-500 mt-10">
-                <p className="mb-3">{t("dashboard_empty")}</p>
-                <Link to="/add" className="text-blue-600 hover:underline">
-                  {t("dashboard_empty_cta")}
-                </Link>
-              </div>
-            ) : (
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      {!hasSubscriptions && (
+        <div className="text-center text-gray-500 mt-10">
+          <p className="mb-3">{t("dashboard_empty")}</p>
+          <Link to="/add" className="text-blue-600 hover:underline">
+            {t("dashboard_empty_cta")}
+          </Link>
+        </div>
+      )}
+
+      {/* If premium + data → slide between LIST and INSIGHTS.
+          Otherwise just show the LIST. */}
+      {hasSubscriptions && canShowInsights ? (
+        <div
+          ref={insightsRef}
+          className="relative mt-2 overflow-hidden rounded-lg"
+        >
+          {/* SLIDER CONTAINER: 2 screens (list + insights) */}
+          <div
+            className={`flex w-[200%] transition-transform duration-300 ease-out ${isInsightsActive ? "-translate-x-1/2" : "translate-x-0"
+              }`}
+          >
+            {/* LEFT SCREEN: SUBSCRIPTION LIST */}
+            <div className="w-1/2 pr-2">
               <div className="space-y-3">
                 {sorted.map((sub) => (
                   <SubscriptionItem
@@ -292,9 +232,7 @@ export default function Dashboard() {
                     rates={rates}
                     convert={convert}
                     onDelete={(id) => {
-                      const updated = subscriptions.filter(
-                        (s) => s.id !== id
-                      );
+                      const updated = subscriptions.filter((s) => s.id !== id);
                       setSubscriptions(updated);
                       localStorage.setItem(
                         "subscriptions",
@@ -304,10 +242,86 @@ export default function Dashboard() {
                   />
                 ))}
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+
+            {/* RIGHT SCREEN: INSIGHTS + ANALYTICS */}
+            <div className="w-1/2 pl-2">
+              <div className="space-y-4">
+                {/* Summary cards */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+                  <InsightsCard
+                    title={t("dashboard_total_monthly")}
+                    value={`${preferredCurrency} ${totalMonthly.toFixed(2)}`}
+                    Icon={CurrencyEuroIcon}
+                  />
+
+                  <InsightsCard
+                    title={t("dashboard_top_category")}
+                    value={topCategory}
+                    Icon={TagIcon}
+                  />
+
+                  <InsightsCard
+                    title={t("dashboard_highest_sub")}
+                    value={
+                      highestSub.name === "-"
+                        ? "-"
+                        : `${highestSub.name} (${preferredCurrency} ${highestSubPriceConverted.toFixed(
+                          2
+                        )})`
+                    }
+                    Icon={ArrowTrendingUpIcon}
+                  />
+
+                  <InsightsCard
+                    title={t("dashboard_common_frequency")}
+                    value={
+                      mostCommonFreqKey === "-"
+                        ? "-"
+                        : t(`frequency_${mostCommonFreqKey}`)
+                    }
+                    Icon={ArrowPathIcon}
+                  />
+                </div>
+
+                {/* Analytics charts */}
+                <Analytics subscriptions={subscriptions} />
+
+                {/* Close insights button */}
+                <div className="mt-4 flex justify-center pb-4">
+                  <button
+                    onClick={handleToggleInsights}
+                    className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  >
+                    {t("button_hide_insights")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : hasSubscriptions ? (
+        // Non-premium OR premium without data → normal list only
+        <div className="mt-2 space-y-3">
+          {sorted.map((sub) => (
+            <SubscriptionItem
+              key={sub.id}
+              item={sub}
+              currency={preferredCurrency}
+              rates={rates}
+              convert={convert}
+              onDelete={(id) => {
+                const updated = subscriptions.filter((s) => s.id !== id);
+                setSubscriptions(updated);
+                localStorage.setItem(
+                  "subscriptions",
+                  JSON.stringify(updated)
+                );
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
