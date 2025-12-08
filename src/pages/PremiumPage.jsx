@@ -1,14 +1,17 @@
+// src/pages/PremiumPage.jsx
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { usePremiumContext } from "../context/PremiumContext";
+import { useAuth } from "../hooks/useAuth";          // ✅ ADD THIS
 
 export default function PremiumPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const premium = usePremiumContext();
+  const { user } = useAuth();                        // ✅ CURRENT USER
 
   const reason = new URLSearchParams(location.search).get("reason");
 
@@ -21,31 +24,17 @@ export default function PremiumPage() {
     t("premium_feature_priority_support"),
   ];
 
-  const handleUpgrade = () => {
-    const plan = "monthly"; // or "yearly" depending on button
-    const email = localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user")).email
-      : null;
-
-    if (!email) {
-      alert("Please log in first.");
-      navigate("/login");
-      return;
+  // ✅ async trial handler (uses server)
+  const handleStartTrial = async () => {
+    const ok = await premium.startTrial();
+    if (ok) {
+      alert(t("premium_trial_started"));
+      navigate("/dashboard");
     }
-
-    premium.startCheckout(plan, email);
-  };
-
-
-  const handleStartTrial = () => {
-    premium.startTrial();
-    alert(t("premium_trial_started"));
-    navigate("/dashboard");
   };
 
   return (
     <div className="w-full px-4 py-6 sm:py-10">
-      {/* Gradient card only around the content, not full screen */}
       <div className="max-w-3xl mx-auto rounded-3xl bg-gradient-to-b from-blue-600 to-blue-900 text-white shadow-2xl p-6 sm:p-10">
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 drop-shadow-lg">
@@ -87,6 +76,7 @@ export default function PremiumPage() {
 
         {/* Pricing */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* MONTHLY */}
           <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
             <h3 className="text-lg sm:text-xl font-semibold mb-1">
               {t("premium_monthly")}
@@ -97,13 +87,14 @@ export default function PremiumPage() {
             </div>
 
             <button
-              onClick={handleUpgrade}
+              onClick={() => premium.startCheckout("monthly", user?.email)}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}
             </button>
           </div>
 
+          {/* YEARLY */}
           <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
             <h3 className="text-lg sm:text-xl font-semibold mb-1">
               {t("premium_yearly")}
@@ -114,7 +105,7 @@ export default function PremiumPage() {
             </div>
 
             <button
-              onClick={handleUpgrade}
+              onClick={() => premium.startCheckout("yearly", user?.email)}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}

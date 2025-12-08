@@ -5,9 +5,15 @@ function key(email) {
 }
 
 /**
- * Save or update premium record for a user
  * record example:
- * { isPremium: true, status: "active", stripeCustomerId, subscriptionId, currentPeriodEnd }
+ * {
+ *   isPremium: true,
+ *   status: "active" | "trial" | "trial_expired" | "canceled" | "past_due",
+ *   stripeCustomerId,
+ *   subscriptionId,
+ *   currentPeriodEnd,
+ *   trialEnds
+ * }
  */
 export async function setPremiumRecord(email, record) {
   const existing = (await kv.get(key(email))) || {};
@@ -17,5 +23,5 @@ export async function setPremiumRecord(email, record) {
 }
 
 export async function getPremiumRecord(email) {
-  return kv.get(key(email)); // might be null
+  return kv.get(key(email)); // may be null
 }

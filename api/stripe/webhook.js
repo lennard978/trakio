@@ -40,6 +40,8 @@ export default async function handler(req, res) {
           stripeCustomerId,
           subscriptionId,
           currentPeriodEnd,
+          trialEnds: null,              // ✅ override any trial
+
         });
 
         break;

@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const PremiumContext = createContext();
 
 export function PremiumProvider({ children }) {
-  // Load premium flag from localStorage
   const [isPremium, setIsPremium] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("isPremium")) || false;
@@ -20,45 +19,76 @@ export function PremiumProvider({ children }) {
     }
   });
 
+  // 🔁 periodically refresh from backend
   useEffect(() => {
+    refreshPremiumStatus(); // initial
     const interval = setInterval(() => refreshPremiumStatus(), 60000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  // Persist premium status
+  // persist flags
   useEffect(() => {
     localStorage.setItem("isPremium", JSON.stringify(isPremium));
   }, [isPremium]);
 
-  // Persist trial end date
   useEffect(() => {
-    if (trialEnds) {
-      localStorage.setItem("trialEnds", trialEnds);
-    } else {
-      localStorage.removeItem("trialEnds");
-    }
+    if (trialEnds) localStorage.setItem("trialEnds", trialEnds);
+    else localStorage.removeItem("trialEnds");
   }, [trialEnds]);
 
-  // Start 7-day trial
-  const startTrial = () => {
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
+  // 7-day TRIAL via backend
+  const startTrial = async () => {
+    const userRaw = localStorage.getItem("user");
+    const email = userRaw ? JSON.parse(userRaw).email : null;
 
-    const iso = expires.toISOString();
-    setTrialEnds(iso);
-    setIsPremium(true);
-    return true;
+    if (!email) {
+      alert("Please log in first.");
+      return false;
+    }
+
+    try {
+      const res = await fetch("/api/user/start-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not start trial.");
+        return false;
+      }
+
+      setIsPremium(!!data.isPremium);
+      if (data.trialEnds) setTrialEnds(data.trialEnds);
+
+      return true;
+    } catch (err) {
+      console.error("Trial start error:", err);
+      alert("Could not start trial.");
+      return false;
+    }
   };
 
-  // Launch real Stripe checkout
-  // replace startCheckout in PremiumContext.jsx
+  // Stripe checkout
   const startCheckout = async (plan, email) => {
+    const userEmail = email || (() => {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw).email : null;
+    })();
+
+    if (!userEmail) {
+      alert("Please log in first.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email }),
+        body: JSON.stringify({ plan, email: userEmail }),
       });
 
       const data = await res.json();
@@ -75,42 +105,41 @@ export function PremiumProvider({ children }) {
     }
   };
 
-
-  // Called AFTER Stripe success page redirect
+  // Called from /success page if you still need it
   const activatePremium = () => {
     setIsPremium(true);
     setTrialEnds(null);
   };
 
-  // Check trial expiration
+  // local-only expiry (offline safety)
   useEffect(() => {
     if (!trialEnds) return;
 
     const now = new Date();
     const exp = new Date(trialEnds);
-
     if (now > exp) setIsPremium(false);
   }, [trialEnds]);
 
+  // 🔁 sync from backend (subscription + trial)
   const refreshPremiumStatus = async () => {
-    const email = localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user")).email
-      : null;
-
+    const raw = localStorage.getItem("user");
+    const email = raw ? JSON.parse(raw).email : null;
     if (!email) return;
 
     try {
-      const res = await fetch(`/api/user/premium-status?email=${email}`);
+      const res = await fetch(`/api/user/premium-status?email=${encodeURIComponent(email)}`);
       const data = await res.json();
 
       if (data && typeof data.isPremium === "boolean") {
         setIsPremium(data.isPremium);
+        if ("trialEnds" in data) {
+          setTrialEnds(data.trialEnds || null);
+        }
       }
     } catch (err) {
       console.error("Premium refresh error:", err);
     }
   };
-
 
   return (
     <PremiumContext.Provider
