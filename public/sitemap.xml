@@ -7,18 +7,28 @@
   </url>
 
   <url>
+    <loc>https://trakio.de/premium</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://trakio.de/login</loc>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>
 
   <url>
     <loc>https://trakio.de/signup</loc>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://trakio.de/dashboard</loc>
-    <priority>0.6</priority>
+    <loc>https://trakio.de/success</loc>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://trakio.de/cancel</loc>
+    <priority>0.4</priority>
   </url>
 
 </urlset>

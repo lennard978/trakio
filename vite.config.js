@@ -19,5 +19,14 @@ export default defineConfig({
         ]
       }
     })
+  ],
+  metaTags: [
+    { name: "description", content: "Track your subscriptions effortlessly with Trakio." },
+    { property: "og:title", content: "Trakio — Subscription Tracker" },
+    { property: "og:description", content: "Track your subscriptions effortlessly with Trakio." },
+    { property: "og:image", content: "/og-image.png" },
+    { property: "og:type", content: "website" },
+    { property: "twitter:card", content: "summary_large_image" }
   ]
+
 });
