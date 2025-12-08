@@ -168,5 +168,22 @@
 	"premium_upgrade": "UPGRADE",
 	"form_currency": "Currency",
 	"settings_premium_trial_active": "You are currently on a free trial.",
-	"settings_premium_trial_ends": "Your free trial ends on {{date}}."
+	"settings_premium_trial_ends": "Your free trial ends on {{date}}.",
+
+	"analytics_no_data": "No subscription data available.",
+	"analytics_total_12months": "Total last 12 months",
+	"analytics_top_category": "Top category",
+	"analytics_highest_subscription": "Highest subscription",
+	"analytics_highest_subscription_monthly": "Monthly cost",
+	"analytics_category": "Category",
+	"analytics_filter_period": "Period",
+	"analytics_filter_category": "Category",
+	"analytics_filter_category_all": "All",
+	"analytics_trend_title": "Spending trend",
+	"analytics_trend_all": "All categories",
+	"analytics_trend_for": "Category",
+	"analytics_no_trend_data": "No trend data for selected period.",
+	"analytics_monthly_category": "Spend by category",
+	"analytics_monthly_category_desc": "Based on actual payments in the last 12 months.",
+	"analytics_no_category_data": "No category data available."
 }

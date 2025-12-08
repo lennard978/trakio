@@ -1,4 +1,4 @@
-// src/pages/SubscriptionForm.jsx (or wherever it lives)
+// src/pages/SubscriptionForm.jsx
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -32,7 +32,7 @@ export default function SubscriptionForm() {
     "triennial",
   ];
 
-  // LOAD EXISTING SUB
+  // LOAD EXISTING SUBSCRIPTION
   useEffect(() => {
     if (id) {
       const saved = JSON.parse(localStorage.getItem("subscriptions")) || [];
@@ -58,6 +58,7 @@ export default function SubscriptionForm() {
 
     const saved = JSON.parse(localStorage.getItem("subscriptions")) || [];
 
+    // LIMIT: Free users can have max 5 subscriptions
     if (!id && !premium.isPremium && saved.length >= 5) {
       navigate("/premium?reason=limit");
       return;
@@ -78,30 +79,56 @@ export default function SubscriptionForm() {
       return;
     }
 
-    // Safety check (UI already prevents it)
+    // PREMIUM-ONLY frequencies
     if (!premium.isPremium && advancedFrequencies.includes(frequency)) {
       navigate("/premium?reason=intervals");
       return;
     }
 
     let updated;
+
+    //
+    // ---------------------------------------------------------
+    // UPDATE EXISTING SUBSCRIPTION
+    // ---------------------------------------------------------
+    //
     if (id) {
-      updated = saved.map((s) =>
-        s.id === Number(id)
-          ? {
-            ...s,
-            name,
-            price: Number(price),
-            frequency,
-            category,
-            datePaid,
-            notify,
-            currency,
-          }
-          : s
-      );
+      updated = saved.map((s) => {
+        if (s.id !== Number(id)) return s;
+
+        // Prepare history array
+        const newHistory = Array.isArray(s.history) ? [...s.history] : [];
+
+        // Add history entry only if user changed price or datePaid
+        if (s.datePaid !== datePaid || s.price !== Number(price)) {
+          newHistory.push({
+            date: datePaid,
+            amount: Number(price),
+          });
+        }
+
+        return {
+          ...s,
+          name,
+          price: Number(price),
+          frequency,
+          category,
+          datePaid,
+          notify,
+          currency,
+          history: newHistory,
+        };
+      });
+
       showToast(t("toast_updated"), "success");
-    } else {
+    }
+
+    //
+    // ---------------------------------------------------------
+    // CREATE NEW SUBSCRIPTION
+    // ---------------------------------------------------------
+    //
+    else {
       updated = [
         ...saved,
         {
@@ -113,8 +140,17 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
+
+          // NEW — first history entry
+          history: [
+            {
+              date: datePaid,
+              amount: Number(price),
+            },
+          ],
         },
       ];
+
       showToast(t("toast_added"), "success");
     }
 
@@ -159,6 +195,7 @@ export default function SubscriptionForm() {
         {/* CURRENCY */}
         <div>
           <label className="block mb-1 text-sm">{t("form_currency")}</label>
+
           {premium.isPremium ? (
             <CurrencySelector value={currency} onChange={setCurrency} />
           ) : (
@@ -213,7 +250,7 @@ export default function SubscriptionForm() {
           <label className="text-sm">{t("settings_notifications_info")}</label>
         </div>
 
-        {/* ACTIONS */}
+        {/* ACTION BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
