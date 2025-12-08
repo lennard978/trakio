@@ -53,6 +53,38 @@ export default function SubscriptionForm() {
     }
   }, [id]);
 
+  function generateRecurringHistory(startDate, price, frequency) {
+    const history = [];
+    const start = new Date(startDate);
+
+    const today = new Date();
+
+    const date = new Date(start);
+
+    while (date <= today) {
+      history.push({
+        date: date.toISOString().split("T")[0],
+        amount: Number(price),
+      });
+
+      switch (frequency) {
+        case "monthly":
+          date.setMonth(date.getMonth() + 1);
+          break;
+
+        case "yearly":
+          date.setFullYear(date.getFullYear() + 1);
+          break;
+
+        default:
+          return history; // only monthly/yearly supported now
+      }
+    }
+
+    return history;
+  }
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -141,18 +173,14 @@ export default function SubscriptionForm() {
           notify,
           currency,
 
-          // NEW — first history entry
-          history: [
-            {
-              date: datePaid,
-              amount: Number(price),
-            },
-          ],
+          // AUTO HISTORY
+          history: generateRecurringHistory(datePaid, price, frequency),
         },
       ];
 
       showToast(t("toast_added"), "success");
     }
+
 
     localStorage.setItem("subscriptions", JSON.stringify(updated));
     navigate("/dashboard");
