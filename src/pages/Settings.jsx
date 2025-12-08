@@ -13,119 +13,107 @@ export default function Settings() {
   const { t } = useTranslation();
   const premium = usePremiumContext();
 
-
+  // --------------------------------------------------
+  //  HANDLE CUSTOMER PORTAL
+  // --------------------------------------------------
   const handleManageSubscription = async () => {
-    // Load user from localStorage
-    const stored = localStorage.getItem("user");
-    const user = stored ? JSON.parse(stored) : null;
-    const email = user?.email;
+    const userData = JSON.parse(localStorage.getItem("user"));
+    const email = userData?.email;
 
     if (!email) {
       alert("Please log in again.");
       return;
     }
 
+    // Trial users do NOT have Stripe customers → block portal
+    if (trialEnds) {
+      alert("Trial users cannot manage subscription yet. Please upgrade first.");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/customer-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    let data;
     try {
-      const res = await fetch("/api/stripe/customer-portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }), // ✅ email is defined here
-      });
-
-      // If server returned error (like 500), log raw text once
-      if (!res.ok) {
-        const raw = await res.text();
-        console.error("Portal HTTP error:", res.status, raw);
-        alert("Server error while opening customer portal.");
-        return;
-      }
-
-      // OK → parse JSON once
-      const data = await res.json();
-      if (!data.url) {
-        alert("You can manage your subscription only after purchasing a plan.");
-        return;
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Portal response missing url:", data);
-        alert("Could not open customer portal.");
-      }
+      data = await res.json();
     } catch (err) {
-      console.error("Portal fetch error:", err);
-      alert("Network error while opening customer portal.");
+      const raw = await res.text();
+      console.error("RAW RESPONSE:", raw);
+      alert("Server error");
+      return;
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Unable to open customer portal.");
     }
   };
 
-
-
-
-  const handleLogout = () => {
-    logout();
-    showToast(t("toast_logout_success"), "success");
-    navigate("/");
-  };
-
-  // ✅ Trial status derived from PremiumContext
+  // --------------------------------------------------
+  //  TRIAL INFORMATION DISPLAY
+  // --------------------------------------------------
   const getTrialInfo = () => {
     const now = new Date();
 
-    if (!trialEnds && !isPremium) {
-      // Never started
-      return t("settings_trial_not_started");
-    }
+    if (!trialEnds && !isPremium) return t("settings_trial_not_started");
 
     if (trialEnds) {
       const end = new Date(trialEnds);
 
       if (now > end && !isPremium) {
-        // Trial ended and user is no longer premium
         return `${t("settings_trial_expired")}: ${end.toLocaleDateString()}`;
       }
 
       if (now <= end && isPremium) {
-        // Currently on free trial
         return `${t("settings_trial_ends")}: ${end.toLocaleDateString()}`;
       }
     }
 
-    // Premium without trial (e.g. manual upgrade / Stripe in future)
     if (isPremium && !trialEnds) {
-      return t("settings_trial_premium_no_trial") || "Premium active (no trial)";
+      return t("settings_premium_no_trial") || "Premium active (no trial).";
     }
 
     return t("settings_trial_not_started");
   };
 
-  // ✅ Premium subscription text
+  // --------------------------------------------------
+  //  PREMIUM INFORMATION
+  // --------------------------------------------------
   const getPremiumInfo = () => {
     const now = new Date();
 
+    // Trial user
     if (isPremium && trialEnds) {
       const end = new Date(trialEnds);
       if (now <= end) {
-        return t("settings_premium_trial_active") ||
-          `On free trial until ${end.toLocaleDateString()}`;
+        return t("settings_premium_trial_active");
       }
     }
 
+    // Paid subscriber
     if (isPremium && !trialEnds) {
-      return t("settings_premium_active") || "Premium subscription is active.";
+      return t("settings_premium_active");
     }
 
+    // No premium
     if (!isPremium && trialEnds) {
       const end = new Date(trialEnds);
       if (now > end) {
-        return t("settings_premium_trial_expired") ||
-          `Trial expired on ${end.toLocaleDateString()}.`;
+        return `${t("settings_premium_trial_expired")}: ${end.toLocaleDateString()}`;
       }
     }
 
     return t("settings_premium_none");
   };
 
+  // --------------------------------------------------
+  //  UI RENDER
+  // --------------------------------------------------
   return (
     <div className="max-w-lg mx-auto mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
       <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
@@ -144,7 +132,7 @@ export default function Settings() {
           </p>
         </div>
 
-        {/* TRIAL INFO (from PremiumContext) */}
+        {/* TRIAL INFO */}
         <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
             {t("settings_trial")}
@@ -159,57 +147,44 @@ export default function Settings() {
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
             {t("settings_premium_title")}
           </h2>
+
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {getPremiumInfo()}
           </p>
+
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             {t("settings_premium_info")}
           </p>
-          {premium.isPremium && !premium.trialEnds && (
+
+          {/* CONDITIONAL BUTTONS */}
+          {isPremium && !trialEnds ? (
+            // Paid Premium → show portal button
             <button
               onClick={handleManageSubscription}
-              className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+              className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700 transition mt-3"
             >
               Manage Subscription
             </button>
+          ) : (
+            // Trial or non-premium → show upgrade button
+            <button
+              onClick={() => navigate("/premium")}
+              className="w-full bg-green-600 text-white py-2 rounded-xl font-medium hover:bg-green-700 transition mt-3"
+            >
+              Upgrade to Premium
+            </button>
           )}
-
-
         </div>
 
-        {/* NOTIFICATIONS */}
-        <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {t("settings_notifications")}
-          </h2>
-
-          <button
-            onClick={async () => {
-              const permission = await Notification.requestPermission();
-              if (permission === "granted") {
-                showToast(t("settings_notifications_enabled"), "success");
-              } else {
-                showToast(t("settings_notifications_blocked"), "error");
-              }
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-          >
-            {t("settings_notifications_enable")}
-          </button>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {t("settings_notifications_info")}
-          </p>
-        </div>
-
-        {/* ACTIONS */}
+        {/* LOGOUT */}
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
         >
           {t("settings_logout")}
         </button>
 
+        {/* BACK */}
         <button
           onClick={() => navigate("/dashboard")}
           className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition"

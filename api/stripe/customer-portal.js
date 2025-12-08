@@ -17,12 +17,16 @@ export default async function handler(req, res) {
 
     const record = await getPremiumRecord(email);
 
-    if (!record || !record.stripeCustomerId) {
-      return res.status(200).json({
-        url: null,
-        message: "Trial users do not have a Stripe portal. Please subscribe first."
-      });
+    // Trial users do NOT have a Stripe customer
+    if (record.status === "trial") {
+      return res.status(400).json({ error: "Trial users cannot open portal" });
     }
+
+    if (!record || !record.stripeCustomerId) {
+      return res.status(400).json({ error: "No Stripe customer found" });
+    }
+
+
 
 
     const session = await stripe.billingPortal.sessions.create({
