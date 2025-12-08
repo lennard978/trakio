@@ -12,6 +12,10 @@ import { ToastProvider } from "./context/ToastContext";
 import { AuthProvider } from "./hooks/useAuth";
 import { PremiumProvider } from "./context/PremiumContext";
 import "./i18n.js";
+import { inject } from "@vercel/analytics";
+
+// Initialize Vercel Web Analytics
+inject();
 
 // Use BrowserRouter ALWAYS on Vercel.
 // HashRouter was only needed for GitHub Pages (you no longer need it).
