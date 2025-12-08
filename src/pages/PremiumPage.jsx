@@ -24,7 +24,26 @@ export default function PremiumPage() {
     t("premium_feature_priority_support"),
   ];
 
-  // ✅ async trial handler (uses server)
+  // inside PremiumPage component
+
+  const handleUpgradeMonthly = () => {
+    if (!user?.email) {
+      alert("Please log in first.");
+      navigate("/login");
+      return;
+    }
+    premium.startCheckout("monthly", user.email);
+  };
+
+  const handleUpgradeYearly = () => {
+    if (!user?.email) {
+      alert("Please log in first.");
+      navigate("/login");
+      return;
+    }
+    premium.startCheckout("yearly", user.email);
+  };
+
   const handleStartTrial = async () => {
     const ok = await premium.startTrial();
     if (ok) {
@@ -32,6 +51,7 @@ export default function PremiumPage() {
       navigate("/dashboard");
     }
   };
+
 
   return (
     <div className="w-full px-4 py-6 sm:py-10">
@@ -87,7 +107,7 @@ export default function PremiumPage() {
             </div>
 
             <button
-              onClick={() => premium.startCheckout("monthly", user?.email)}
+              onClick={handleUpgradeMonthly}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}
@@ -105,7 +125,7 @@ export default function PremiumPage() {
             </div>
 
             <button
-              onClick={() => premium.startCheckout("yearly", user?.email)}
+              onClick={handleUpgradeYearly}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-lg transition active:scale-95"
             >
               {t("premium_button_upgrade")}
