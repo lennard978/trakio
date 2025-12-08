@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { getPremiumRecord } from "../../utils/premiumStore.js"; // <-- fix this if incorrect
+import { getPremiumRecord } from "../../utils/premiumStore.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -15,14 +15,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Email required" });
     }
 
-    // read premium info from KV
     const record = await getPremiumRecord(email);
 
     if (!record || !record.stripeCustomerId) {
       return res.status(400).json({ error: "No Stripe customer found" });
     }
 
-    // create portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: record.stripeCustomerId,
       return_url: `${process.env.APP_URL}/settings`,

@@ -15,30 +15,46 @@ export default function Settings() {
 
 
   const handleManageSubscription = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?.email) {
+    // Load user from localStorage
+    const stored = localStorage.getItem("user");
+    const user = stored ? JSON.parse(stored) : null;
+    const email = user?.email;
+
+    if (!email) {
       alert("Please log in again.");
       return;
     }
 
-    const res = await fetch("/api/stripe/customer-portal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user.email }),
-    });
-
-    let data;
     try {
-      data = await res.json();
-    } catch (err) {
-      const raw = await res.text();
-      console.error("RAW RESPONSE:", raw);
-      alert("Server error");
-      return;
-    }
+      const res = await fetch("/api/stripe/customer-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }), // ✅ email is defined here
+      });
 
-    window.location.href = data.url;
+      // If server returned error (like 500), log raw text once
+      if (!res.ok) {
+        const raw = await res.text();
+        console.error("Portal HTTP error:", res.status, raw);
+        alert("Server error while opening customer portal.");
+        return;
+      }
+
+      // OK → parse JSON once
+      const data = await res.json();
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Portal response missing url:", data);
+        alert("Could not open customer portal.");
+      }
+    } catch (err) {
+      console.error("Portal fetch error:", err);
+      alert("Network error while opening customer portal.");
+    }
   };
+
 
 
 
