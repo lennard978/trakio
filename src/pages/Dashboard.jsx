@@ -178,11 +178,12 @@ export default function Dashboard() {
 
       {/* HEADER + INSIGHTS TOGGLE */}
       {hasSubscriptions && (
-        <div className="flex justify-between items-center mb-3">
-          <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
+        <>
+          {/* HEADER ROW */}
+          <div className="flex justify-between items-center mb-3">
+            <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
 
-          <div className="flex items-center gap-2">
-            {/* PREMIUM-ONLY CURRENCY SELECTOR */}
+            {/* CURRENCY SELECTOR */}
             {premium.isPremium ? (
               <CurrencySelector
                 value={preferredCurrency}
@@ -196,21 +197,22 @@ export default function Dashboard() {
                 EUR · {t("premium_locked_currency")}
               </button>
             )}
-
           </div>
-          <div className="w-full flex justify-end mb-3">
+
+          {/* INSIGHTS TOGGLE BUTTON (separate row for correct layout) */}
+          <div className="w-full flex justify-end mb-4">
             <button
               onClick={handleToggleInsights}
-              className="text-sm px-3 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="px-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               {showInsightsView
                 ? t("button_hide_insights")
                 : t("button_show_insights")}
             </button>
           </div>
-
-        </div>
+        </>
       )}
+
 
       {/* CONTENT AREA: EITHER LIST OR INSIGHTS (CROSSFADE) */}
       <div
