@@ -18,8 +18,12 @@ export default async function handler(req, res) {
     const record = await getPremiumRecord(email);
 
     if (!record || !record.stripeCustomerId) {
-      return res.status(400).json({ error: "No Stripe customer found" });
+      return res.status(200).json({
+        url: null,
+        message: "Trial users do not have a Stripe portal. Please subscribe first."
+      });
     }
+
 
     const session = await stripe.billingPortal.sessions.create({
       customer: record.stripeCustomerId,

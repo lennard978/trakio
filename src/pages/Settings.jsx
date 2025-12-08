@@ -42,6 +42,10 @@ export default function Settings() {
 
       // OK → parse JSON once
       const data = await res.json();
+      if (!data.url) {
+        alert("You can manage your subscription only after purchasing a plan.");
+        return;
+      }
 
       if (data?.url) {
         window.location.href = data.url;
@@ -161,7 +165,7 @@ export default function Settings() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             {t("settings_premium_info")}
           </p>
-          {premium.isPremium && (
+          {premium.isPremium && !premium.trialEnds && (
             <button
               onClick={handleManageSubscription}
               className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700 transition"
@@ -169,6 +173,7 @@ export default function Settings() {
               Manage Subscription
             </button>
           )}
+
 
         </div>
 
