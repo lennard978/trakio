@@ -20,6 +20,12 @@ export function PremiumProvider({ children }) {
     }
   });
 
+  useEffect(() => {
+    const interval = setInterval(() => refreshPremiumStatus(), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+
   // Persist premium status
   useEffect(() => {
     localStorage.setItem("isPremium", JSON.stringify(isPremium));
@@ -85,6 +91,26 @@ export function PremiumProvider({ children }) {
 
     if (now > exp) setIsPremium(false);
   }, [trialEnds]);
+
+  const refreshPremiumStatus = async () => {
+    const email = localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user")).email
+      : null;
+
+    if (!email) return;
+
+    try {
+      const res = await fetch(`/api/user/premium-status?email=${email}`);
+      const data = await res.json();
+
+      if (data && typeof data.isPremium === "boolean") {
+        setIsPremium(data.isPremium);
+      }
+    } catch (err) {
+      console.error("Premium refresh error:", err);
+    }
+  };
+
 
   return (
     <PremiumContext.Provider

@@ -22,10 +22,20 @@ export default function PremiumPage() {
   ];
 
   const handleUpgrade = () => {
-    premium.activatePremium();
-    alert("Premium activated!");
-    navigate("/dashboard");
+    const plan = "monthly"; // or "yearly" depending on button
+    const email = localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user")).email
+      : null;
+
+    if (!email) {
+      alert("Please log in first.");
+      navigate("/login");
+      return;
+    }
+
+    premium.startCheckout(plan, email);
   };
+
 
   const handleStartTrial = () => {
     premium.startTrial();
