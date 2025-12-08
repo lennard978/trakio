@@ -11,6 +11,25 @@ export default function Settings() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const premium = usePremiumContext();
+
+  const handleManageSubscription = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user?.email) {
+      alert("Please log in again.");
+      return;
+    }
+
+    const res = await fetch("/api/stripe/customer-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user.email }),
+    });
+
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert("Failed to open portal.");
+  };
 
   const handleLogout = () => {
     logout();
@@ -115,6 +134,15 @@ export default function Settings() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             {t("settings_premium_info")}
           </p>
+          {premium.isPremium && (
+            <button
+              onClick={handleManageSubscription}
+              className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+            >
+              Manage Subscription
+            </button>
+          )}
+
         </div>
 
         {/* NOTIFICATIONS */}
