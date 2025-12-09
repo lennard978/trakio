@@ -81,8 +81,8 @@ function MobileTabBar({ dir }) {
               key={tab.to}
               to={tab.to}
               className={`flex flex-col items-center justify-center flex-1 py-2 text-xs font-medium ${active
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 dark:text-gray-400"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-gray-500 dark:text-gray-400"
                 }`}
             >
               <span className={`text-lg ${active ? "scale-110" : "opacity-70"}`}>
@@ -137,7 +137,7 @@ export default function App() {
       </header>
 
       {/* MAIN ROUTER */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-2 pb-20 md:pb-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-2 pb-20 relative overflow-hidden">
         <Suspense fallback={<LoadingSkeleton />}>
           <Routes>
             <Route path="/" element={<Welcome />} />

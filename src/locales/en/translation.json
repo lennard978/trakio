@@ -120,7 +120,7 @@
 	"button_edit": "Edit",
 	"button_delete": "Delete",
 
-	"label_last_paid": "Last paid on: {{date}}",
+	"label_last_paid": "Last paid on",
 	"label_renews_in": "Renews in {{days}} day(s)",
 	"label_overdue": "Overdue by {{days}} day(s)",
 	"label_renews_on": "Next renewal: {{date}}",

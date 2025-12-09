@@ -1,0 +1,44 @@
+/* ============================================
+   iOS-Style Page Transitions
+   Smooth slide + fade, LTR/RTL aware
+   ============================================ */
+
+.page-wrapper {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow-x: hidden;
+}
+
+/* Page entering */
+.page-enter {
+	opacity: 0;
+	transform: translateX(40px);
+}
+
+.page-enter-active {
+	opacity: 1;
+	transform: translateX(0);
+	transition: opacity 240ms ease, transform 240ms ease;
+}
+
+/* Page exiting */
+.page-exit {
+	opacity: 1;
+	transform: translateX(0);
+}
+
+.page-exit-active {
+	opacity: 0;
+	transform: translateX(-30px);
+	transition: opacity 200ms ease, transform 200ms ease;
+}
+
+/* RTL support */
+.rtl .page-enter {
+	transform: translateX(-40px);
+}
+
+.rtl .page-exit-active {
+	transform: translateX(30px);
+}
