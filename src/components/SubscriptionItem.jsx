@@ -90,7 +90,7 @@ export default function SubscriptionItem({
     }
   };
 
-  // Tooltip calculation
+  // Tooltip info
   const getNextPaymentText = () => {
     if (!item.datePaid) return "No paid date";
 
@@ -118,8 +118,7 @@ export default function SubscriptionItem({
       end.setMonth(start.getMonth() + 1);
     }
 
-    const ms = 1000 * 60 * 60 * 24;
-    const diff = Math.ceil((end - now) / ms);
+    const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
 
     if (diff > 1) return `Next payment in ${diff} days`;
     if (diff === 1) return "Next payment in 1 day";
@@ -128,7 +127,7 @@ export default function SubscriptionItem({
     return `Overdue by ${Math.abs(diff)} days`;
   };
 
-  // -------- Swipe handlers (same) --------
+  // -------- Swipe handlers (same logic) --------
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
 
@@ -176,15 +175,17 @@ export default function SubscriptionItem({
   return (
     <div className="relative mb-6">
 
-      {/* DELETE BUTTON BEHIND CARD */}
+      {/* DELETE BUTTON */}
       <div className="absolute inset-y-0 right-3 flex items-center">
         <button
           onClick={() => onDelete(item.id)}
           className="
             px-4 py-2 rounded-xl text-xs font-semibold
             text-white bg-red-600/80
-            backdrop-blur-md border border-red-400/40
-            shadow-md active:scale-95
+            backdrop-blur-md border border-red-400/50
+            shadow-[0_0_18px_rgba(255,0,0,0.45)]
+            active:scale-95 transition
+            dark:shadow-[0_0_22px_rgba(255,0,0,0.55)]
           "
         >
           {t("delete").toLowerCase()}
@@ -198,7 +199,7 @@ export default function SubscriptionItem({
           bg-white/90 dark:bg-black/30
           border border-gray-300 dark:border-white/10
           backdrop-blur-xl
-          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.5)]
           transition-all
         "
         style={{
@@ -210,7 +211,7 @@ export default function SubscriptionItem({
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
       >
-        {/* TOP SECTION */}
+        {/* HEADER */}
         <div className="flex justify-between items-start">
           <div>
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -230,12 +231,12 @@ export default function SubscriptionItem({
           <div
             className="
               px-3 py-1 text-xs font-semibold rounded-full
-              text-white backdrop-blur-md border border-white/20
-              shadow-md
+              text-white shadow-md backdrop-blur-md
+              border border-white/30
             "
             style={{
               backgroundColor: color,
-              boxShadow: `0 0 12px ${color}60`,
+              boxShadow: `0 0 14px ${color}70`,
             }}
           >
             {(item.category || "other").toLowerCase()}
@@ -260,7 +261,7 @@ export default function SubscriptionItem({
             {item.datePaid ? t("paid") : t("unpaid")}
           </button>
 
-          {/* PROGRESS BAR */}
+          {/* PROGRESS BAR (CENTER TEXT ALWAYS VISIBLE) */}
           <div className="relative flex-1">
             <div
               className="
@@ -271,18 +272,24 @@ export default function SubscriptionItem({
               "
               onClick={toggleTooltip}
             >
+              {/* Colored fill */}
               <div
                 className="
-                  h-full rounded-full transition-all duration-500
-                  flex items-center justify-center text-[10px] font-semibold
+                  absolute left-0 top-0 h-full rounded-full transition-all duration-500
                 "
                 style={{
                   width: `${progress}%`,
                   backgroundColor: color,
-                  color: "white",
-                  boxShadow: `0 0 10px ${color}70`,
+                  boxShadow: `0 0 10px ${color}60`,
                 }}
-              >
+              />
+
+              {/* Percentage text always centered on top layer */}
+              <div className="
+                absolute inset-0 flex items-center justify-center 
+                text-[10px] font-semibold pointer-events-none
+                text-gray-800 dark:text-white
+              ">
                 {progress}%
               </div>
             </div>
@@ -316,7 +323,7 @@ export default function SubscriptionItem({
           </button>
         </div>
 
-        {/* HIDDEN DATE INPUT */}
+        {/* Hidden date input */}
         <input
           ref={dateInputRef}
           type="date"
