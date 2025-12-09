@@ -28,15 +28,26 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
-  // Swipe states
+  // Swipe state
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
   const openedRef = useRef(false);
 
-  // Tooltip
+  // Tooltip state
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // -------- openCalendar MUST exist --------
+  const openCalendar = () => {
+    if (dateInputRef.current) {
+      // Some browsers use showPicker()
+      dateInputRef.current.showPicker?.();
+      // Others require click()
+      dateInputRef.current.click?.();
+    }
+  };
+
+  // Price
   const displayPrice =
     rates && convert
       ? convert(item.price, item.currency || "EUR", currency, rates)
@@ -44,7 +55,7 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // -------- PROGRESS CALC (unchanged) --------
+  // -------- Progress calculation --------
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -120,7 +131,7 @@ export default function SubscriptionItem({
     return `Overdue by ${Math.abs(diff)} days`;
   };
 
-  // -------- SWIPE HANDLERS (unchanged) --------
+  // -------- Swipe logic --------
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
 
@@ -194,9 +205,8 @@ export default function SubscriptionItem({
           relative p-5 rounded-3xl
           bg-white/90 dark:bg-black/25
           border border-gray-300 dark:border-white/10
-          backdrop-blur-xl
-          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
-          transition-all
+          backdrop-blur-xl shadow-lg
+          dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
         "
         style={{
           transform: `translateX(${translateX}px)`,
@@ -230,7 +240,8 @@ export default function SubscriptionItem({
           <div
             className="
               px-3 py-1 text-xs font-semibold rounded-full
-              text-white backdrop-blur-md border border-white/20 shadow-md
+              text-white backdrop-blur-md border border-white/20
+              shadow-md
             "
             style={{
               backgroundColor: color,
@@ -272,13 +283,11 @@ export default function SubscriptionItem({
             >
               {/* Colored fill */}
               <div
-                className="
-                  absolute left-0 top-0 h-full rounded-full transition-all duration-500
-                "
+                className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${color} 0%, ${color}cc 100%)`,
-                  boxShadow: `0 0 10px ${color}80`,
+                  background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+                  boxShadow: `0 0 10px ${color}70`,
                 }}
               />
 
@@ -301,9 +310,8 @@ export default function SubscriptionItem({
               <div
                 className="
                   absolute -top-7 left-1/2 -translate-x-1/2
-                  px-2 py-1 rounded-lg
-                  bg-black/85 text-[10px] text-white shadow-lg
-                  whitespace-nowrap
+                  px-2 py-1 rounded-lg bg-black/85
+                  text-[10px] text-white shadow-lg whitespace-nowrap
                 "
               >
                 {getNextPaymentText()}
@@ -325,7 +333,7 @@ export default function SubscriptionItem({
           </button>
         </div>
 
-        {/* HIDDEN DATE INPUT */}
+        {/* Hidden Date Picker */}
         <input
           ref={dateInputRef}
           type="date"
