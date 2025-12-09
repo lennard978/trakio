@@ -28,11 +28,11 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
-  // Swipe-to-delete state
+  // Swipe left-to-delete states
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
-  const openedRef = useRef(false); // whether delete is currently open
+  const openedRef = useRef(false);
 
   const displayPrice =
     rates && convert
@@ -41,9 +41,7 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // ------------------------------------------------------
-  // PROGRESS CALCULATION WITH OVERDUE DETECTION
-  // ------------------------------------------------------
+  // ------------ PROGRESS LOGIC (unchanged) ------------
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -89,11 +87,9 @@ export default function SubscriptionItem({
     }
   };
 
-  // ------------------------------------------------------
-  // SWIPE HANDLERS (touch)
-  // ------------------------------------------------------
-  const MAX_SWIPE = -90; // how far left the card can slide
-  const THRESHOLD = -45; // when to keep it open
+  // ------------- Swipe handlers (unchanged) -------------
+  const MAX_SWIPE = -90;
+  const THRESHOLD = -45;
 
   const handleTouchStart = (e) => {
     if (!e.touches || e.touches.length === 0) return;
@@ -103,15 +99,13 @@ export default function SubscriptionItem({
 
   const handleTouchMove = (e) => {
     if (!isDragging || !e.touches || e.touches.length === 0) return;
-    const currentX = e.touches[0].clientX;
-    const dx = currentX - startXRef.current;
 
-    // Only allow left swipe
+    const dx = e.touches[0].clientX - startXRef.current;
+
     if (dx < 0) {
       const base = openedRef.current ? -Math.abs(dx) - 40 : dx;
       setTranslateX(Math.max(base, MAX_SWIPE));
     } else {
-      // Swiping right → close
       setTranslateX(0);
     }
   };
@@ -129,7 +123,6 @@ export default function SubscriptionItem({
     }
   };
 
-  // Close swipe if user taps on the card content when open
   const handleCardClick = () => {
     if (openedRef.current) {
       setTranslateX(0);
@@ -137,16 +130,22 @@ export default function SubscriptionItem({
     }
   };
 
+  // ---------------------------------------------------------
+  //                  UPDATED STYLING BELOW
+  // ---------------------------------------------------------
+
   return (
-    <div className="relative mb-4">
-      {/* DELETE BACKGROUND (revealed when swiped) */}
-      <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+    <div className="relative mb-6">
+      {/* DELETE BUTTON – BEHIND SWIPED CARD */}
+      <div className="absolute inset-y-0 right-3 flex items-center">
         <button
           onClick={() => onDelete(item.id)}
           className="
-            px-4 py-2 rounded-md text-xs sm:text-sm font-semibold
-            bg-red-500 text-white
-            hover:bg-red-600
+            px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm
+            text-white
+            bg-red-600/70 backdrop-blur-md
+            border border-red-400/30
+            shadow-lg shadow-red-900/40
             active:scale-95 transition
           "
         >
@@ -154,39 +153,41 @@ export default function SubscriptionItem({
         </button>
       </div>
 
-      {/* SLIDING CARD */}
+      {/* MAIN CARD */}
       <div
-        className={`
-          p-5 rounded-2xl
-          bg-white dark:bg-gray-900
-          border border-gray-200 dark:border-gray-700
-          shadow-sm
-          transition-shadow duration-300
-          hover:shadow-md
-        `}
+        className="
+          relative p-5 rounded-3xl
+          backdrop-blur-xl
+          bg-white/10 dark:bg-black/20
+          border border-white/20 dark:border-white/10
+          shadow-[0_8px_30px_rgba(0,0,0,0.25)]
+          transition-all duration-300
+        "
         style={{
           transform: `translateX(${translateX}px)`,
-          transition: isDragging ? "none" : "transform 0.2s ease-out, box-shadow 0.2s ease-out",
+          transition: isDragging
+            ? "none"
+            : "transform 0.25s ease-out, box-shadow 0.25s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
       >
-        {/* TOP ROW: NAME / PRICE / CATEGORY BADGE */}
+        {/* TOP SECTION */}
         <div className="flex justify-between items-start">
           <div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <div className="text-lg font-semibold text-white">
               {item.name}
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-300">
+            <div className="text-sm text-gray-300">
               {currency} {displayPrice.toFixed(2)} /{" "}
               {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-1 text-xs text-gray-400">
                 {t("label_last_paid")}:{" "}
                 {new Date(item.datePaid).toLocaleDateString()}
               </div>
@@ -194,41 +195,34 @@ export default function SubscriptionItem({
           </div>
 
           <div
-            style={{ backgroundColor: color }}
             className="
-              px-3 py-1 text-xs font-medium text-white capitalize rounded-full 
-              shadow-sm
-              transition-transform duration-300 
-              hover:scale-105
+              px-3 py-1 text-xs font-medium rounded-full
+              text-white shadow-md
+              backdrop-blur-md
             "
+            style={{ backgroundColor: color + "cc" }}
           >
             {item.category || "Other"}
           </div>
         </div>
 
-        {/* PROGRESS RING (tap to open calendar) */}
-        <div className="w-full flex justify-center mt-4 mb-4">
+        {/* PROGRESS CIRCLE */}
+        <div className="flex justify-center mt-4 mb-4">
           <div
-            className={`
-              relative cursor-pointer transition-transform duration-300 
-              active:scale-95 
-              ${isOverdue ? "animate-pulse" : ""}
-            `}
+            className={`relative cursor-pointer active:scale-95 transition
+                        ${isOverdue ? "animate-pulse" : ""}`}
             onClick={openCalendar}
           >
             <svg width="80" height="80">
-              {/* Background circle */}
               <circle
                 cx="40"
                 cy="40"
                 r="32"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-700"
+                stroke="rgba(255,255,255,0.15)"
                 strokeWidth="6"
                 fill="none"
               />
 
-              {/* Progress circle */}
               <circle
                 cx="40"
                 cy="40"
@@ -238,33 +232,30 @@ export default function SubscriptionItem({
                 fill="none"
                 strokeDasharray={Math.PI * 2 * 32}
                 strokeDashoffset={
-                  Math.PI * 2 * 32 - (Math.PI * 2 * 32 * progress) / 100
+                  Math.PI * 2 * 32 -
+                  (Math.PI * 2 * 32 * progress) / 100
                 }
                 strokeLinecap="round"
                 transform="rotate(-90 40 40)"
-                className="
-                  transition-all duration-500 ease-out
-                  drop-shadow-[0_0_6px_rgba(0,0,0,0.15)]
-                "
+                className="transition-all duration-500 drop-shadow-[0_0_10px_rgba(0,0,0,0.4)]"
               />
             </svg>
 
-            <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-800 dark:text-gray-200">
+            <div className="absolute inset-0 flex items-center justify-center text-white font-semibold text-sm">
               {progress}%
             </div>
 
             {isOverdue && (
               <div
-                className="absolute inset-0 rounded-full blur-xl opacity-30"
+                className="absolute inset-0 rounded-full blur-xl opacity-40"
                 style={{ backgroundColor: color }}
               />
             )}
           </div>
         </div>
 
-        {/* ACTION BUTTONS ROW */}
+        {/* BOTTOM BUTTON ROW */}
         <div className="flex justify-between items-center pt-2">
-          {/* HIDDEN DATE INPUT */}
           <input
             ref={dateInputRef}
             type="date"
@@ -273,32 +264,33 @@ export default function SubscriptionItem({
             onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
           />
 
-          {/* LEFT: PAID / UNPAID BUTTON */}
+          {/* PAID / UNPAID BUTTON */}
           <button
             onClick={openCalendar}
             className={`
-              px-4 py-1.5 rounded-md text-xs font-medium transition-all active:scale-95
+              px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
+              backdrop-blur-md
               ${item.datePaid
-                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                ? "bg-green-500/20 text-green-300 border border-green-400/20"
+                : "bg-red-500/20 text-red-300 border border-red-400/20"
               }
             `}
           >
             {item.datePaid ? t("paid") : t("unpaid")}
           </button>
 
-          {/* RIGHT: EDIT BUTTON (Delete is via swipe only – A1) */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate(`/edit/${item.id}`)}
-              className="
-                px-3 py-1.5 uppercase rounded-md text-xs font-semibold text-white
-                bg-blue-500 hover:bg-blue-600 active:scale-95 transition
-              "
-            >
-              {t("edit")}
-            </button>
-          </div>
+          {/* EDIT BUTTON */}
+          <button
+            onClick={() => navigate(`/edit/${item.id}`)}
+            className="
+              px-4 py-1.5 rounded-xl text-xs font-semibold
+              text-white bg-blue-500/80 backdrop-blur-md
+              border border-blue-300/20
+              shadow-md active:scale-95 transition
+            "
+          >
+            {t("edit")}
+          </button>
         </div>
       </div>
     </div>
