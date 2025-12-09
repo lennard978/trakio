@@ -4,18 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const CATEGORY_COLORS = {
-  Fitness: "#22c55e",
-  Bills: "#6366f1",
-  Transport: "#f97316",
-  Streaming: "#8b5cf6",
-  Software: "#3b82f6",
-  Productivity: "#f59e0b",
-  Gaming: "#ef4444",
-  Education: "#14b8a6",
-  Food: "#84cc16",
-  Other: "#6b7280",
+  fitness: "#22c55e",
+  bills: "#6366f1",
+  transport: "#f97316",
+  streaming: "#8b5cf6",
+  software: "#3b82f6",
+  productivity: "#f59e0b",
+  gaming: "#ef4444",
+  education: "#14b8a6",
+  food: "#84cc16",
+  other: "#6b7280",
 };
-
 
 export default function SubscriptionItem({
   item,
@@ -29,34 +28,32 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
+  // Category normalization
+  const normalizedCategory = (item.category || "Other").trim().toLowerCase();
+  const color = CATEGORY_COLORS[normalizedCategory] || CATEGORY_COLORS.other;
+
   // Swipe state
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
   const openedRef = useRef(false);
 
-  // Tooltip state
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // -------- openCalendar MUST exist --------
   const openCalendar = () => {
     if (dateInputRef.current) {
-      // Some browsers use showPicker()
       dateInputRef.current.showPicker?.();
-      // Others require click()
       dateInputRef.current.click?.();
     }
   };
 
-  // Price
+  // Price conversion
   const displayPrice =
     rates && convert
       ? convert(item.price, item.currency || "EUR", currency, rates)
       : item.price;
 
-  const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
-
-  // -------- Progress calculation --------
+  // Progress
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -76,13 +73,9 @@ export default function SubscriptionItem({
 
     const days = { weekly: 7, biweekly: 14 };
 
-    if (months[item.frequency]) {
-      end.setMonth(start.getMonth() + months[item.frequency]);
-    } else if (days[item.frequency]) {
-      end.setDate(start.getDate() + days[item.frequency]);
-    } else {
-      end.setMonth(start.getMonth() + 1);
-    }
+    if (months[item.frequency]) end.setMonth(start.getMonth() + months[item.frequency]);
+    else if (days[item.frequency]) end.setDate(start.getDate() + days[item.frequency]);
+    else end.setMonth(start.getMonth() + 1);
 
     const total = end - start;
     const used = now - start;
@@ -95,7 +88,7 @@ export default function SubscriptionItem({
 
   const progress = calcProgress();
 
-  // Tooltip message
+  // Tooltip text
   const getNextPaymentText = () => {
     if (!item.datePaid) return "No paid date";
 
@@ -115,13 +108,9 @@ export default function SubscriptionItem({
 
     const days = { weekly: 7, biweekly: 14 };
 
-    if (months[item.frequency]) {
-      end.setMonth(start.getMonth() + months[item.frequency]);
-    } else if (days[item.frequency]) {
-      end.setDate(start.getDate() + days[item.frequency]);
-    } else {
-      end.setMonth(start.getMonth() + 1);
-    }
+    if (months[item.frequency]) end.setMonth(start.getMonth() + months[item.frequency]);
+    else if (days[item.frequency]) end.setDate(start.getDate() + days[item.frequency]);
+    else end.setMonth(start.getMonth() + 1);
 
     const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
 
@@ -132,7 +121,7 @@ export default function SubscriptionItem({
     return `Overdue by ${Math.abs(diff)} days`;
   };
 
-  // -------- Swipe logic --------
+  // Swipe logic
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
 
@@ -146,7 +135,6 @@ export default function SubscriptionItem({
     if (!isDragging || !e.touches?.length) return;
 
     const dx = e.touches[0].clientX - startXRef.current;
-
     if (dx < 0) {
       const base = openedRef.current ? -Math.abs(dx) - 40 : dx;
       setTranslateX(Math.max(base, MAX_SWIPE));
@@ -157,7 +145,6 @@ export default function SubscriptionItem({
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
-
     setIsDragging(false);
 
     if (translateX <= THRESHOLD) {
@@ -175,8 +162,6 @@ export default function SubscriptionItem({
       openedRef.current = false;
     }
   };
-
-  const toggleTooltip = () => setShowTooltip((v) => !v);
 
   return (
     <div className="relative mb-6">
@@ -196,7 +181,7 @@ export default function SubscriptionItem({
             dark:shadow-[0_0_22px_rgba(255,0,0,0.55)]
           "
         >
-          {t("delete")}
+          {t("delete").charAt(0).toUpperCase() + t("delete").slice(1)}
         </button>
       </div>
 
@@ -246,10 +231,10 @@ export default function SubscriptionItem({
             "
             style={{
               backgroundColor: color,
-              boxShadow: `0 0 12px ${color}80`,
+              boxShadow: `0 0 12px ${color}90`,
             }}
           >
-            {(item.category || "other").toLowerCase()}
+            {normalizedCategory}
           </div>
         </div>
 
@@ -280,44 +265,28 @@ export default function SubscriptionItem({
                 bg-gray-200 dark:bg-gray-700
                 border-gray-300 dark:border-white/20
               "
-              onClick={toggleTooltip}
             >
-              {/* Colored fill */}
               <div
                 className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-                  boxShadow: `0 0 10px ${color}70`,
+                  background: `linear-gradient(90deg, ${color}, ${color}aa)`,
+                  boxShadow: `0 0 12px ${color}80`,
                 }}
               />
 
-              {/* Centered percent text */}
               <div
                 className="
                   absolute inset-0 flex items-center justify-center
                   text-[10px] font-semibold z-10 pointer-events-none
                 "
                 style={{
-                  color: progress < 12 ? "#000" : "#fff",
+                  color: progress < 10 ? "#000" : "#fff",
                 }}
               >
                 {progress}%
               </div>
             </div>
-
-            {/* Tooltip */}
-            {showTooltip && (
-              <div
-                className="
-                  absolute -top-7 left-1/2 -translate-x-1/2
-                  px-2 py-1 rounded-lg bg-black/85
-                  text-[10px] text-white shadow-lg whitespace-nowrap
-                "
-              >
-                {getNextPaymentText()}
-              </div>
-            )}
           </div>
 
           {/* EDIT BUTTON */}
@@ -330,7 +299,7 @@ export default function SubscriptionItem({
               shadow-md active:scale-95
             "
           >
-            {t("edit")}
+            {t("edit").charAt(0).toUpperCase() + t("edit").slice(1)}
           </button>
         </div>
 
