@@ -34,7 +34,7 @@ export default function SubscriptionItem({
   const startXRef = useRef(0);
   const openedRef = useRef(false);
 
-  // Tooltip state for progress bar
+  // Tooltip state
   const [showTooltip, setShowTooltip] = useState(false);
 
   const displayPrice =
@@ -44,7 +44,7 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // -------- PROGRESS (unchanged logic) --------
+  // -------- PROGRESS (same logic) --------
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -90,9 +90,9 @@ export default function SubscriptionItem({
     }
   };
 
-  // Extra helper for tooltip text
+  // Tooltip calculation
   const getNextPaymentText = () => {
-    if (!item.datePaid) return "No paid date yet";
+    if (!item.datePaid) return "No paid date";
 
     const start = new Date(item.datePaid);
     const now = new Date();
@@ -118,29 +118,28 @@ export default function SubscriptionItem({
       end.setMonth(start.getMonth() + 1);
     }
 
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const diffDays = Math.ceil((end - now) / msPerDay);
+    const ms = 1000 * 60 * 60 * 24;
+    const diff = Math.ceil((end - now) / ms);
 
-    if (diffDays > 1) return `Next payment in ${diffDays} days`;
-    if (diffDays === 1) return "Next payment in 1 day";
-    if (diffDays === 0) return "Due today";
-    const overdue = Math.abs(diffDays);
-    if (overdue === 1) return "Overdue by 1 day";
-    return `Overdue by ${overdue} days`;
+    if (diff > 1) return `Next payment in ${diff} days`;
+    if (diff === 1) return "Next payment in 1 day";
+    if (diff === 0) return "Due today";
+    if (diff === -1) return "Overdue by 1 day";
+    return `Overdue by ${Math.abs(diff)} days`;
   };
 
-  // -------- Swipe handlers (unchanged) --------
+  // -------- Swipe handlers (same) --------
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
 
   const handleTouchStart = (e) => {
-    if (!e.touches || e.touches.length === 0) return;
+    if (!e.touches?.length) return;
     startXRef.current = e.touches[0].clientX;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e) => {
-    if (!isDragging || !e.touches || e.touches.length === 0) return;
+    if (!isDragging || !e.touches?.length) return;
 
     const dx = e.touches[0].clientX - startXRef.current;
 
@@ -172,27 +171,20 @@ export default function SubscriptionItem({
     }
   };
 
-  const toggleTooltip = () => {
-    setShowTooltip((prev) => !prev);
-  };
-
-  // ---------------------------------------------------------
-  //                     RENDER
-  // ---------------------------------------------------------
+  const toggleTooltip = () => setShowTooltip((v) => !v);
 
   return (
     <div className="relative mb-6">
-      {/* DELETE BUTTON – BEHIND SWIPED CARD */}
+
+      {/* DELETE BUTTON BEHIND CARD */}
       <div className="absolute inset-y-0 right-3 flex items-center">
         <button
           onClick={() => onDelete(item.id)}
           className="
-            px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm
-            text-white
-            bg-red-600/80 backdrop-blur-md
-            border border-red-400/40
-            shadow-lg shadow-red-900/40
-            active:scale-95 transition
+            px-4 py-2 rounded-xl text-xs font-semibold
+            text-white bg-red-600/80
+            backdrop-blur-md border border-red-400/40
+            shadow-md active:scale-95
           "
         >
           {t("delete").toLowerCase()}
@@ -203,17 +195,15 @@ export default function SubscriptionItem({
       <div
         className="
           relative p-5 rounded-3xl
-          bg-white/80 dark:bg-black/40
-          border border-gray-200/70 dark:border-white/10
+          bg-white/90 dark:bg-black/30
+          border border-gray-300 dark:border-white/10
           backdrop-blur-xl
-          shadow-[0_18px_45px_rgba(0,0,0,0.35)]
-          transition-all duration-300
+          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+          transition-all
         "
         style={{
           transform: `translateX(${translateX}px)`,
-          transition: isDragging
-            ? "none"
-            : "transform 0.25s ease-out, box-shadow 0.25s ease-out",
+          transition: isDragging ? "none" : "transform .25s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -226,93 +216,85 @@ export default function SubscriptionItem({
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               {item.name}
             </div>
-
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {currency} {displayPrice.toFixed(2)} /{" "}
-              {t(`frequency_${item.frequency}`)}
+              {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
             </div>
-
             {item.datePaid && (
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {t("label_last_paid")}:{" "}
-                {new Date(item.datePaid).toLocaleDateString()}
+                {t("label_last_paid")}: {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
           </div>
 
-          {/* CATEGORY CHIP – colored per category */}
+          {/* CATEGORY CHIP */}
           <div
             className="
               px-3 py-1 text-xs font-semibold rounded-full
-              text-white shadow-md backdrop-blur-md
-              border border-white/40
+              text-white backdrop-blur-md border border-white/20
+              shadow-md
             "
             style={{
               backgroundColor: color,
-              boxShadow: `0 0 18px ${color}80`,
+              boxShadow: `0 0 12px ${color}60`,
             }}
           >
-            {(item.category || "Other").toLowerCase()}
+            {(item.category || "other").toLowerCase()}
           </div>
         </div>
 
-        {/* BOTTOM ROW: PAID / PROGRESS BAR / EDIT */}
+        {/* BOTTOM ROW */}
         <div className="flex items-center gap-4 mt-5">
-          {/* PAID / UNPAID BUTTON */}
+
+          {/* PAID BUTTON */}
           <button
             onClick={openCalendar}
             className={`
               px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
               backdrop-blur-md border
               ${item.datePaid
-                ? "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/40"
-                : "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40"
+                ? "bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/40"
+                : "bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/40"
               }
             `}
           >
             {item.datePaid ? t("paid") : t("unpaid")}
           </button>
 
-          {/* GLASS HORIZONTAL PROGRESS BAR */}
+          {/* PROGRESS BAR */}
           <div className="relative flex-1">
             <div
-              className={`
-                w-full h-3 rounded-full 
-                bg-gray-200 dark:bg-white/15 
-                border border-gray-300/70 dark:border-white/20 
-                backdrop-blur-md overflow-hidden 
-                cursor-pointer
-                ${isOverdue ? "animate-pulse" : ""}
-              `}
+              className="
+                w-full h-4 rounded-full
+                bg-gray-300 dark:bg-white/10
+                border border-gray-400/60 dark:border-white/20
+                backdrop-blur-md overflow-hidden cursor-pointer
+              "
               onClick={toggleTooltip}
-              style={{
-                boxShadow: "0 0 15px rgba(0,0,0,0.35)",
-              }}
             >
               <div
-                className="h-full rounded-full transition-all duration-500"
+                className="
+                  h-full rounded-full transition-all duration-500
+                  flex items-center justify-center text-[10px] font-semibold
+                "
                 style={{
                   width: `${progress}%`,
-                  background: color,
-                  boxShadow: `0 0 15px ${color}aa`,
+                  backgroundColor: color,
+                  color: "white",
+                  boxShadow: `0 0 10px ${color}70`,
                 }}
-              />
-              {/* percentage text inside the bar */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-semibold text-white drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
-                  {progress}%
-                </span>
+              >
+                {progress}%
               </div>
             </div>
 
-            {/* Tooltip above the bar */}
+            {/* Tooltip */}
             {showTooltip && (
               <div
                 className="
-                  absolute -top-8 left-1/2 -translate-x-1/2
+                  absolute -top-7 left-1/2 -translate-x-1/2
                   px-2 py-1 rounded-lg
-                  bg-black/90 text-[10px] text-white
-                  shadow-lg whitespace-nowrap
+                  bg-black/85 text-[10px] text-white shadow-lg
+                  whitespace-nowrap
                 "
               >
                 {getNextPaymentText()}
@@ -325,17 +307,16 @@ export default function SubscriptionItem({
             onClick={() => navigate(`/edit/${item.id}`)}
             className="
               px-4 py-1.5 rounded-xl text-xs font-semibold
-              text-white bg-blue-500/85 dark:bg-blue-500/85
-              backdrop-blur-md
-              border border-blue-300/40
-              shadow-md active:scale-95 transition
+              text-white bg-blue-500/85
+              backdrop-blur-md border border-blue-300/40
+              shadow-md active:scale-95
             "
           >
             {t("edit").toLowerCase()}
           </button>
         </div>
 
-        {/* HIDDEN DATE INPUT (unchanged) */}
+        {/* HIDDEN DATE INPUT */}
         <input
           ref={dateInputRef}
           type="date"
