@@ -121,11 +121,11 @@ export default function PremiumPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {/* MONTHLY */}
             <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
-              <h3 className="text-lg sm:text-xl font-semibold mb-1">
+              <h3 className="text-lg sm:text-xl font-semibold mb-1 text-center">
                 {t("premium_monthly")}
               </h3>
-              <div className="text-3xl sm:text-5xl font-bold mb-1">€4</div>
-              <div className="text-blue-200 text-xs sm:text-sm mb-3">
+              <div className="text-3xl sm:text-5xl font-bold mb-1 text-center">€4</div>
+              <div className="text-blue-200 text-center text-xs sm:text-sm mb-3">
                 {t("premium_month")}
               </div>
 

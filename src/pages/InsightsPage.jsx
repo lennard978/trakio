@@ -112,7 +112,7 @@ export default function InsightsPage() {
     <div className="max-w-4xl mx-auto mt-4 p-4 pb-20">
       <button
         onClick={() => navigate("/dashboard")}
-        className="mb-4 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="mb-4 px-2 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
       >
         ← {t("button_back")}
       </button>
