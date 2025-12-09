@@ -84,7 +84,7 @@
 	"error_password_short": "Password must be at least 6 characters long",
 	"error_price_invalid": "Price must be a positive number",
 	"error_paid_date_required": "Please select a valid last paid date",
-
+	"success_back": "Welcome Back",
 	"toast_login_success": "You have logged in successfully.",
 	"toast_signup_success": "Account created successfully! You are now logged in.",
 	"toast_logout_success": "You have logged out successfully.",

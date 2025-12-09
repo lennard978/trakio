@@ -128,7 +128,7 @@ export default function InsightsPage() {
         />
         <InsightsCard
           title={t("dashboard_top_category")}
-          value={topCategory}
+          value={topCategory.toLocaleUpperCase}
           Icon={TagIcon}
         />
         <InsightsCard
