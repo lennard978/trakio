@@ -1,3 +1,4 @@
+// src/pages/TrialExpired.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -6,27 +7,26 @@ export default function TrialExpired() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex justify-center mt-20 px-4">
-      <div className="max-w-md w-full p-8 rounded-xl shadow-lg 
-      bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
-
-        <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+    <div className="flex justify-center mt-16 px-4">
+      <div className="max-w-md w-full p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
+        <h1 className="text-2xl font-semibold mb-4">
           {t("trial_expired_title")}
         </h1>
 
-        <p className="mb-6 text-gray-700 dark:text-gray-300">
+        <p className="mb-6 leading-relaxed text-sm text-gray-700 dark:text-gray-200">
           {t("trial_expired_message")}
         </p>
 
         <button
-          className="w-full py-2 mb-4 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
+          onClick={() => alert("Stripe integration coming soon.")}
+          className="w-full py-2 mb-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition active:scale-95"
         >
           {t("trial_expired_button")}
         </button>
 
         <Link
           to="/settings"
-          className="text-blue-600 dark:text-blue-300 hover:underline"
+          className="text-blue-600 dark:text-blue-300 hover:underline text-sm"
         >
           {t("button_settings")}
         </Link>

@@ -10,22 +10,20 @@ export default function Cancel() {
 
   useEffect(() => {
     showToast(t("cancel_message"), "error");
-  }, []);
+  }, [showToast, t]);
 
   return (
-    <div className="flex justify-center mt-20 px-4">
-      <div className="max-w-md w-full p-8 rounded-xl shadow-lg 
-      bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
+    <div className="flex justify-center mt-16 px-4">
+      <div className="max-w-md w-full p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
+        <h1 className="text-2xl font-semibold mb-4">{t("cancel_title")}</h1>
 
-        <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          {t("cancel_title")}
-        </h1>
-
-        <p className="mb-6 text-gray-700 dark:text-gray-300">{t("cancel_message")}</p>
+        <p className="mb-6 text-sm text-gray-700 dark:text-gray-200">
+          {t("cancel_message")}
+        </p>
 
         <Link
           to="/settings"
-          className="inline-block px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+          className="inline-block px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition active:scale-95"
         >
           {t("cancel_back")}
         </Link>

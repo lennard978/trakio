@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { Suspense, lazy, useEffect, useState } from "react";
+import React, { Suspense, lazy } from "react";
 import {
   Routes,
   Route,
@@ -7,7 +7,6 @@ import {
   NavLink,
   Navigate,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
@@ -54,7 +53,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// NEW 4-TAB MOBILE BAR
+// 4-TAB MOBILE BAR with micro-animations
 function MobileTabBar({ dir }) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -72,23 +71,48 @@ function MobileTabBar({ dir }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-800 backdrop-blur-md">
-      <div className={`flex justify-around ${isRTL ? "flex-row-reverse" : ""}`}>
+    <nav
+      className="
+        fixed bottom-0 left-0 right-0 z-30 md:hidden
+        bg-white/90 dark:bg-gray-900/90
+        border-t border-gray-200 dark:border-gray-800
+        backdrop-blur-md
+      "
+    >
+      <div
+        className={`flex justify-around items-stretch ${isRTL ? "flex-row-reverse" : ""
+          }`}
+      >
         {tabs.map((tab) => {
           const active = location.pathname.startsWith(tab.to);
           return (
             <NavLink
               key={tab.to}
               to={tab.to}
-              className={`flex flex-col items-center justify-center flex-1 py-2 text-xs font-medium ${active
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-gray-500 dark:text-gray-400"
-                }`}
+              className={`
+                mobile-tab flex flex-col items-center justify-center flex-1 py-2
+                text-xs font-medium relative
+                ${active
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-500 dark:text-gray-400"
+                }
+              `}
             >
-              <span className={`text-lg ${active ? "scale-110" : "opacity-70"}`}>
+              <span
+                className={`
+                  text-lg mb-0.5 transition-transform duration-200
+                  ${active
+                    ? "scale-110 translate-y-[-2px]"
+                    : "scale-95 opacity-80"
+                  }
+                `}
+              >
                 {tab.icon}
               </span>
               <span className="truncate max-w-[80px]">{tab.label}</span>
+              {active && (
+                <span className="tab-pill absolute -top-1 h-1 w-10 rounded-full bg-blue-500/90 dark:bg-blue-400/90" />
+              )}
             </NavLink>
           );
         })}
@@ -101,19 +125,42 @@ export default function App() {
   const { user } = useAuth();
   const premium = usePremiumContext();
   const { i18n } = useTranslation();
-  const location = useLocation();
 
   const dir = i18n.dir();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div
+      className={`
+        min-h-screen flex flex-col
+        bg-gray-100 dark:bg-gray-900
+        text-gray-900 dark:text-gray-100
+      `}
+    >
       <Analytics />
 
-      {/* HEADER */}
-      <header className="w-full sticky top-0 z-20 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+      {/* HEADER with subtle animation */}
+      <header
+        className="
+          app-header
+          w-full sticky top-0 z-20
+          border-b border-gray-200 dark:border-gray-800
+          bg-white/80 dark:bg-gray-900/80
+          backdrop-blur-md
+        "
+      >
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to={user ? "/dashboard" : "/"}>
-            <img src={LogoIcon} alt="Logo" className="h-12 w-12" />
+          <Link
+            to={user ? "/dashboard" : "/"}
+            className="flex items-center gap-2"
+          >
+            <img
+              src={LogoIcon}
+              alt="Logo"
+              className="h-10 w-10 rounded-xl shadow-sm"
+            />
+            <span className="hidden sm:inline text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Subscription Tracker
+            </span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -124,7 +171,13 @@ export default function App() {
             ) : (
               <Link
                 to="/premium"
-                className="px-2 py-1 text-xs bg-yellow-400 text-black rounded-md font-semibold shadow"
+                className="
+                  px-3 py-1 text-xs 
+                  bg-yellow-400 text-black 
+                  rounded-md font-semibold shadow 
+                  hover:bg-yellow-300 
+                  transition active:scale-95
+                "
               >
                 UPGRADE
               </Link>
@@ -136,23 +189,67 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN ROUTER */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-2 pb-20 relative overflow-hidden">
+      {/* MAIN ROUTER AREA – same neutral background on all pages */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-20 md:pb-6">
         <Suspense fallback={<LoadingSkeleton />}>
           <Routes>
-            <Route path="/" element={<Welcome />} />
-            <Route path="/premium" element={<PremiumPage />} />
-            <Route path="/success" element={<Success />} />
-            <Route path="/cancel" element={<Cancel />} />
-            <Route path="/trial-expired" element={<TrialExpired />} />
+            <Route path="/" element={<AnimatedPage><Welcome /></AnimatedPage>} />
+            <Route
+              path="/premium"
+              element={
+                <AnimatedPage>
+                  <PremiumPage />
+                </AnimatedPage>
+              }
+            />
+            <Route
+              path="/success"
+              element={
+                <AnimatedPage>
+                  <Success />
+                </AnimatedPage>
+              }
+            />
+            <Route
+              path="/cancel"
+              element={
+                <AnimatedPage>
+                  <Cancel />
+                </AnimatedPage>
+              }
+            />
+            <Route
+              path="/trial-expired"
+              element={
+                <AnimatedPage>
+                  <TrialExpired />
+                </AnimatedPage>
+              }
+            />
 
             <Route
               path="/login"
-              element={user ? <Navigate to="/dashboard" /> : <Login />}
+              element={
+                user ? (
+                  <Navigate to="/dashboard" />
+                ) : (
+                  <AnimatedPage>
+                    <Login />
+                  </AnimatedPage>
+                )
+              }
             />
             <Route
               path="/signup"
-              element={user ? <Navigate to="/dashboard" /> : <Signup />}
+              element={
+                user ? (
+                  <Navigate to="/dashboard" />
+                ) : (
+                  <AnimatedPage>
+                    <Signup />
+                  </AnimatedPage>
+                )
+              }
             />
 
             <Route

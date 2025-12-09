@@ -247,3 +247,49 @@ html.ready {
 .dark .form-arrow {
 	color: rgb(156 163 175); /* gray-400 */
 }
+
+/* Page enter animation */
+.page-fade-enter {
+	opacity: 0;
+	transform: translateY(8px);
+	animation: pageFadeIn 220ms ease-out forwards;
+}
+
+@keyframes pageFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Header subtle drop-in */
+.app-header {
+	transform: translateY(-4px);
+	opacity: 0;
+	animation: headerDrop 200ms ease-out forwards;
+}
+
+@keyframes headerDrop {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Mobile tab micro-animation */
+.mobile-tab {
+	transition: transform 180ms ease-out, color 180ms ease-out,
+		background-color 180ms ease-out;
+}
+
+.tab-pill {
+	transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
