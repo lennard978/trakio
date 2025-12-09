@@ -16,6 +16,7 @@ const CATEGORY_COLORS = {
   Other: "#6b7280",
 };
 
+
 export default function SubscriptionItem({
   item,
   currency,
