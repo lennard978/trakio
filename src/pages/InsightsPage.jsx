@@ -79,7 +79,7 @@ export default function InsightsPage() {
   }, {});
 
   const topCategory =
-    Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
+    Object.entries(categoryTotals).toLocaleUpperCase.sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
 
   const highestSub =
     subscriptions.length === 0
@@ -128,7 +128,7 @@ export default function InsightsPage() {
         />
         <InsightsCard
           title={t("dashboard_top_category")}
-          value={topCategory.toLocaleUpperCase}
+          value={topCategory}
           Icon={TagIcon}
         />
         <InsightsCard
