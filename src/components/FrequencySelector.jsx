@@ -3,15 +3,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const OPTIONS = [
-  { value: "weekly", labelKey: "form_weekly", premiumOnly: false },
-  { value: "biweekly", labelKey: "form_biweekly", premiumOnly: false },
-  { value: "monthly", labelKey: "form_monthly", premiumOnly: false },
-  { value: "quarterly", labelKey: "form_quarterly", premiumOnly: true },
-  { value: "semiannual", labelKey: "form_semiannual", premiumOnly: true },
-  { value: "nine_months", labelKey: "form_nine_months", premiumOnly: true },
-  { value: "yearly", labelKey: "form_yearly", premiumOnly: false },
-  { value: "biennial", labelKey: "form_biennial", premiumOnly: true },
-  { value: "triennial", labelKey: "form_triennial", premiumOnly: true },
+  { value: "weekly", labelKey: "frequency_weekly", premiumOnly: false },
+  { value: "biweekly", labelKey: "frequency_biweekly", premiumOnly: false },
+  { value: "monthly", labelKey: "frequency_monthly", premiumOnly: false },
+  { value: "quarterly", labelKey: "frequency_quarterly", premiumOnly: true },
+  { value: "semiannual", labelKey: "frequency_semiannual", premiumOnly: true },
+  { value: "nine_months", labelKey: "frequency_nine_months", premiumOnly: true },
+  { value: "yearly", labelKey: "frequency_yearly", premiumOnly: false },
+  { value: "biennial", labelKey: "frequency_biennial", premiumOnly: true },
+  { value: "triennial", labelKey: "frequency_triennial", premiumOnly: true },
 ];
 
 export default function FrequencySelector({

@@ -153,7 +153,7 @@ export default function Settings() {
           </p>
 
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {t("settings_premium_info")}
+            {t("settings_premium_active")}
           </p>
 
           {/* CONDITIONAL BUTTONS */}
