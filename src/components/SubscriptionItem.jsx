@@ -79,6 +79,7 @@ export default function SubscriptionItem({
 
   return (
     <div className="relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+
       {/* TOP BAR */}
       <div className="flex justify-between items-start mb-2">
         <div>
@@ -87,18 +88,17 @@ export default function SubscriptionItem({
           </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-300">
-            {currency} {displayPrice.toFixed(2)} /{" "}
-            {t(`frequency_${item.frequency}`)}
+            {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
           </div>
 
           {item.datePaid && (
             <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {t("label_last_paid")}:{" "}
-              {new Date(item.datePaid).toLocaleDateString()}
+              {t("label_last_paid")}: {new Date(item.datePaid).toLocaleDateString()}
             </div>
           )}
         </div>
 
+        {/* CATEGORY */}
         <div
           className="px-3 py-1 capitalize text-xs rounded-full font-medium text-white"
           style={{ backgroundColor: color }}
@@ -107,18 +107,11 @@ export default function SubscriptionItem({
         </div>
       </div>
 
-      {/* PROGRESS CIRCLE */}
+      {/* PROGRESS CIRCLE NOW DIRECTLY BELOW CATEGORY */}
       <div className="w-full flex justify-center mt-2 mb-4">
         <div className="relative">
           <svg width="70" height="70">
-            <circle
-              cx="35"
-              cy="35"
-              r="30"
-              stroke="#e5e7eb"
-              strokeWidth="6"
-              fill="none"
-            />
+            <circle cx="35" cy="35" r="30" stroke="#e5e7eb" strokeWidth="6" fill="none" />
             <circle
               cx="35"
               cy="35"
@@ -127,9 +120,7 @@ export default function SubscriptionItem({
               strokeWidth="6"
               fill="none"
               strokeDasharray={Math.PI * 2 * 30}
-              strokeDashoffset={
-                Math.PI * 2 * 30 - (Math.PI * 2 * 30 * progress) / 100
-              }
+              strokeDashoffset={Math.PI * 2 * 30 - (Math.PI * 2 * 30 * progress) / 100}
               strokeLinecap="round"
               transform="rotate(-90 35 35)"
             />
@@ -141,43 +132,50 @@ export default function SubscriptionItem({
         </div>
       </div>
 
-      {/* ACTIONS */}
-      <div className="flex justify-end items-center gap-3">
-        {/* HIDDEN DATE INPUT */}
-        <input
-          ref={dateInputRef}
-          type="date"
-          className="hidden"
-          value={item.datePaid || ""}
-          onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
-        />
+      {/* ACTIONS — PAID LEFT / EDIT + DELETE RIGHT */}
+      <div className="flex justify-between items-center">
 
-        {/* PAID BUTTON (opens calendar) */}
-        <button
-          onClick={openCalendar}
-          className={`px-3 py-1 rounded-md text-xs font-medium active:scale-95 ${item.datePaid
-            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-            }`}
-        >
-          {item.datePaid ? t("paid") : t("unpaid")}
-        </button>
+        {/* LEFT SIDE: PAID BUTTON */}
+        <div>
+          {/* Hidden date picker */}
+          <input
+            ref={dateInputRef}
+            type="date"
+            className="hidden"
+            value={item.datePaid || ""}
+            onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
+          />
 
-        {/* EDIT */}
-        <button
-          onClick={() => navigate(`/edit/${item.id}`)}
-          className="px-3 capitalize py-1 rounded-md text-xs bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
-        >
-          {t("edit")}
-        </button>
+          <button
+            onClick={openCalendar}
+            className={`px-3 py-1 rounded-md text-xs font-medium active:scale-95 
+              ${item.datePaid
+                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+              }
+            `}
+          >
+            {item.datePaid ? t("paid") : t("unpaid")}
+          </button>
+        </div>
 
-        {/* DELETE */}
-        <button
-          onClick={() => onDelete(item.id)}
-          className="px-3 capitalize py-1 rounded-md text-xs bg-red-500 text-white hover:bg-red-600 active:scale-95"
-        >
-          {t("delete")}
-        </button>
+        {/* RIGHT SIDE: EDIT + DELETE */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(`/edit/${item.id}`)}
+            className="px-3 py-1 capitalize text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 active:scale-95"
+          >
+            {t("edit")}
+          </button>
+
+          <button
+            onClick={() => onDelete(item.id)}
+            className="px-3 py-1 capitalize text-xs bg-red-500 text-white rounded-md hover:bg-red-600 active:scale-95"
+          >
+            {t("delete")}
+          </button>
+        </div>
+
       </div>
     </div>
   );
