@@ -252,43 +252,44 @@ export default function SubscriptionItem({
         </div>
 
         {/* BOTTOM ROW: PAID / PROGRESS BAR / EDIT */}
-        <div className="flex items-center gap-3 mt-4">
+        {/* BOTTOM ROW: PAID / PROGRESS BAR / EDIT */}
+        <div className="flex items-center gap-4 mt-5">
+
           {/* PAID / UNPAID BUTTON */}
           <button
             onClick={openCalendar}
             className={`
-              px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
-              backdrop-blur-md
-              ${item.datePaid
-                ? "bg-green-500/20 text-green-300 border border-green-400/20"
-                : "bg-red-500/20 text-red-300 border border-red-400/20"
+      px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
+      backdrop-blur-md
+      ${item.datePaid
+                ? "bg-green-500/25 text-green-300 border border-green-400/25"
+                : "bg-red-500/25 text-red-300 border border-red-400/25"
               }
-            `}
+    `}
           >
             {item.datePaid ? t("paid") : t("unpaid")}
           </button>
 
           {/* GLASS HORIZONTAL PROGRESS BAR */}
-          <div className="relative flex-1 mx-1">
+          <div className="relative flex-1">
             <div
-              className={`
-                w-full h-3 rounded-full 
-                bg-white/10 border border-white/20 
-                backdrop-blur-md overflow-hidden 
-                cursor-pointer
-                ${isOverdue ? "animate-pulse" : ""}
-              `}
+              className="
+        w-full h-3 rounded-full 
+        bg-white/15 border border-white/20 
+        backdrop-blur-md overflow-hidden 
+        cursor-pointer shadow-[0_0_15px_rgba(0,0,0,0.3)]
+      "
               onClick={toggleTooltip}
               style={{
-                boxShadow: `0 0 18px rgba(0,0,0,0.45)`,
+                backdropFilter: "blur(10px)",
               }}
             >
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${progress}%`,
-                  backgroundColor: color,
-                  boxShadow: `0 0 22px ${color}80`,
+                  background: `linear-gradient(90deg, ${color}bb, ${color})`,
+                  boxShadow: `0 0 15px ${color}aa`,
                 }}
               />
             </div>
@@ -297,12 +298,11 @@ export default function SubscriptionItem({
             {showTooltip && (
               <div
                 className="
-                  absolute -top-8 left-1/2 -translate-x-1/2
-                  px-2 py-1 rounded-lg
-                  bg-black/85 text-[10px] text-white
-                  whitespace-nowrap
-                  shadow-lg
-                "
+          absolute -top-8 left-1/2 -translate-x-1/2
+          px-2 py-1 rounded-lg
+          bg-black/90 text-[10px] text-white
+          shadow-lg whitespace-nowrap
+        "
               >
                 {getNextPaymentText()}
               </div>
@@ -313,15 +313,16 @@ export default function SubscriptionItem({
           <button
             onClick={() => navigate(`/edit/${item.id}`)}
             className="
-              px-4 py-1.5 rounded-xl text-xs font-semibold
-              text-white bg-blue-500/80 backdrop-blur-md
-              border border-blue-300/20
-              shadow-md active:scale-95 transition
-            "
+      px-4 py-1.5 rounded-xl text-xs font-semibold
+      text-white bg-blue-500/80 backdrop-blur-md
+      border border-blue-300/20
+      shadow-md active:scale-95 transition
+    "
           >
             {t("edit").toLowerCase()}
           </button>
         </div>
+
 
         {/* HIDDEN DATE INPUT (unchanged) */}
         <input
