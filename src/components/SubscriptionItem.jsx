@@ -1,9 +1,8 @@
 // src/components/SubscriptionItem.jsx
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-// Category colors
 const CATEGORY_COLORS = {
   Fitness: "#22c55e",
   Bills: "#6366f1",
@@ -23,68 +22,61 @@ export default function SubscriptionItem({
   rates,
   convert,
   onDelete,
+  onUpdatePaidDate,
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Convert price for display
+  const dateInputRef = useRef(null);
+
   const displayPrice =
     rates && convert
       ? convert(item.price, item.currency || "EUR", currency, rates)
       : item.price;
 
-  // Category color
-  const color =
-    CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
+  const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // Renewal progress
   const calcProgress = () => {
     if (!item.datePaid) return 0;
     const start = new Date(item.datePaid);
-
-    const freq = item.frequency;
     const now = new Date();
-
     const end = new Date(start);
 
     const monthsMap = {
-      monthly: 1,
-      quarterly: 3,
-      semiannual: 6,
-      nine_months: 9,
-      yearly: 12,
-      biennial: 24,
-      triennial: 36,
+      monthly: 1, quarterly: 3, semiannual: 6,
+      nine_months: 9, yearly: 12, biennial: 24, triennial: 36,
     };
 
-    const daysMap = {
-      weekly: 7,
-      biweekly: 14,
-    };
+    const daysMap = { weekly: 7, biweekly: 14 };
 
-    if (monthsMap[freq]) {
-      end.setMonth(start.getMonth() + monthsMap[freq]);
-    } else if (daysMap[freq]) {
-      end.setDate(start.getDate() + daysMap[freq]);
+    if (monthsMap[item.frequency]) {
+      end.setMonth(start.getMonth() + monthsMap[item.frequency]);
+    } else if (daysMap[item.frequency]) {
+      end.setDate(start.getDate() + daysMap[item.frequency]);
     } else {
       end.setMonth(start.getMonth() + 1);
     }
 
     const total = end - start;
     const used = now - start;
-
     if (used <= 0) return 0;
     if (used >= total) return 100;
-
     return Math.round((used / total) * 100);
   };
 
   const progress = calcProgress();
 
+  const openCalendar = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker?.();
+      dateInputRef.current.click?.();
+    }
+  };
+
   return (
     <div className="relative p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
 
-      {/* TOP SECTION */}
+      {/* TOP BAR */}
       <div className="flex justify-between items-start mb-2">
         <div>
           <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -102,7 +94,6 @@ export default function SubscriptionItem({
           )}
         </div>
 
-        {/* Category Pill */}
         <div
           className="px-3 py-1 text-xs rounded-full font-medium text-white"
           style={{ backgroundColor: color }}
@@ -115,14 +106,7 @@ export default function SubscriptionItem({
       <div className="w-full flex justify-center mt-2 mb-4">
         <div className="relative">
           <svg width="70" height="70">
-            <circle
-              cx="35"
-              cy="35"
-              r="30"
-              stroke="#e5e7eb"
-              strokeWidth="6"
-              fill="none"
-            />
+            <circle cx="35" cy="35" r="30" stroke="#e5e7eb" strokeWidth="6" fill="none" />
             <circle
               cx="35"
               cy="35"
@@ -131,9 +115,7 @@ export default function SubscriptionItem({
               strokeWidth="6"
               fill="none"
               strokeDasharray={Math.PI * 2 * 30}
-              strokeDashoffset={
-                Math.PI * 2 * 30 - (Math.PI * 2 * 30 * progress) / 100
-              }
+              strokeDashoffset={Math.PI * 2 * 30 - (Math.PI * 2 * 30 * progress) / 100}
               strokeLinecap="round"
               transform="rotate(-90 35 35)"
             />
@@ -148,18 +130,28 @@ export default function SubscriptionItem({
       {/* ACTIONS */}
       <div className="flex justify-end items-center gap-3">
 
-        {/* PAID BADGE */}
-        {item.datePaid ? (
-          <span className="px-3 py-1 rounded-md text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-            {t("paid")}
-          </span>
-        ) : (
-          <span className="px-3 py-1 rounded-md text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-            {t("unpaid")}
-          </span>
-        )}
+        {/* HIDDEN DATE INPUT */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          className="hidden"
+          value={item.datePaid || ""}
+          onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
+        />
 
-        {/* EDIT BUTTON */}
+        {/* PAID BUTTON (opens calendar) */}
+        <button
+          onClick={openCalendar}
+          className={`px-3 py-1 rounded-md text-xs font-medium active:scale-95
+            ${item.datePaid
+              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+              : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+            }`}
+        >
+          {item.datePaid ? t("paid") : t("unpaid")}
+        </button>
+
+        {/* EDIT */}
         <button
           onClick={() => navigate(`/edit/${item.id}`)}
           className="px-3 py-1 rounded-md text-xs bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
@@ -167,13 +159,14 @@ export default function SubscriptionItem({
           {t("edit")}
         </button>
 
-        {/* DELETE BUTTON */}
+        {/* DELETE */}
         <button
           onClick={() => onDelete(item.id)}
           className="px-3 py-1 rounded-md text-xs bg-red-500 text-white hover:bg-red-600 active:scale-95"
         >
           {t("delete")}
         </button>
+
       </div>
     </div>
   );

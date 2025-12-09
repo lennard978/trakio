@@ -119,12 +119,17 @@ export default function Dashboard() {
               onDelete={(id) => {
                 const updated = subscriptions.filter((s) => s.id !== id);
                 setSubscriptions(updated);
-                localStorage.setItem(
-                  "subscriptions",
-                  JSON.stringify(updated)
+                localStorage.setItem("subscriptions", JSON.stringify(updated));
+              }}
+              onUpdatePaidDate={(id, newDate) => {
+                const updated = subscriptions.map((s) =>
+                  s.id === id ? { ...s, datePaid: newDate } : s
                 );
+                setSubscriptions(updated);
+                localStorage.setItem("subscriptions", JSON.stringify(updated));
               }}
             />
+
           ))}
         </div>
       )}
