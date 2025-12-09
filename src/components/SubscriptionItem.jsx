@@ -34,7 +34,7 @@ export default function SubscriptionItem({
   const startXRef = useRef(0);
   const openedRef = useRef(false);
 
-  // Tooltip state
+  // Tooltip
   const [showTooltip, setShowTooltip] = useState(false);
 
   const displayPrice =
@@ -44,7 +44,7 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // -------- PROGRESS (same logic) --------
+  // -------- PROGRESS CALC (unchanged) --------
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -52,7 +52,7 @@ export default function SubscriptionItem({
     const now = new Date();
     const end = new Date(start);
 
-    const monthsMap = {
+    const months = {
       monthly: 1,
       quarterly: 3,
       semiannual: 6,
@@ -62,12 +62,12 @@ export default function SubscriptionItem({
       triennial: 36,
     };
 
-    const daysMap = { weekly: 7, biweekly: 14 };
+    const days = { weekly: 7, biweekly: 14 };
 
-    if (monthsMap[item.frequency]) {
-      end.setMonth(start.getMonth() + monthsMap[item.frequency]);
-    } else if (daysMap[item.frequency]) {
-      end.setDate(start.getDate() + daysMap[item.frequency]);
+    if (months[item.frequency]) {
+      end.setMonth(start.getMonth() + months[item.frequency]);
+    } else if (days[item.frequency]) {
+      end.setDate(start.getDate() + days[item.frequency]);
     } else {
       end.setMonth(start.getMonth() + 1);
     }
@@ -77,20 +77,13 @@ export default function SubscriptionItem({
 
     if (used <= 0) return 0;
     if (used >= total) return 100;
+
     return Math.round((used / total) * 100);
   };
 
   const progress = calcProgress();
-  const isOverdue = progress >= 100;
 
-  const openCalendar = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker?.();
-      dateInputRef.current.click?.();
-    }
-  };
-
-  // Tooltip info
+  // Tooltip message
   const getNextPaymentText = () => {
     if (!item.datePaid) return "No paid date";
 
@@ -98,7 +91,7 @@ export default function SubscriptionItem({
     const now = new Date();
     const end = new Date(start);
 
-    const monthsMap = {
+    const months = {
       monthly: 1,
       quarterly: 3,
       semiannual: 6,
@@ -108,12 +101,12 @@ export default function SubscriptionItem({
       triennial: 36,
     };
 
-    const daysMap = { weekly: 7, biweekly: 14 };
+    const days = { weekly: 7, biweekly: 14 };
 
-    if (monthsMap[item.frequency]) {
-      end.setMonth(start.getMonth() + monthsMap[item.frequency]);
-    } else if (daysMap[item.frequency]) {
-      end.setDate(start.getDate() + daysMap[item.frequency]);
+    if (months[item.frequency]) {
+      end.setMonth(start.getMonth() + months[item.frequency]);
+    } else if (days[item.frequency]) {
+      end.setDate(start.getDate() + days[item.frequency]);
     } else {
       end.setMonth(start.getMonth() + 1);
     }
@@ -127,7 +120,7 @@ export default function SubscriptionItem({
     return `Overdue by ${Math.abs(diff)} days`;
   };
 
-  // -------- Swipe handlers (same logic) --------
+  // -------- SWIPE HANDLERS (unchanged) --------
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
 
@@ -152,6 +145,7 @@ export default function SubscriptionItem({
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
+
     setIsDragging(false);
 
     if (translateX <= THRESHOLD) {
@@ -180,26 +174,28 @@ export default function SubscriptionItem({
         <button
           onClick={() => onDelete(item.id)}
           className="
-            px-4 py-2 rounded-xl text-xs font-semibold
-            text-white bg-red-600/80
-            backdrop-blur-md border border-red-400/50
-            shadow-[0_0_18px_rgba(255,0,0,0.45)]
-            active:scale-95 transition
+            px-4 py-2 rounded-xl text-xs font-semibold text-white
+            backdrop-blur-md active:scale-95 transition border
+
+            bg-red-500/80 border-red-400/60
+            shadow-[0_0_18px_rgba(255,70,70,0.55)]
+
+            dark:bg-red-600/85 dark:border-red-400/40
             dark:shadow-[0_0_22px_rgba(255,0,0,0.55)]
           "
         >
-          {t("delete").toLowerCase()}
+          {t("delete")}
         </button>
       </div>
 
-      {/* MAIN CARD */}
+      {/* CARD */}
       <div
         className="
           relative p-5 rounded-3xl
-          bg-white/90 dark:bg-black/30
+          bg-white/90 dark:bg-black/25
           border border-gray-300 dark:border-white/10
           backdrop-blur-xl
-          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.5)]
+          shadow-lg dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
           transition-all
         "
         style={{
@@ -217,12 +213,15 @@ export default function SubscriptionItem({
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               {item.name}
             </div>
+
             <div className="text-sm text-gray-700 dark:text-gray-300">
               {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
             </div>
+
             {item.datePaid && (
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {t("label_last_paid")}: {new Date(item.datePaid).toLocaleDateString()}
+                {t("label_last_paid")}:{" "}
+                {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
           </div>
@@ -231,12 +230,11 @@ export default function SubscriptionItem({
           <div
             className="
               px-3 py-1 text-xs font-semibold rounded-full
-              text-white shadow-md backdrop-blur-md
-              border border-white/30
+              text-white backdrop-blur-md border border-white/20 shadow-md
             "
             style={{
               backgroundColor: color,
-              boxShadow: `0 0 14px ${color}70`,
+              boxShadow: `0 0 12px ${color}80`,
             }}
           >
             {(item.category || "other").toLowerCase()}
@@ -258,17 +256,17 @@ export default function SubscriptionItem({
               }
             `}
           >
-            {item.datePaid ? t("paid") : t("unpaid")}
+            {t("paid")}
           </button>
 
-          {/* PROGRESS BAR (CENTER TEXT ALWAYS VISIBLE) */}
+          {/* PROGRESS BAR */}
           <div className="relative flex-1">
             <div
               className="
-                w-full h-4 rounded-full
-                bg-gray-300 dark:bg-white/10
-                border border-gray-400/60 dark:border-white/20
-                backdrop-blur-md overflow-hidden cursor-pointer
+                w-full h-4 rounded-full overflow-hidden relative cursor-pointer
+                backdrop-blur-md border
+                bg-gray-200 dark:bg-gray-700
+                border-gray-300 dark:border-white/20
               "
               onClick={toggleTooltip}
             >
@@ -279,17 +277,21 @@ export default function SubscriptionItem({
                 "
                 style={{
                   width: `${progress}%`,
-                  backgroundColor: color,
-                  boxShadow: `0 0 10px ${color}60`,
+                  background: `linear-gradient(90deg, ${color} 0%, ${color}cc 100%)`,
+                  boxShadow: `0 0 10px ${color}80`,
                 }}
               />
 
-              {/* Percentage text always centered on top layer */}
-              <div className="
-                absolute inset-0 flex items-center justify-center 
-                text-[10px] font-semibold pointer-events-none
-                text-gray-800 dark:text-white
-              ">
+              {/* Centered percent text */}
+              <div
+                className="
+                  absolute inset-0 flex items-center justify-center
+                  text-[10px] font-semibold z-10 pointer-events-none
+                "
+                style={{
+                  color: progress < 12 ? "#000" : "#fff",
+                }}
+              >
                 {progress}%
               </div>
             </div>
@@ -319,11 +321,11 @@ export default function SubscriptionItem({
               shadow-md active:scale-95
             "
           >
-            {t("edit").toLowerCase()}
+            {t("edit")}
           </button>
         </div>
 
-        {/* Hidden date input */}
+        {/* HIDDEN DATE INPUT */}
         <input
           ref={dateInputRef}
           type="date"
