@@ -139,11 +139,11 @@ export default function PremiumPage() {
 
             {/* YEARLY */}
             <div className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-lg">
-              <h3 className="text-lg sm:text-xl font-semibold mb-1">
+              <h3 className="text-lg text-center sm:text-xl font-semibold mb-1">
                 {t("premium_yearly")}
               </h3>
-              <div className="text-3xl sm:text-5xl font-bold mb-1">€40</div>
-              <div className="text-blue-200 text-xs sm:text-sm mb-3">
+              <div className="text-3xl sm:text-5xl text-center font-bold mb-1">€40</div>
+              <div className="text-blue-200 text-xs text-center sm:text-sm mb-3">
                 {t("premium_year")}
               </div>
 

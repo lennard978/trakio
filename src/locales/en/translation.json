@@ -142,6 +142,8 @@
 
 	"paid": "Paid",
 	"unpaid": "Unpaid",
+	"last_paid": "Last Paid",
+	"next_renewal": "Next Renewal",
 
 	"premium_title": "Go Premium",
 	"premium_subtitle": "Unlock more features and full control of your subscriptions",
@@ -170,5 +172,18 @@
 
 	"language": "Language",
 	"lang_en": "English",
-	"lang_de": "German"
+	"lang_de": "German",
+	"settings_language_change": "Change Language",
+	"settings_trial_ends": "Your free trial ends on {{date}}.",
+	"settings_trial_active": "Your free trial is active.",
+	"settings_trial_days_left": "You have {{count}} days left in your free trial.",
+	"settings_premium_active": "You have an active Premium subscription.",
+	"settings_premium_expiry": "Your Premium subscription expires on {{date}}.",
+	"settings_premium_renewal": "Your Premium subscription will renew on {{date}}.",
+
+	"notification_title": "Subscription Renewal Reminder",
+	"notification_body": "Your subscription to {{name}} is renewing on {{date}}.",
+	"button_back": "Back to Dashboard",
+	"premium_feature_custom_reports": "Custom reports (coming soon)",
+	"premium_feature_data_export": "Data export (coming soon)"
 }
