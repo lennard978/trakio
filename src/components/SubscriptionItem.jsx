@@ -292,7 +292,7 @@ export default function SubscriptionItem({
             <button
               onClick={() => navigate(`/edit/${item.id}`)}
               className="
-                px-3 py-1.5 rounded-md text-xs font-semibold text-white
+                px-3 py-1.5 uppercase rounded-md text-xs font-semibold text-white
                 bg-blue-500 hover:bg-blue-600 active:scale-95 transition
               "
             >
