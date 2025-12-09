@@ -71,9 +71,9 @@
 	"settings_logout": "Log Out",
 	"settings_back_to_dashboard": "Back to Dashboard",
 	"settings_premium_trial_active": "",
-	"success_title": "Payment Successful",
-	"success_message": "Thank you! Your subscription is now active.",
-	"success_back": "Return to Dashboard",
+	"premium_success_title": "Payment Successful",
+	"premium_success_message": "Thank you! Your subscription is now active.",
+	"button_continue": "Return to Dashboard",
 
 	"cancel_title": "Payment Cancelled",
 	"cancel_message": "Your subscription was not activated.",
@@ -164,6 +164,8 @@
 	"premium_reason_currency": "Changing display currency requires Premium.",
 	"premium_start_trial": "Start Free 7-Day Trial",
 	"premium_trial_started": "Your free trial has started!",
+	"premium_trial_not_started": "You dont have free trial !",
+
 	"premium_button": "PREMIUM",
 	"premium_upgrade": "UPGRADE",
 

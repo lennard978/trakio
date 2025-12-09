@@ -100,7 +100,7 @@ export default function SubscriptionItem({
         </div>
 
         <div
-          className="px-3 py-1 text-xs rounded-full font-medium text-white"
+          className="px-3 py-1 capitalize text-xs rounded-full font-medium text-white"
           style={{ backgroundColor: color }}
         >
           {item.category || "Other"}
@@ -156,8 +156,8 @@ export default function SubscriptionItem({
         <button
           onClick={openCalendar}
           className={`px-3 py-1 rounded-md text-xs font-medium active:scale-95 ${item.datePaid
-              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-              : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+            : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
             }`}
         >
           {item.datePaid ? t("paid") : t("unpaid")}
@@ -166,7 +166,7 @@ export default function SubscriptionItem({
         {/* EDIT */}
         <button
           onClick={() => navigate(`/edit/${item.id}`)}
-          className="px-3 py-1 rounded-md text-xs bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+          className="px-3 capitalize py-1 rounded-md text-xs bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
         >
           {t("edit")}
         </button>
@@ -174,7 +174,7 @@ export default function SubscriptionItem({
         {/* DELETE */}
         <button
           onClick={() => onDelete(item.id)}
-          className="px-3 py-1 rounded-md text-xs bg-red-500 text-white hover:bg-red-600 active:scale-95"
+          className="px-3 capitalize py-1 rounded-md text-xs bg-red-500 text-white hover:bg-red-600 active:scale-95"
         >
           {t("delete")}
         </button>

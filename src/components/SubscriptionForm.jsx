@@ -200,7 +200,7 @@ export default function SubscriptionForm() {
         </div>
 
         {/* CURRENCY */}
-        <div>
+        {/* <div>
           <label className="block mb-1 text-sm">{t("form_currency")}</label>
 
           {premium.isPremium ? (
@@ -214,7 +214,7 @@ export default function SubscriptionForm() {
               <span className="form-arrow">▾</span>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* FREQUENCY */}
         <div>
