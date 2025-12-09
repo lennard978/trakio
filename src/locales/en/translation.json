@@ -53,9 +53,6 @@
 	"button_save": "Save Subscription",
 	"button_cancel": "Cancel",
 
-	"trial_banner_one_day": "Your free trial ends tomorrow.",
-	"trial_banner_days_left": "Your free trial ends in {{count}} days.",
-
 	"trial_expired_title": "Free Trial Ended",
 	"trial_expired_message": "Your trial period has ended. To continue using premium features, please upgrade your subscription.",
 	"trial_expired_button": "Go to Settings",
@@ -73,7 +70,7 @@
 	"settings_notifications_info": "We use this to remind you before subscriptions renew.",
 	"settings_logout": "Log Out",
 	"settings_back_to_dashboard": "Back to Dashboard",
-
+	"settings_premium_trial_active": "",
 	"success_title": "Payment Successful",
 	"success_message": "Thank you! Your subscription is now active.",
 	"success_back": "Return to Dashboard",
@@ -174,7 +171,7 @@
 	"lang_en": "English",
 	"lang_de": "German",
 	"settings_language_change": "Change Language",
-	"settings_trial_ends": "Your free trial ends on {{date}}.",
+	"settings_trial_ends": "Your free trial ends on :",
 	"settings_trial_active": "Your free trial is active.",
 	"settings_trial_days_left": "You have {{count}} days left in your free trial.",
 	"settings_premium_active": "You have an active Premium subscription.",
