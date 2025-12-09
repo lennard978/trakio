@@ -44,7 +44,7 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
-  // -------- PROGRESS (unchanged) --------
+  // -------- PROGRESS (unchanged logic) --------
   const calcProgress = () => {
     if (!item.datePaid) return 0;
 
@@ -90,7 +90,7 @@ export default function SubscriptionItem({
     }
   };
 
-  // Extra helper for tooltip text (no impact on existing logic)
+  // Extra helper for tooltip text
   const getNextPaymentText = () => {
     if (!item.datePaid) return "No paid date yet";
 
@@ -189,8 +189,8 @@ export default function SubscriptionItem({
           className="
             px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm
             text-white
-            bg-red-600/70 backdrop-blur-md
-            border border-red-400/30
+            bg-red-600/80 backdrop-blur-md
+            border border-red-400/40
             shadow-lg shadow-red-900/40
             active:scale-95 transition
           "
@@ -203,10 +203,10 @@ export default function SubscriptionItem({
       <div
         className="
           relative p-5 rounded-3xl
+          bg-white/80 dark:bg-black/40
+          border border-gray-200/70 dark:border-white/10
           backdrop-blur-xl
-          bg-white/10 dark:bg-black/20
-          border border-white/20 dark:border-white/10
-          shadow-[0_8px_30px_rgba(0,0,0,0.25)]
+          shadow-[0_18px_45px_rgba(0,0,0,0.35)]
           transition-all duration-300
         "
         style={{
@@ -223,49 +223,52 @@ export default function SubscriptionItem({
         {/* TOP SECTION */}
         <div className="flex justify-between items-start">
           <div>
-            <div className="text-lg font-semibold text-white">
+            <div className="text-lg font-semibold text-gray-900 dark:text-white">
               {item.name}
             </div>
 
-            <div className="text-sm text-gray-300">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               {currency} {displayPrice.toFixed(2)} /{" "}
               {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
-              <div className="mt-1 text-xs text-gray-400">
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {t("label_last_paid")}:{" "}
                 {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
           </div>
 
+          {/* CATEGORY CHIP – colored per category */}
           <div
             className="
-              px-3 py-1 text-xs font-medium rounded-full
+              px-3 py-1 text-xs font-semibold rounded-full
               text-white shadow-md backdrop-blur-md
+              border border-white/40
             "
-            style={{ backgroundColor: color + "cc" }}
+            style={{
+              backgroundColor: color,
+              boxShadow: `0 0 18px ${color}80`,
+            }}
           >
-            {item.category || "Other"}
+            {(item.category || "Other").toLowerCase()}
           </div>
         </div>
 
         {/* BOTTOM ROW: PAID / PROGRESS BAR / EDIT */}
-        {/* BOTTOM ROW: PAID / PROGRESS BAR / EDIT */}
         <div className="flex items-center gap-4 mt-5">
-
           {/* PAID / UNPAID BUTTON */}
           <button
             onClick={openCalendar}
             className={`
-      px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
-      backdrop-blur-md
-      ${item.datePaid
-                ? "bg-green-500/25 text-green-300 border border-green-400/25"
-                : "bg-red-500/25 text-red-300 border border-red-400/25"
+              px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
+              backdrop-blur-md border
+              ${item.datePaid
+                ? "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/40"
+                : "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/40"
               }
-    `}
+            `}
           >
             {item.datePaid ? t("paid") : t("unpaid")}
           </button>
@@ -273,36 +276,44 @@ export default function SubscriptionItem({
           {/* GLASS HORIZONTAL PROGRESS BAR */}
           <div className="relative flex-1">
             <div
-              className="
-        w-full h-3 rounded-full 
-        bg-white/15 border border-white/20 
-        backdrop-blur-md overflow-hidden 
-        cursor-pointer shadow-[0_0_15px_rgba(0,0,0,0.3)]
-      "
+              className={`
+                w-full h-3 rounded-full 
+                bg-gray-200 dark:bg-white/15 
+                border border-gray-300/70 dark:border-white/20 
+                backdrop-blur-md overflow-hidden 
+                cursor-pointer
+                ${isOverdue ? "animate-pulse" : ""}
+              `}
               onClick={toggleTooltip}
               style={{
-                backdropFilter: "blur(10px)",
+                boxShadow: "0 0 15px rgba(0,0,0,0.35)",
               }}
             >
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${color}bb, ${color})`,
+                  background: color,
                   boxShadow: `0 0 15px ${color}aa`,
                 }}
               />
+              {/* percentage text inside the bar */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-[10px] font-semibold text-white drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
+                  {progress}%
+                </span>
+              </div>
             </div>
 
-            {/* Tooltip */}
+            {/* Tooltip above the bar */}
             {showTooltip && (
               <div
                 className="
-          absolute -top-8 left-1/2 -translate-x-1/2
-          px-2 py-1 rounded-lg
-          bg-black/90 text-[10px] text-white
-          shadow-lg whitespace-nowrap
-        "
+                  absolute -top-8 left-1/2 -translate-x-1/2
+                  px-2 py-1 rounded-lg
+                  bg-black/90 text-[10px] text-white
+                  shadow-lg whitespace-nowrap
+                "
               >
                 {getNextPaymentText()}
               </div>
@@ -313,16 +324,16 @@ export default function SubscriptionItem({
           <button
             onClick={() => navigate(`/edit/${item.id}`)}
             className="
-      px-4 py-1.5 rounded-xl text-xs font-semibold
-      text-white bg-blue-500/80 backdrop-blur-md
-      border border-blue-300/20
-      shadow-md active:scale-95 transition
-    "
+              px-4 py-1.5 rounded-xl text-xs font-semibold
+              text-white bg-blue-500/85 dark:bg-blue-500/85
+              backdrop-blur-md
+              border border-blue-300/40
+              shadow-md active:scale-95 transition
+            "
           >
             {t("edit").toLowerCase()}
           </button>
         </div>
-
 
         {/* HIDDEN DATE INPUT (unchanged) */}
         <input
