@@ -78,61 +78,71 @@ export default function Dashboard() {
     .sort((a, b) => getNextRenewalDate(a) - getNextRenewalDate(b));
 
   return (
-    <div className="mt-2 pb-20">
+    <div className="max-w-2xl mx-auto mt-2 pb-20">
       <TrialBanner />
 
-      {hasSubscriptions && (
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
+      <div className="mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
+        {hasSubscriptions && (
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
 
-          {premium.isPremium ? (
-            <CurrencySelector value={currency} onChange={handleCurrency} />
-          ) : (
-            <button
-              onClick={() => navigate("/premium?reason=currency")}
-              className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
+            {premium.isPremium ? (
+              <CurrencySelector value={currency} onChange={handleCurrency} />
+            ) : (
+              <button
+                onClick={() => navigate("/premium?reason=currency")}
+                className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+              >
+                EUR · {t("premium_locked_currency")}
+              </button>
+            )}
+          </div>
+        )}
+
+        {!hasSubscriptions && (
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
+            <p className="mb-3">{t("dashboard_empty")}</p>
+            <Link
+              to="/add"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              EUR · {t("premium_locked_currency")}
-            </button>
-          )}
-        </div>
-      )}
+              {t("dashboard_empty_cta")}
+            </Link>
+          </div>
+        )}
 
-      {!hasSubscriptions && (
-        <div className="text-center text-gray-500 mt-10">
-          <p className="mb-3">{t("dashboard_empty")}</p>
-          <Link to="/add" className="text-blue-600 hover:underline">
-            {t("dashboard_empty_cta")}
-          </Link>
-        </div>
-      )}
-
-      {hasSubscriptions && (
-        <div className="space-y-3 mt-3">
-          {sorted.map((sub) => (
-            <SubscriptionItem
-              key={sub.id}
-              item={sub}
-              currency={preferredCurrency}
-              rates={rates}
-              convert={convert}
-              onDelete={(id) => {
-                const updated = subscriptions.filter((s) => s.id !== id);
-                setSubscriptions(updated);
-                localStorage.setItem("subscriptions", JSON.stringify(updated));
-              }}
-              onUpdatePaidDate={(id, newDate) => {
-                const updated = subscriptions.map((s) =>
-                  s.id === id ? { ...s, datePaid: newDate } : s
-                );
-                setSubscriptions(updated);
-                localStorage.setItem("subscriptions", JSON.stringify(updated));
-              }}
-            />
-
-          ))}
-        </div>
-      )}
+        {hasSubscriptions && (
+          <div className="space-y-3 mt-3">
+            {sorted.map((sub) => (
+              <SubscriptionItem
+                key={sub.id}
+                item={sub}
+                currency={preferredCurrency}
+                rates={rates}
+                convert={convert}
+                onDelete={(id) => {
+                  const updated = subscriptions.filter((s) => s.id !== id);
+                  setSubscriptions(updated);
+                  localStorage.setItem(
+                    "subscriptions",
+                    JSON.stringify(updated)
+                  );
+                }}
+                onUpdatePaidDate={(id, newDate) => {
+                  const updated = subscriptions.map((s) =>
+                    s.id === id ? { ...s, datePaid: newDate } : s
+                  );
+                  setSubscriptions(updated);
+                  localStorage.setItem(
+                    "subscriptions",
+                    JSON.stringify(updated)
+                  );
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

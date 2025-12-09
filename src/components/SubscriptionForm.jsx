@@ -1,5 +1,4 @@
 // src/pages/SubscriptionForm.jsx
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
@@ -56,9 +55,7 @@ export default function SubscriptionForm() {
   function generateRecurringHistory(startDate, price, frequency) {
     const history = [];
     const start = new Date(startDate);
-
     const today = new Date();
-
     const date = new Date(start);
 
     while (date <= today) {
@@ -71,11 +68,9 @@ export default function SubscriptionForm() {
         case "monthly":
           date.setMonth(date.getMonth() + 1);
           break;
-
         case "yearly":
           date.setFullYear(date.getFullYear() + 1);
           break;
-
         default:
           return history; // only monthly/yearly supported now
       }
@@ -83,7 +78,6 @@ export default function SubscriptionForm() {
 
     return history;
   }
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -119,19 +113,13 @@ export default function SubscriptionForm() {
 
     let updated;
 
-    //
-    // ---------------------------------------------------------
     // UPDATE EXISTING SUBSCRIPTION
-    // ---------------------------------------------------------
-    //
     if (id) {
       updated = saved.map((s) => {
         if (s.id !== Number(id)) return s;
 
-        // Prepare history array
         const newHistory = Array.isArray(s.history) ? [...s.history] : [];
 
-        // Add history entry only if user changed price or datePaid
         if (s.datePaid !== datePaid || s.price !== Number(price)) {
           newHistory.push({
             date: datePaid,
@@ -153,14 +141,8 @@ export default function SubscriptionForm() {
       });
 
       showToast(t("toast_updated"), "success");
-    }
-
-    //
-    // ---------------------------------------------------------
-    // CREATE NEW SUBSCRIPTION
-    // ---------------------------------------------------------
-    //
-    else {
+    } else {
+      // CREATE NEW SUBSCRIPTION
       updated = [
         ...saved,
         {
@@ -172,8 +154,6 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
-
-          // AUTO HISTORY
           history: generateRecurringHistory(datePaid, price, frequency),
         },
       ];
@@ -181,13 +161,12 @@ export default function SubscriptionForm() {
       showToast(t("toast_added"), "success");
     }
 
-
     localStorage.setItem("subscriptions", JSON.stringify(updated));
     navigate("/dashboard");
   };
 
   return (
-    <div className="max-w-md mx-auto mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
+    <div className="max-w-2xl mx-auto mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
       <h1 className="text-xl font-semibold mb-6">
         {id ? t("edit_title") : t("add_title")}
       </h1>
@@ -275,7 +254,9 @@ export default function SubscriptionForm() {
             checked={notify}
             onChange={(e) => setNotify(e.target.checked)}
           />
-          <label className="text-sm">{t("settings_notifications_info")}</label>
+          <label className="text-sm">
+            {t("settings_notifications_info")}
+          </label>
         </div>
 
         {/* ACTION BUTTONS */}

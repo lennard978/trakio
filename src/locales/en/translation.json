@@ -171,7 +171,7 @@
 	"lang_en": "English",
 	"lang_de": "German",
 	"settings_language_change": "Change Language",
-	"settings_trial_ends": "Your free trial ends on :",
+	"settings_trial_ends": "Your free trial ends on",
 	"settings_trial_active": "Your free trial is active.",
 	"settings_trial_days_left": "You have {{count}} days left in your free trial.",
 	"settings_premium_active": "You have an active Premium subscription.",

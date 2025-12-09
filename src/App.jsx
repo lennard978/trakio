@@ -106,7 +106,7 @@ export default function App() {
   const dir = i18n.dir();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Analytics />
 
       {/* HEADER */}
@@ -137,7 +137,7 @@ export default function App() {
       </header>
 
       {/* MAIN ROUTER */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-2 pb-20">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-2 pb-20 md:pb-6">
         <Suspense fallback={<LoadingSkeleton />}>
           <Routes>
             <Route path="/" element={<Welcome />} />

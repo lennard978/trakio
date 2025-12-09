@@ -1,3 +1,4 @@
+// src/components/Analytics.jsx
 import React from "react";
 import {
   PieChart,
@@ -51,11 +52,7 @@ export default function Analytics({ subscriptions }) {
 
   return (
     <div
-      className="
-        w-full bg-white dark:bg-gray-900
-        rounded-xl shadow border border-gray-200 dark:border-gray-800
-        p-4 mt-2 mb-20
-      "
+      className="w-full bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 mt-4 mb-20"
       style={{ minHeight: "340px" }}
     >
       <h3 className="text-sm mb-3 text-gray-700 dark:text-gray-300 font-medium text-center">
