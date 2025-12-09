@@ -35,8 +35,10 @@ export default function SubscriptionItem({
 
   const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Other;
 
+  // PROGRESS CALCULATION
   const calcProgress = () => {
     if (!item.datePaid) return 0;
+
     const start = new Date(item.datePaid);
     const now = new Date();
     const end = new Date(start);
@@ -50,7 +52,6 @@ export default function SubscriptionItem({
       biennial: 24,
       triennial: 36,
     };
-
     const daysMap = { weekly: 7, biweekly: 14 };
 
     if (monthsMap[item.frequency]) {
@@ -63,6 +64,7 @@ export default function SubscriptionItem({
 
     const total = end - start;
     const used = now - start;
+
     if (used <= 0) return 0;
     if (used >= total) return 100;
     return Math.round((used / total) * 100);
@@ -78,10 +80,16 @@ export default function SubscriptionItem({
   };
 
   return (
-    <div className="relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
-
-      {/* TOP BAR */}
-      <div className="flex justify-between items-start mb-2">
+    <div
+      className="
+        relative p-5 mb-3 rounded-2xl
+        bg-white dark:bg-gray-900 
+        border border-gray-200 dark:border-gray-700
+        shadow-sm
+      "
+    >
+      {/* TOP ROW: NAME + CATEGORY BADGE */}
+      <div className="flex justify-between items-start">
         <div>
           <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {item.name}
@@ -98,20 +106,27 @@ export default function SubscriptionItem({
           )}
         </div>
 
-        {/* CATEGORY */}
         <div
-          className="px-3 py-1 capitalize text-xs rounded-full font-medium text-white"
+          className="px-3 py-1 text-xs rounded-full text-white font-medium capitalize"
           style={{ backgroundColor: color }}
         >
-          {item.category || "Other"}
+          {item.category}
         </div>
       </div>
 
-      {/* PROGRESS CIRCLE NOW DIRECTLY BELOW CATEGORY */}
-      <div className="w-full flex justify-center mt-2 mb-4">
+      {/* PROGRESS RING */}
+      <div className="w-full flex justify-center mt-4 mb-4">
         <div className="relative">
           <svg width="70" height="70">
-            <circle cx="35" cy="35" r="30" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+            <circle
+              cx="35"
+              cy="35"
+              r="30"
+              stroke="#e5e7eb"
+              className="dark:stroke-gray-700"
+              strokeWidth="6"
+              fill="none"
+            />
             <circle
               cx="35"
               cy="35"
@@ -123,59 +138,58 @@ export default function SubscriptionItem({
               strokeDashoffset={Math.PI * 2 * 30 - (Math.PI * 2 * 30 * progress) / 100}
               strokeLinecap="round"
               transform="rotate(-90 35 35)"
+              className="transition-all duration-500 ease-out"
             />
           </svg>
 
-          <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-700 dark:text-gray-200">
+          <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-800 dark:text-gray-200">
             {progress}%
           </div>
         </div>
       </div>
 
-      {/* ACTIONS — PAID LEFT / EDIT + DELETE RIGHT */}
-      <div className="flex justify-between items-center">
+      {/* ACTION BUTTONS — iOS layout: PAID left, EDIT/DELETE right */}
+      <div className="flex justify-between items-center mt-3">
+        {/* HIDDEN DATE INPUT */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          className="hidden"
+          value={item.datePaid || ""}
+          onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
+        />
 
-        {/* LEFT SIDE: PAID BUTTON */}
-        <div>
-          {/* Hidden date picker */}
-          <input
-            ref={dateInputRef}
-            type="date"
-            className="hidden"
-            value={item.datePaid || ""}
-            onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
-          />
+        {/* LEFT: PAID BUTTON */}
+        <button
+          onClick={openCalendar}
+          className={`
+            px-4 py-1.5 rounded-md text-xs font-medium active:scale-95
+            transition-all
+            ${item.datePaid
+              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+              : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+            }
+          `}
+        >
+          {item.datePaid ? t("paid") : t("unpaid")}
+        </button>
 
-          <button
-            onClick={openCalendar}
-            className={`px-3 py-1 rounded-md text-xs font-medium active:scale-95 
-              ${item.datePaid
-                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-              }
-            `}
-          >
-            {item.datePaid ? t("paid") : t("unpaid")}
-          </button>
-        </div>
-
-        {/* RIGHT SIDE: EDIT + DELETE */}
-        <div className="flex items-center gap-3">
+        {/* RIGHT: EDIT + DELETE */}
+        <div className="flex gap-2">
           <button
             onClick={() => navigate(`/edit/${item.id}`)}
-            className="px-3 py-1 capitalize text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 active:scale-95"
+            className="px-3 py-1.5 rounded-md text-xs bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
           >
             {t("edit")}
           </button>
 
           <button
             onClick={() => onDelete(item.id)}
-            className="px-3 py-1 capitalize text-xs bg-red-500 text-white rounded-md hover:bg-red-600 active:scale-95"
+            className="px-3 py-1.5 rounded-md text-xs bg-red-500 text-white hover:bg-red-600 active:scale-95"
           >
             {t("delete")}
           </button>
         </div>
-
       </div>
     </div>
   );
