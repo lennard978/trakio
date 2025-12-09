@@ -184,9 +184,18 @@
 	"analytics_no_trend_data": "No trend data for selected period.",
 	"analytics_monthly_category_desc": "Based on actual payments in the last 12 months.",
 	"analytics_no_category_data": "No category data available.",
-	"tab_insights": "Insights",
 	"tab_insights_hide": "Close",
 	"nav_home": "Home",
 	"nav_add": "Add",
-	"nav_settings": "Settings"
+	"nav_settings": "Settings",
+	"tab_home": "Home",
+	"tab_insights": "Insights",
+	"tab_add": "Add",
+	"tab_settings": "Settings",
+
+	"insights_title": "Your Insights",
+
+	"edit": "Edit",
+	"delete": "Delete",
+	"paid": "Paid"
 }
