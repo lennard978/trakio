@@ -294,6 +294,11 @@ html.ready {
 	transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
 
+/* Auto-adjust logo for dark mode */
+.logo-img {
+	transition: filter 0.3s ease;
+}
+
 .dark .logo-img {
-	filter: brightness(1.8) saturate(1.2);
+	filter: brightness(1.2) saturate(1.2) invert(1);
 }

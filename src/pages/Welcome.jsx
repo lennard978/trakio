@@ -1,6 +1,6 @@
 // src/pages/Welcome.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 
@@ -11,8 +11,11 @@ import SettingButton from "../components/ui/SettingButton";
 export default function Welcome() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  // Logged-in state
+  // -------------------------------------------------------
+  // LOGGED-IN VIEW
+  // -------------------------------------------------------
   if (user) {
     return (
       <div className="flex justify-center mt-12 px-4 pb-24">
@@ -22,16 +25,25 @@ export default function Welcome() {
               {t("toast_login_success")}
             </p>
 
-            <SettingButton variant="primary" onClick={() => { }}>
-              <Link to="/dashboard">{t("success_back")}</Link>
-            </SettingButton>
+            {/* FIXED BUTTON (wrap with Link) */}
+            <Link to="/dashboard" className="inline-block w-full">
+              <SettingButton
+                variant="primary"
+                onClick={() => navigate("/dashboard")}
+              >
+                {t("success_back")}
+              </SettingButton>
+
+            </Link>
           </Card>
         </div>
       </div>
     );
   }
 
-  // Public welcome
+  // -------------------------------------------------------
+  // PUBLIC VIEW
+  // -------------------------------------------------------
   return (
     <div className="flex justify-center mt-12 px-4 pb-24">
       <div className="max-w-lg w-full">
@@ -45,21 +57,26 @@ export default function Welcome() {
           </p>
 
           <div className="flex justify-center gap-3">
-            <SettingButton
-              variant="primary"
-              className="w-auto px-6"
-              onClick={() => navigate("/login")}
-            >
-              <Link to="/login">{t("button_sign_in")}</Link>
-            </SettingButton>
 
-            <SettingButton
-              variant="neutral"
-              className="w-auto px-6"
-              onClick={() => navigate("/signup")}
-            >
-              <Link to="/signup">{t("button_sign_up")}</Link>
-            </SettingButton>
+            {/* FIX: Wrap SettingButton with Link */}
+            <Link to="/login" className="inline-block">
+              <SettingButton
+                variant="primary"
+                className="w-auto px-6"
+              >
+                {t("button_sign_in")}
+              </SettingButton>
+            </Link>
+
+            <Link to="/signup" className="inline-block">
+              <SettingButton
+                variant="neutral"
+                className="w-auto px-6"
+              >
+                {t("button_sign_up")}
+              </SettingButton>
+            </Link>
+
           </div>
         </Card>
       </div>
