@@ -154,7 +154,7 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <SettingButton variant="danger" onClick={logout}>
             {t("settings_logout")}
           </SettingButton>

@@ -56,7 +56,7 @@ export default function SwipeToDeleteWrapper({
           onClick={onDelete}
           className="
             px-4 py-2 rounded-xl text-xs font-semibold text-white
-            backdrop-blur-md active:scale-95 transition border
+            backdrop-blur-md active:scale-95 transition border uppercase
 
             bg-red-500/85 border-red-400/70
             shadow-[0_0_18px_rgba(255,70,70,0.55)]
