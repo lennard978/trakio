@@ -7,8 +7,11 @@ export default function Footer() {
     <footer className="text-xs text-gray-500 dark:text-gray-400 text-center py-6 border-t border-gray-200 dark:border-gray-700 mt-10">
       <p>
         &copy; {new Date().getFullYear()} Trakio. All rights reserved.{" "}
-        <Link to="/impressum" className="underline hover:text-blue-600">Impressum</Link>
+        <Link to="/impressum" className="underline hover:text-blue-600">Impressum</Link>{" | "}
+        <Link to="/datenschutz" className="underline hover:text-blue-600">Datenschutz</Link>{" | "}
+        <Link to="/agb" className="underline hover:text-blue-600">AGB</Link>
       </p>
+
     </footer>
   );
 }

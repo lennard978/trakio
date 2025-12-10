@@ -18,7 +18,7 @@ import LogoIcon from "./icons/icon-192.png";
 import { useAuth } from "./hooks/useAuth";
 import { usePremiumContext } from "./context/PremiumContext";
 import { Analytics } from "@vercel/analytics/react";
-
+import { Footer } from "./components/ui/Footer"
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AddEditSubscription = lazy(() =>
   import("./pages/AddEditSubscription")
@@ -33,6 +33,8 @@ const Success = lazy(() => import("./pages/Success"));
 const Cancel = lazy(() => import("./pages/Cancel"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const Impressum = lazy(() => import("./pages/Impressum"));
+const Datenschutz = lazy(() => import("./pages/Datenschutz"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 function LoadingSkeleton() {
   return (
@@ -131,6 +133,8 @@ export default function App() {
             <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
             <Route path="/trial-expired" element={<AnimatedPage><TrialExpired /></AnimatedPage>} />
             <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
+            <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
+            <Route path="/agb" element={<AnimatedPage><Terms /></AnimatedPage>} />
 
             <Route
               path="/login"
