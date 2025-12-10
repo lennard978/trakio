@@ -1,3 +1,4 @@
+// src/context/PremiumContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -15,13 +16,8 @@ export function PremiumProvider({ children }) {
     return localStorage.getItem("trialEnds") || null;
   });
 
-  const [status, setStatus] = useState(() => {
-    return localStorage.getItem("premiumStatus") || null; // e.g., "trial" or "active"
-  });
-
   const [loading, setLoading] = useState(false);
 
-  // Persist state
   useEffect(() => {
     localStorage.setItem("isPremium", isPremium ? "true" : "false");
   }, [isPremium]);
@@ -34,15 +30,6 @@ export function PremiumProvider({ children }) {
     }
   }, [trialEnds]);
 
-  useEffect(() => {
-    if (status) {
-      localStorage.setItem("premiumStatus", status);
-    } else {
-      localStorage.removeItem("premiumStatus");
-    }
-  }, [status]);
-
-  // Helpers
   const isTrialExpired = () => {
     if (!trialEnds) return false;
     return new Date() > new Date(trialEnds);
@@ -57,32 +44,20 @@ export function PremiumProvider({ children }) {
     if (!email) {
       setIsPremium(false);
       setTrialEnds(null);
-      setStatus(null);
       return;
     }
 
     try {
       const res = await fetch(`/api/user/premium-status?email=${encodeURIComponent(email)}`);
-      if (!res.ok) {
-        console.error("premium-status HTTP error:", res.status);
-        return;
-      }
-
       const data = await res.json();
 
       if (typeof data.isPremium === "boolean") {
         setIsPremium(data.isPremium);
-        if (data.isPremium && !data.trialEnds) {
-          setTrialEnds(null); // Paid user without trial
-        }
+        if (data.isPremium) setTrialEnds(null);
       }
 
       if (data.trialEnds || data.trialEnds === null) {
         setTrialEnds(data.trialEnds);
-      }
-
-      if (data.status) {
-        setStatus(data.status); // "trial", "active", etc.
       }
     } catch (err) {
       console.error("Premium refresh error:", err);
@@ -110,7 +85,6 @@ export function PremiumProvider({ children }) {
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         alert(data?.error || "Could not start trial.");
         return false;
@@ -118,13 +92,31 @@ export function PremiumProvider({ children }) {
 
       if (data.trialEnds) setTrialEnds(data.trialEnds);
       if (typeof data.isPremium === "boolean") setIsPremium(data.isPremium);
-      if (data.status) setStatus(data.status);
 
       return true;
     } catch (err) {
       console.error("startTrial error:", err);
       alert("Could not start trial.");
       return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelTrial = async () => {
+    if (!email) return;
+
+    try {
+      setLoading(true);
+      await fetch("/api/user/cancel-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      setTrialEnds(null);
+    } catch (err) {
+      console.error("Cancel trial error:", err);
     } finally {
       setLoading(false);
     }
@@ -169,7 +161,6 @@ export function PremiumProvider({ children }) {
       value={{
         isPremium,
         trialEnds,
-        status,
         isTrialExpired: isTrialExpired(),
         isTrialActive: isTrialActive(),
         loading,
@@ -177,6 +168,7 @@ export function PremiumProvider({ children }) {
         startCheckout,
         activatePremium,
         refreshPremiumStatus,
+        cancelTrial,
       }}
     >
       {children}

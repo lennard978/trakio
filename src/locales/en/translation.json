@@ -107,6 +107,7 @@
 	"premium_active_message": "Your Premium subscription is active.",
 	"premium_button": "PREMIUM",
 	"premium_button_upgrade": "Upgrade now",
+	"premium_whats_included": "What is included",
 	"premium_feature_advanced_intervals": "Advanced billing intervals",
 	"premium_feature_cloud_backup": "Cloud backup (coming soon)",
 	"premium_feature_custom_reports": "Custom reports (coming soon)",
@@ -156,7 +157,7 @@
 	"settings_trial": "Trial status",
 	"settings_trial_active": "Your free trial is active.",
 	"settings_trial_days_left": "You have {{count}} days left in your free trial.",
-	"settings_trial_ends": "Your free trial ends on {{date}}.",
+	"settings_trial_ends": "Your free trial ends on ",
 	"settings_trial_expired": "Your free trial has expired.",
 	"settings_trial_not_started": "You don't have an active free trial yet.",
 

@@ -21,41 +21,15 @@ export default function Settings() {
     trialExpired,
     noTrial,
     trialDaysLeft,
+    startTrial,
   } = usePremium();
-
-  /** ------------------------------------------------------------------
-   *  Trial Upgrade Banner (countdown)
-   * ------------------------------------------------------------------ */
-  const renderTrialUpgradeBanner = () => {
-    if (!hasActiveTrial || isPremium || trialDaysLeft == null) return null;
-
-    return (
-      <Card className="bg-yellow-100 dark:bg-yellow-800 border-l-4 border-yellow-500 shadow-md p-4">
-        <div className="flex flex-col space-y-2">
-          <p className="text-sm text-gray-900 dark:text-white">
-            You're on a <strong>free trial</strong>. Your trial ends in{" "}
-            <strong>{trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}</strong>.
-          </p>
-          <SettingButton
-            variant="success"
-            className="w-fit"
-            onClick={() => navigate("/premium")}
-          >
-            Upgrade to Premium
-          </SettingButton>
-        </div>
-      </Card>
-    );
-  };
 
   /** ------------------------------------------------------------------
    *  Stripe Customer Portal
    * ------------------------------------------------------------------ */
   const handleManageSubscription = async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem("user") || "null");
-      const email = userData?.email;
-
+      const email = user?.email;
       if (!email) {
         alert("Please log in again.");
         return;
@@ -67,14 +41,7 @@ export default function Settings() {
         body: JSON.stringify({ email }),
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        alert("Server error");
-        return;
-      }
-
+      const data = await res.json();
       if (data?.url) {
         window.location.href = data.url;
       } else {
@@ -87,64 +54,101 @@ export default function Settings() {
   };
 
   /** ------------------------------------------------------------------
-   *  TRIAL TEXT LOGIC
+   * Cancel Trial
+   * ------------------------------------------------------------------ */
+  const handleCancelTrial = async () => {
+    try {
+      const res = await fetch("/api/user/cancel-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data?.error || "Could not cancel trial.");
+        return;
+      }
+
+      alert("Trial cancelled.");
+      window.location.reload(); // force update
+    } catch (err) {
+      console.error("Cancel trial error:", err);
+      alert("Could not cancel trial.");
+    }
+  };
+
+  /** ------------------------------------------------------------------
+   * Trial section UI
    * ------------------------------------------------------------------ */
   const renderTrialContent = () => {
-    if (isPremium && !trialEndDate) {
-      return (
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_premium_no_trial")}
-        </p>
-      );
-    }
-
     if (hasActiveTrial && trialEndDate) {
       return (
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_trial_ends")}: {trialEndDate.toLocaleDateString()}
-        </p>
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+            Trial ends in <strong>{trialDaysLeft} days</strong> (
+            {trialEndDate.toLocaleDateString()})
+          </p>
+          <SettingButton
+            variant="danger"
+            onClick={handleCancelTrial}
+          >
+            Cancel Trial
+          </SettingButton>
+        </>
       );
     }
 
     if (trialExpired && trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_premium_trial_expired")}: {trialEndDate.toLocaleDateString()}
+          Trial expired on {trialEndDate.toLocaleDateString()}
         </p>
       );
     }
 
-    if (noTrial && !isPremium) {
+    if (noTrial) {
       return (
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_trial_not_started")}
-        </p>
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            You haven’t started your free trial yet.
+          </p>
+          <SettingButton
+            variant="success"
+            className="mt-2"
+            onClick={async () => {
+              const ok = await startTrial();
+              if (ok) {
+                alert("Trial started");
+                window.location.reload();
+              }
+            }}
+          >
+            Start Free Trial
+          </SettingButton>
+        </>
       );
     }
 
-    return (
-      <p className="text-sm text-gray-700 dark:text-gray-300">
-        {t("settings_trial_not_started")}
-      </p>
-    );
+    return null;
   };
 
   /** ------------------------------------------------------------------
-   *  PREMIUM SECTION CONTENT
+   * Premium section UI
    * ------------------------------------------------------------------ */
   const renderPremiumSection = () => {
     if (isPremium) {
       return (
         <>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            {t("settings_premium_active")}
+            Premium subscription active.
           </p>
           <SettingButton
             variant="primary"
-            className="mt-4"
+            className="mt-2"
             onClick={handleManageSubscription}
           >
-            {t("settings_manage_subscription")}
+            Manage Subscription
           </SettingButton>
         </>
       );
@@ -153,11 +157,11 @@ export default function Settings() {
     return (
       <>
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_premium_none")}
+          You are not subscribed.
         </p>
         <SettingButton
           variant="success"
-          className="mt-4"
+          className="mt-2"
           onClick={() => navigate("/premium")}
         >
           Upgrade to Premium
@@ -171,53 +175,52 @@ export default function Settings() {
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-6 pb-20">
       <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
-        {t("settings_title")}
+        {t("settings_title") || "Settings"}
       </h1>
-
-      {renderTrialUpgradeBanner()} {/* ✅ Trial countdown banner */}
 
       {/* ACCOUNT INFO */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          {t("settings_account")}
+        <h2 className="text-lg font-semibold mb-2">
+          {t("settings_account") || "Account Info"}
         </h2>
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_email")}:{" "}
+          {t("settings_email") || "Email"}:{" "}
           <span className="font-semibold">{user?.email}</span>
         </p>
       </Card>
 
-      {/* TRIAL INFO */}
+      {/* TRIAL SECTION */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          {t("settings_trial")}
+        <h2 className="text-lg font-semibold mb-2">
+          Trial
         </h2>
         {renderTrialContent()}
       </Card>
 
       {/* PREMIUM SECTION */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          {t("settings_premium_title")}
+        <h2 className="text-lg font-semibold mb-2">
+          Subscription
         </h2>
-        {renderPremiumSection()}
+        {/* Only show manage subscription if not on trial */}
+        {!hasActiveTrial && renderPremiumSection()}
       </Card>
 
-      {/* LOGOUT + BACK */}
+      {/* LOGOUT / BACK */}
       <Card>
         <div className="flex flex-col gap-3">
           <SettingButton
             variant="danger"
             onClick={logout}
           >
-            {t("settings_logout")}
+            {t("settings_logout") || "Log Out"}
           </SettingButton>
 
           <SettingButton
             variant="neutral"
             onClick={() => navigate("/dashboard")}
           >
-            {t("settings_back_to_dashboard")}
+            {t("settings_back_to_dashboard") || "Back to Dashboard"}
           </SettingButton>
         </div>
       </Card>
