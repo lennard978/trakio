@@ -1,4 +1,3 @@
-// src/pages/Settings.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -22,6 +21,7 @@ export default function Settings() {
     noTrial,
     trialDaysLeft,
     startTrial,
+    cancelTrial,
   } = usePremium();
 
   /** ------------------------------------------------------------------
@@ -29,23 +29,18 @@ export default function Settings() {
    * ------------------------------------------------------------------ */
   const handleManageSubscription = async () => {
     try {
-      const email = user?.email;
-      if (!email) {
-        alert("Please log in again.");
-        return;
-      }
-
       const res = await fetch("/api/stripe/customer-portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: user?.email }),
       });
 
       const data = await res.json();
+
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        alert("Unable to open customer portal.");
+        alert(data?.error || "Unable to open customer portal.");
       }
     } catch (err) {
       console.error("Customer portal error:", err);
@@ -54,119 +49,98 @@ export default function Settings() {
   };
 
   /** ------------------------------------------------------------------
-   * Cancel Trial
+   *  Trial logic and UI
    * ------------------------------------------------------------------ */
-  const handleCancelTrial = async () => {
-    try {
-      const res = await fetch("/api/user/cancel-trial", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data?.error || "Could not cancel trial.");
-        return;
-      }
-
-      alert("Trial cancelled.");
-      window.location.reload(); // force update
-    } catch (err) {
-      console.error("Cancel trial error:", err);
-      alert("Could not cancel trial.");
+  const handleStartTrial = async () => {
+    const success = await startTrial();
+    if (success) {
+      alert("Trial started successfully.");
     }
   };
 
-  /** ------------------------------------------------------------------
-   * Trial section UI
-   * ------------------------------------------------------------------ */
+  const handleCancelTrial = async () => {
+    const confirmed = window.confirm("Are you sure you want to cancel your trial?");
+    if (!confirmed) return;
+
+    const success = await cancelTrial();
+    if (success) {
+      alert("Trial cancelled.");
+    }
+  };
+
   const renderTrialContent = () => {
     if (hasActiveTrial && trialEndDate) {
       return (
-        <>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
-            Trial ends in <strong>{trialDaysLeft} days</strong> (
-            {trialEndDate.toLocaleDateString()})
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Your trial ends on: <strong>{trialEndDate.toLocaleDateString()}</strong>
+            {trialDaysLeft !== null && (
+              <span> ({trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left)</span>
+            )}
           </p>
-          <SettingButton
-            variant="danger"
-            onClick={handleCancelTrial}
-          >
+          <SettingButton variant="danger" onClick={handleCancelTrial}>
             Cancel Trial
           </SettingButton>
-        </>
+        </div>
       );
     }
 
     if (trialExpired && trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          Trial expired on {trialEndDate.toLocaleDateString()}
+          Your trial expired on: <strong>{trialEndDate.toLocaleDateString()}</strong>
         </p>
       );
     }
 
     if (noTrial) {
       return (
-        <>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            You haven’t started your free trial yet.
-          </p>
-          <SettingButton
-            variant="success"
-            className="mt-2"
-            onClick={async () => {
-              const ok = await startTrial();
-              if (ok) {
-                alert("Trial started");
-                window.location.reload();
-              }
-            }}
-          >
-            Start Free Trial
-          </SettingButton>
-        </>
+        <SettingButton variant="success" onClick={handleStartTrial}>
+          Start Free 7-Day Trial
+        </SettingButton>
+      );
+    }
+
+    if (isPremium) {
+      return (
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          You are a Premium user (no trial info available).
+        </p>
       );
     }
 
     return null;
   };
 
-  /** ------------------------------------------------------------------
-   * Premium section UI
-   * ------------------------------------------------------------------ */
-  const renderPremiumSection = () => {
+  const renderPremiumContent = () => {
     if (isPremium) {
       return (
         <>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Premium subscription active.
+            Your Premium subscription is active.
           </p>
-          <SettingButton
-            variant="primary"
-            className="mt-2"
-            onClick={handleManageSubscription}
-          >
-            Manage Subscription
-          </SettingButton>
+          {/* Only show manage button if not on trial */}
+          {!hasActiveTrial && (
+            <SettingButton variant="primary" className="mt-3" onClick={handleManageSubscription}>
+              Manage Subscription
+            </SettingButton>
+          )}
         </>
       );
     }
 
     return (
-      <>
+      <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          You are not subscribed.
+          You are on the free plan.
         </p>
-        <SettingButton
-          variant="success"
-          className="mt-2"
-          onClick={() => navigate("/premium")}
-        >
-          Upgrade to Premium
-        </SettingButton>
-      </>
+
+        {!hasActiveTrial && (
+          <SettingButton variant="success" onClick={() => navigate("/premium")}>
+            Upgrade to Premium
+          </SettingButton>
+        )}
+      </div>
     );
   };
 
@@ -180,8 +154,8 @@ export default function Settings() {
 
       {/* ACCOUNT INFO */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">
-          {t("settings_account") || "Account Info"}
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          {t("settings_account") || "Account"}
         </h2>
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {t("settings_email") || "Email"}:{" "}
@@ -189,37 +163,30 @@ export default function Settings() {
         </p>
       </Card>
 
-      {/* TRIAL SECTION */}
+      {/* TRIAL INFO */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">
-          Trial
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Trial Status
         </h2>
         {renderTrialContent()}
       </Card>
 
-      {/* PREMIUM SECTION */}
+      {/* PREMIUM STATUS */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">
-          Subscription
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Premium Subscription
         </h2>
-        {/* Only show manage subscription if not on trial */}
-        {!hasActiveTrial && renderPremiumSection()}
+        {renderPremiumContent()}
       </Card>
 
-      {/* LOGOUT / BACK */}
+      {/* LOGOUT + BACK */}
       <Card>
         <div className="flex flex-col gap-3">
-          <SettingButton
-            variant="danger"
-            onClick={logout}
-          >
+          <SettingButton variant="danger" onClick={logout}>
             {t("settings_logout") || "Log Out"}
           </SettingButton>
 
-          <SettingButton
-            variant="neutral"
-            onClick={() => navigate("/dashboard")}
-          >
+          <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
             {t("settings_back_to_dashboard") || "Back to Dashboard"}
           </SettingButton>
         </div>

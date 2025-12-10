@@ -1,4 +1,3 @@
-// src/context/PremiumContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -18,6 +17,7 @@ export function PremiumProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
+  // Persist values to localStorage
   useEffect(() => {
     localStorage.setItem("isPremium", isPremium ? "true" : "false");
   }, [isPremium]);
@@ -40,6 +40,7 @@ export function PremiumProvider({ children }) {
     return !isTrialExpired();
   };
 
+  // Refresh status from /api/user
   const refreshPremiumStatus = async () => {
     if (!email) {
       setIsPremium(false);
@@ -48,19 +49,31 @@ export function PremiumProvider({ children }) {
     }
 
     try {
-      const res = await fetch(`/api/user/premium-status?email=${encodeURIComponent(email)}`);
+      const res = await fetch("/api/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "get-status", email }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to fetch premium status:", res.status);
+        return;
+      }
+
       const data = await res.json();
 
       if (typeof data.isPremium === "boolean") {
         setIsPremium(data.isPremium);
-        if (data.isPremium) setTrialEnds(null);
+        if (data.isPremium) {
+          setTrialEnds(null);
+        }
       }
 
       if (data.trialEnds || data.trialEnds === null) {
         setTrialEnds(data.trialEnds);
       }
     } catch (err) {
-      console.error("Premium refresh error:", err);
+      console.error("refreshPremiumStatus error:", err);
     }
   };
 
@@ -70,6 +83,7 @@ export function PremiumProvider({ children }) {
     return () => clearInterval(id);
   }, [email]);
 
+  // ✅ Start Trial
   const startTrial = async () => {
     if (!email) {
       alert("Please log in first.");
@@ -78,13 +92,14 @@ export function PremiumProvider({ children }) {
 
     try {
       setLoading(true);
-      const res = await fetch("/api/user/start-trial", {
+      const res = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ action: "start-trial", email }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
         alert(data?.error || "Could not start trial.");
         return false;
@@ -103,25 +118,40 @@ export function PremiumProvider({ children }) {
     }
   };
 
+  // ❌ Cancel Trial
   const cancelTrial = async () => {
-    if (!email) return;
+    if (!email) {
+      alert("Please log in first.");
+      return false;
+    }
 
     try {
       setLoading(true);
-      await fetch("/api/user/cancel-trial", {
+      const res = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ action: "cancel-trial", email }),
       });
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data?.error || "Could not cancel trial.");
+        return false;
+      }
+
       setTrialEnds(null);
+      return true;
     } catch (err) {
-      console.error("Cancel trial error:", err);
+      console.error("cancelTrial error:", err);
+      alert("Could not cancel trial.");
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
+  // 🧾 Stripe Checkout
   const startCheckout = async (plan, emailOverride) => {
     const checkoutEmail = emailOverride || email;
     if (!checkoutEmail) {
@@ -165,10 +195,10 @@ export function PremiumProvider({ children }) {
         isTrialActive: isTrialActive(),
         loading,
         startTrial,
+        cancelTrial,
         startCheckout,
         activatePremium,
         refreshPremiumStatus,
-        cancelTrial,
       }}
     >
       {children}
