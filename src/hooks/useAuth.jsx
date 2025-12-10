@@ -6,7 +6,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     const savedToken = localStorage.getItem("token");
@@ -17,7 +16,6 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Save to storage when user logs in
   const saveAuth = (user, token) => {
     setUser(user);
     setToken(token);
@@ -25,41 +23,51 @@ export function AuthProvider({ children }) {
     localStorage.setItem("token", token);
   };
 
-  // Signup
+  // ✅ SAFER signup
   const signup = async (email, password) => {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    let data;
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Signup failed");
+      data = await res.json(); // still might throw, so in try
+      if (!res.ok) throw new Error(data.error || "Signup failed");
 
-    // Auto-login after signup
-    return login(email, password);
+      return login(email, password); // auto-login
+    } catch (err) {
+      console.error("Signup failed:", err);
+      throw new Error(data?.error || err.message || "Signup failed");
+    }
   };
 
-  // Login
+  // ✅ SAFER login
   const login = async (email, password) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    let data;
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Login failed");
+      data = await res.json(); // catch invalid JSON too
+      if (!res.ok) throw new Error(data.error || "Login failed");
 
-    saveAuth(data.user, data.token);
-    return true;
+      saveAuth(data.user, data.token);
+      return true;
+    } catch (err) {
+      console.error("Login failed:", err);
+      throw new Error(data?.error || err.message || "Login failed");
+    }
   };
 
-  // Logout
   const logout = () => {
     setUser(null);
     setToken(null);
