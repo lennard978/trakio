@@ -73,13 +73,13 @@ export default function Settings() {
       return (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Your trial ends on: <strong>{trialEndDate.toLocaleDateString()}</strong>
+            {t("trial_end")} <strong>{trialEndDate.toLocaleDateString()}</strong>
             {trialDaysLeft !== null && (
-              <span> ({trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left)</span>
+              <span> ({trialDaysLeft} {t("day")}{trialDaysLeft === 1 ? "" : "s"} {t("left")})</span>
             )}
           </p>
           <SettingButton variant="danger" onClick={handleCancelTrial}>
-            Cancel Trial
+            {t("cancel_trial")}
           </SettingButton>
         </div>
       );
@@ -88,7 +88,7 @@ export default function Settings() {
     if (trialExpired && trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          Your trial expired on: <strong>{trialEndDate.toLocaleDateString()}</strong>
+          {t("trial_expired")} <strong>{trialEndDate.toLocaleDateString()}</strong>
         </p>
       );
     }
@@ -96,7 +96,7 @@ export default function Settings() {
     if (noTrial) {
       return (
         <SettingButton variant="success" onClick={handleStartTrial}>
-          Start Free 7-Day Trial
+          {t("start_seven_days")}
         </SettingButton>
       );
     }
@@ -104,7 +104,7 @@ export default function Settings() {
     if (isPremium) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          You are a Premium user (no trial info available).
+          {t("no_info")}
         </p>
       );
     }
@@ -117,12 +117,12 @@ export default function Settings() {
       return (
         <>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Your Premium subscription is active.
+            {t("active_sub")}
           </p>
           {/* Only show manage button if not on trial */}
           {!hasActiveTrial && (
             <SettingButton variant="primary" className="mt-3" onClick={handleManageSubscription}>
-              Manage Subscription
+              {t("manage_sub")}
             </SettingButton>
           )}
         </>
@@ -132,12 +132,12 @@ export default function Settings() {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          You are on the free plan.
+          {t("free_plan")}
         </p>
 
         {!hasActiveTrial && (
           <SettingButton variant="success" onClick={() => navigate("/premium")}>
-            Upgrade to Premium
+            {t("upgrade_premium")}
           </SettingButton>
         )}
       </div>
@@ -166,7 +166,7 @@ export default function Settings() {
       {/* TRIAL INFO */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Trial Status
+          {t("trial_status")}
         </h2>
         {renderTrialContent()}
       </Card>
@@ -174,7 +174,7 @@ export default function Settings() {
       {/* PREMIUM STATUS */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Premium Subscription
+          {t("premium_subscription")}
         </h2>
         {renderPremiumContent()}
       </Card>

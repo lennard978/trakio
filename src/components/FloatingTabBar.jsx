@@ -57,20 +57,6 @@ export default function FloatingTabBar({ dir = "ltr" }) {
                 }
               `}
             >
-              {/* Active pill behind icon */}
-              {/* <div
-                className={`
-                  absolute inset-0 mx-auto
-                  w-10 h-8
-                  rounded-2xl
-                  transition-all duration-200
-                  ${isActive
-                    ? "bg-blue-500/12 dark:bg-blue-500/20 shadow-[0_0_10px_rgba(37,99,235,0.4)]"
-                    : "bg-transparent shadow-none"
-                  }
-                `}
-              /> */}
-
               {/* Icon */}
               <span
                 className={`
