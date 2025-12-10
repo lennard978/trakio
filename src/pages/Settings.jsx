@@ -6,29 +6,28 @@ import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { usePremiumContext } from "../context/PremiumContext";
 
-// Reusable UI components
+// UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
 export default function Settings() {
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { showToast } = useToast();
-  const { t } = useTranslation();
-
   const premium = usePremiumContext();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+
   const { isPremium, trialEnds } = premium;
 
-  // CUSTOMER PORTAL
+  /** ------------------------------------------------------------------
+   *  Redirect user to Stripe Customer Portal
+   * ------------------------------------------------------------------ */
   const handleManageSubscription = async () => {
-    const email = user?.email;
-    if (!email) {
-      showToast("Please log in again.", "error");
-      return;
-    }
+    const userData = JSON.parse(localStorage.getItem("user"));
+    const email = userData?.email;
 
-    if (trialEnds) {
-      showToast("Trial users cannot manage subscription yet.", "error");
+    if (!email) {
+      alert("Please log in again.");
       return;
     }
 
@@ -38,91 +37,195 @@ export default function Settings() {
       body: JSON.stringify({ email }),
     });
 
-    const data = await res.json().catch(() => null);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      alert("Server error");
+      return;
+    }
 
     if (data?.url) window.location.href = data.url;
-    else showToast("Unable to open customer portal.", "error");
+    else alert("Unable to open customer portal.");
   };
 
-  // TRIAL INFO
-  const getTrialInfo = () => {
-    const now = new Date();
-    if (!trialEnds && !isPremium) return t("settings_trial_not_started");
+  /** ------------------------------------------------------------------
+   *  Derived state values
+   * ------------------------------------------------------------------ */
 
-    const end = trialEnds ? new Date(trialEnds) : null;
+  const now = new Date();
+  const trialEndDate = trialEnds ? new Date(trialEnds) : null;
 
-    if (trialEnds && now > end && !isPremium)
-      return `${t("settings_trial_expired")}: ${end.toLocaleDateString()}`;
+  const hasActiveTrial =
+    trialEndDate && now <= trialEndDate && !isPremium;
 
-    if (trialEnds && now <= end && isPremium)
-      return `${t("settings_trial_ends")}: ${end.toLocaleDateString()}`;
+  const trialExpired =
+    trialEndDate && now > trialEndDate && !isPremium;
 
-    if (isPremium && !trialEnds) return t("settings_premium_no_trial");
+  const noTrial =
+    !trialEndDate && !isPremium;
 
-    return t("settings_trial_not_started");
-  };
+  /** ------------------------------------------------------------------
+   *  Render functions for Premium Box
+   * ------------------------------------------------------------------ */
 
-  // PREMIUM INFO
-  const getPremiumInfo = () => {
-    const now = new Date();
-    if (isPremium && trialEnds) {
-      const end = new Date(trialEnds);
-      if (now <= end) return t("settings_premium_trial_active");
+  const renderPremiumSection = () => {
+    // 1) Premium user (paid, not trial)
+    if (isPremium && !trialEndDate) {
+      return (
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_premium_active")}
+          </p>
+
+          <SettingButton
+            variant="primary"
+            className="mt-4"
+            onClick={handleManageSubscription}
+          >
+            Manage Subscription
+          </SettingButton>
+        </>
+      );
     }
-    if (isPremium && !trialEnds) return t("settings_premium_active");
 
-    if (!isPremium && trialEnds) {
-      const end = new Date(trialEnds);
-      if (now > end) return `${t("settings_premium_trial_expired")}: ${end.toLocaleDateString()}`;
+    // 2) Active trial, not premium
+    if (hasActiveTrial) {
+      return (
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_trial_ends")}: {trialEndDate.toLocaleDateString()}
+          </p>
+
+          <SettingButton
+            variant="success"
+            className="mt-4"
+            onClick={() => navigate("/premium")}
+          >
+            Upgrade to Premium
+          </SettingButton>
+        </>
+      );
     }
 
-    return t("settings_premium_none");
+    // 3) Trial expired & not premium
+    if (trialExpired) {
+      return (
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_premium_trial_expired")}:{" "}
+            {trialEndDate.toLocaleDateString()}
+          </p>
+
+          <SettingButton
+            variant="success"
+            className="mt-4"
+            onClick={() => navigate("/premium")}
+          >
+            Upgrade to Premium
+          </SettingButton>
+        </>
+      );
+    }
+
+    // 4) No trial + not premium
+    if (noTrial) {
+      return (
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_premium_none")}
+          </p>
+
+          <SettingButton
+            variant="success"
+            className="mt-4"
+            onClick={() => navigate("/premium")}
+          >
+            Upgrade to Premium
+          </SettingButton>
+        </>
+      );
+    }
+
+    return null;
   };
+
+  /** ------------------------------------------------------------------ */
 
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-6 pb-20">
-      <h1 className="text-2xl font-bold mb-2 px-2">{t("settings_title")}</h1>
+      <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
+        {t("settings_title")}
+      </h1>
 
-      {/* ACCOUNT */}
+      {/* ACCOUNT INFO */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">{t("settings_account")}</h2>
-        <p className="text-sm">
-          {t("settings_email")}: <span className="font-semibold">{user?.email}</span>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          {t("settings_account")}
+        </h2>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {t("settings_email")}:{" "}
+          <span className="font-semibold">{user?.email}</span>
         </p>
       </Card>
 
-      {/* TRIAL */}
+      {/* TRIAL INFORMATION */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">{t("settings_trial")}</h2>
-        <p className="text-sm">{getTrialInfo()}</p>
-      </Card>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          {t("settings_trial")}
+        </h2>
 
-      {/* PREMIUM */}
-      <Card>
-        <h2 className="text-lg font-semibold mb-2">{t("settings_premium_title")}</h2>
-        <p className="text-sm">{getPremiumInfo()}</p>
-
-        {isPremium && !trialEnds && (
-          <SettingButton variant="primary" onClick={handleManageSubscription} className="mt-4">
-            Manage Subscription
-          </SettingButton>
+        {/* Trial text logic */}
+        {isPremium && !trialEndDate && (
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_premium_no_trial")}
+          </p>
         )}
 
-        {!isPremium && (
-          <SettingButton variant="success" onClick={() => navigate("/premium")} className="mt-4">
-            Upgrade to Premium
-          </SettingButton>
+        {hasActiveTrial && (
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_trial_ends")}:{" "}
+            {trialEndDate.toLocaleDateString()}
+          </p>
+        )}
+
+        {trialExpired && (
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_premium_trial_expired")}:{" "}
+            {trialEndDate.toLocaleDateString()}
+          </p>
+        )}
+
+        {noTrial && (
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {t("settings_trial_not_started")}
+          </p>
         )}
       </Card>
 
-      {/* ACTIONS */}
+      {/* PREMIUM SECTION */}
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          {t("settings_premium_title")}
+        </h2>
+
+        {renderPremiumSection()}
+      </Card>
+
+      {/* LOGOUT + NAVIGATION */}
       <Card>
         <div className="flex flex-col gap-3">
-          <SettingButton variant="danger" onClick={logout}>
+          <SettingButton
+            variant="danger"
+            onClick={logout}
+          >
             {t("settings_logout")}
           </SettingButton>
 
-          <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
+          <SettingButton
+            variant="neutral"
+            onClick={() => navigate("/dashboard")}
+          >
             {t("settings_back_to_dashboard")}
           </SettingButton>
         </div>
