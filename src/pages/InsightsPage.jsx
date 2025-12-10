@@ -13,6 +13,9 @@ import Analytics from "../components/Analytics";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 
+// Reusable UI components
+import Card from "../components/ui/Card";
+
 export default function InsightsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
@@ -109,15 +112,22 @@ export default function InsightsPage() {
       : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
 
   return (
-    <div className="max-w-4xl mx-auto mt-4 p-4 pb-20">
+    <div className="max-w-4xl mx-auto mt-4 p-4 pb-24 space-y-4">
       <button
         onClick={() => navigate("/dashboard")}
-        className="mb-4 px-2 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+        className="
+          mb-4 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700
+          bg-white/70 dark:bg-black/30 backdrop-blur-md
+          shadow-[0_3px_12px_rgba(0,0,0,0.08)]
+          hover:bg-gray-100 dark:hover:bg-gray-800 transition
+        "
       >
         ← {t("button_back")}
       </button>
 
-      <h1 className="text-2xl font-semibold mb-4">{t("insights_title")}</h1>
+      <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white px-1">
+        {t("insights_title")}
+      </h1>
 
       {/* Summary Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -153,7 +163,6 @@ export default function InsightsPage() {
         />
       </div>
 
-      {/* Analytics Component */}
       <Analytics subscriptions={subscriptions} />
     </div>
   );
@@ -161,14 +170,14 @@ export default function InsightsPage() {
 
 function InsightsCard({ title, value, Icon }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 w-full">
-      <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+    <Card className="flex items-center gap-3 py-5">
+      <Icon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
       <div>
         <div className="text-sm text-gray-500 dark:text-gray-400">{title}</div>
-        <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+        <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {value}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
