@@ -34,7 +34,7 @@ export default function LanguageSwitcher() {
         onClick={toggle}
         className="
           w-10 h-10 rounded-2xl flex items-center justify-center
-          bg-white dark:bg-black
+          bg-white/20 dark:bg-black/20
           backdrop-blur-xl border border-white/30 dark:border-white/10
           shadow-[0_8px_20px_rgba(0,0,0,0.25)]
           transition-all active:scale-95
@@ -50,7 +50,7 @@ export default function LanguageSwitcher() {
           className="
             absolute right-0 mt-2 w-56 max-h-64 overflow-auto
             p-3 rounded-2xl
-            bg-white/30 dark:bg-black/30
+            bg-white dark:bg-black
             backdrop-blur-2xl
             border border-white/20 dark:border-white/10
             shadow-[0_12px_35px_rgba(0,0,0,0.35)]

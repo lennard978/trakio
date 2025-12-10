@@ -58,7 +58,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
               `}
             >
               {/* Active pill behind icon */}
-              <div
+              {/* <div
                 className={`
                   absolute inset-0 mx-auto
                   w-10 h-8
@@ -69,7 +69,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
                     : "bg-transparent shadow-none"
                   }
                 `}
-              />
+              /> */}
 
               {/* Icon */}
               <span
