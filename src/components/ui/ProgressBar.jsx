@@ -33,7 +33,7 @@ export default function ProgressBar({
             text-[10px] font-semibold z-10 pointer-events-none
           "
           style={{
-            color: progress < 10 ? "#000" : "#1f2933",
+            color: progress < 10 ? "#1f2933" : "#000",
           }}
         >
           {progress}%
