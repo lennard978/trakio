@@ -154,13 +154,15 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <SettingButton variant="danger" onClick={logout}>
-          {t("settings_logout")}
-        </SettingButton>
+        <div className="flex flex-col gap-1">
+          <SettingButton variant="danger" onClick={logout}>
+            {t("settings_logout")}
+          </SettingButton>
 
-        <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
-          {t("settings_back_to_dashboard")}
-        </SettingButton>
+          <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
+            {t("settings_back_to_dashboard")}
+          </SettingButton>
+        </div>
       </Card>
     </div>
   );

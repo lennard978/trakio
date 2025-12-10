@@ -30,7 +30,7 @@ export default function ProgressBar({
         <div
           className="
             absolute inset-0 flex items-center justify-center
-            text-[5px] font-semibold z-10 pointer-events-none
+            text-[10px] font-semibold z-10 pointer-events-none
           "
           style={{
             color: progress < 10 ? "#1f2933" : "#000",
