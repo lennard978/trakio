@@ -3,7 +3,6 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
-	"homepage": "https://lennard978.github.io/trakio",
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
@@ -30,7 +29,6 @@
 	"devDependencies": {
 		"@vitejs/plugin-react": "^5.1.1",
 		"autoprefixer": "^10.4.22",
-		"gh-pages": "^6.3.0",
 		"postcss": "^8.5.6",
 		"tailwindcss": "^3.3.3",
 		"vite": "^5.4.21",
