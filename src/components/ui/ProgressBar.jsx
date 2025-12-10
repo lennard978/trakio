@@ -10,7 +10,7 @@ export default function ProgressBar({
     <div className="relative flex-1">
       <div
         className="
-          w-full px-4 py-1.5 rounded-full overflow-hidden relative cursor-pointer
+          w-full p-4 rounded-full overflow-hidden relative cursor-pointer
           backdrop-blur-md border
           bg-gray-200 dark:bg-gray-700
           border-gray-300 dark:border-white/20
@@ -30,7 +30,7 @@ export default function ProgressBar({
         <div
           className="
             absolute inset-0 flex items-center justify-center
-            text-[10px] font-semibold z-10 pointer-events-none
+           font-semibold z-10 pointer-events-none
           "
           style={{
             color: progress < 10 ? "#1f2933" : "#000",

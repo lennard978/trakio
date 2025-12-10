@@ -138,7 +138,7 @@ export default function SubscriptionItem({
           p-5 rounded-3xl
           bg-white/90 dark:bg-black/25
           border border-gray-300 dark:border-white/10
-          backdrop-blur-xl shadow-lg
+          backdrop-blur-l shadow-lg capitalize
           dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
         "
       >
@@ -196,7 +196,7 @@ export default function SubscriptionItem({
             onClick={() => navigate(`/edit/${item.id}`)}
             className="
               px-4 py-1.5 rounded-xl text-xs font-semibold
-              text-white bg-blue-500/85 uppercase
+              text-white bg-blue-500/85 capitalize
               backdrop-blur-md border border-blue-300/40
               shadow-[0_4px_14px_rgba(0,0,0,0.15)]
               active:scale-95
