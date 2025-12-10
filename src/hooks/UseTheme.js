@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+// src/hooks/useTheme.js
+import { useState, useEffect } from "react";
 
-export default function useDarkMode() {
+export function useTheme() {
   const getPreferredTheme = () => {
     if (typeof window === "undefined") return "light";
     if (localStorage.theme) return localStorage.theme;
@@ -27,17 +28,16 @@ export default function useDarkMode() {
 
     applyTheme(theme);
 
-    // Add fade-in class after theme applied
+    // For smooth transition after load
     requestAnimationFrame(() => {
       root.classList.add("ready");
     });
 
-    // Live OS theme change support
+    // Detect OS theme change
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e) => {
       if (!localStorage.theme) {
-        const systemTheme = e.matches ? "dark" : "light";
-        setTheme(systemTheme);
+        setTheme(e.matches ? "dark" : "light");
       }
     };
 
@@ -45,5 +45,9 @@ export default function useDarkMode() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
-  return [theme, setTheme];
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  return { theme, toggleTheme };
 }
