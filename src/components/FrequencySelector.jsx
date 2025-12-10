@@ -1,5 +1,6 @@
 // src/components/FrequencySelector.jsx
-import React, { useState, useRef, useEffect } from "react";
+
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 const OPTIONS = [
@@ -24,23 +25,37 @@ export default function FrequencySelector({
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // Close on click outside
+  /** -----------------------------------------------------------
+   * Precompute selected option & options list for performance
+   * ----------------------------------------------------------- */
+  const selectedOption = useMemo(() => {
+    return OPTIONS.find((opt) => opt.value === value) || OPTIONS.find((o) => o.value === "monthly");
+  }, [value]);
+
+  const options = useMemo(() => OPTIONS, []);
+
+  /** -----------------------------------------------------------
+   * Close dropdown on outside click
+   * ----------------------------------------------------------- */
   useEffect(() => {
-    const handler = (e) => {
+    const handleOutside = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  const selectedOption =
-    OPTIONS.find((opt) => opt.value === value) || OPTIONS[2]; // default monthly
-
+  /** -----------------------------------------------------------
+   * Handle selection
+   * ----------------------------------------------------------- */
   const handleSelect = (opt) => {
+    // Block premium-only options
     if (opt.premiumOnly && !isPremium) {
-      onRequirePremium();
+      onRequirePremium?.();
       return;
     }
+
     onChange(opt.value);
     setOpen(false);
   };
@@ -50,7 +65,7 @@ export default function FrequencySelector({
       {/* BUTTON */}
       <button
         type="button"
-        onClick={() => setOpen((x) => !x)}
+        onClick={() => setOpen((prev) => !prev)}
         className="form-field cursor-pointer"
       >
         <span>{t(selectedOption.labelKey)}</span>
@@ -66,25 +81,35 @@ export default function FrequencySelector({
             max-h-64 overflow-y-auto
           "
         >
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handleSelect(opt)}
-              className={`
-                w-full px-4 py-3 text-left text-sm flex items-center justify-between
-                hover:bg-gray-100 dark:hover:bg-gray-800 transition
-                ${opt.premiumOnly && !isPremium ? "opacity-70" : ""}
-              `}
-            >
-              <span>{t(opt.labelKey)}</span>
-              {opt.premiumOnly && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/80 text-black font-semibold">
-                  PRO
-                </span>
-              )}
-            </button>
-          ))}
+          {options.map((opt) => {
+            const locked = opt.premiumOnly && !isPremium;
+
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleSelect(opt)}
+                className={`
+                  w-full px-4 py-3 text-left text-sm flex items-center justify-between
+                  hover:bg-gray-100 dark:hover:bg-gray-800 transition
+                  ${locked ? "opacity-70" : ""}
+                `}
+              >
+                <span>{t(opt.labelKey)}</span>
+
+                {opt.premiumOnly && (
+                  <span
+                    className="
+                      text-[10px] px-2 py-0.5 rounded-full
+                      bg-yellow-400/80 text-black font-semibold
+                    "
+                  >
+                    PRO
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

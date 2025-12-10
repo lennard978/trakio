@@ -191,5 +191,16 @@
 	"welcome_message": "Track all your recurring expenses in one place. Stay in control of your spending, avoid surprises, and never miss a renewal date again.",
 	"welcome_title": "Manage your subscriptions effortlessly",
 
-	"placeholder_examples": "Netflix, gym, Adobe…"
+	"placeholder_examples": "Netflix, gym, Adobe…",
+	"trial_banner_one_day": "Your free trial ends tomorrow!",
+	"trial_banner_days_left": "{{count}} days left in your free trial",
+	"no_paid_date": "Payment date not set.",
+	"payment_in_1_day": "Payment due in 1 day.",
+	"payment_in_days": "Payment due in {{d}} days.",
+	"due_today": "Payment due today.",
+	"overdue_1_day": "Overdue by 1 day.",
+	"overdue_days": "Overdue by {{d}} days.",
+	"label_premium_badge": "PRO",
+	"settings_manage_subscription": "Manage subscription",
+	"none": "None"
 }

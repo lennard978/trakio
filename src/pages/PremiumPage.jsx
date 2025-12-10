@@ -3,10 +3,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
-import { usePremiumContext } from "../context/PremiumContext";
+import { usePremium } from "../hooks/usePremium";
 import { useAuth } from "../hooks/useAuth";
 
-// Reusable UI
+// UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
@@ -14,13 +14,13 @@ export default function PremiumPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const premium = usePremiumContext();
+  const premium = usePremium();
   const { user } = useAuth();
 
   const reason = new URLSearchParams(location.search).get("reason");
 
-  const trialActive = premium.trialEnds !== null;
-  const isPaidPremium = premium.isPremium && !trialActive;
+  const { isPremium, hasActiveTrial, trialEndDate } = premium;
+  const isPaidPremium = !!isPremium;
 
   const requireLogin = () => {
     if (!user?.email) {
@@ -36,12 +36,14 @@ export default function PremiumPage() {
     premium.startCheckout(plan, user.email);
   };
 
-  const handleStartTrial = () => {
+  const handleStartTrial = async () => {
     if (!requireLogin()) return;
 
-    premium.startTrial();
-    alert(t("premium_trial_started"));
-    navigate("/dashboard");
+    const ok = await premium.startTrial();
+    if (ok) {
+      alert(t("premium_trial_started"));
+      navigate("/dashboard");
+    }
   };
 
   const features = [
@@ -150,7 +152,7 @@ export default function PremiumPage() {
           </div>
         )}
 
-        {/* TRIAL (if not paid) */}
+        {/* TRIAL SECTION (only if not paid) */}
         {!isPaidPremium && (
           <>
             <Card className="bg-gray-50/90 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 mb-3">
@@ -159,22 +161,24 @@ export default function PremiumPage() {
               </p>
             </Card>
 
-            <p className="mt-1 mb-3 text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center">
-              {t("premium_7day_trial")}
-            </p>
-
-            {!trialActive ? (
-              <button
-                onClick={handleStartTrial}
-                className="block mx-auto text-xs sm:text-sm underline text-blue-600 dark:text-blue-300"
-              >
-                {t("premium_start_trial")}
-              </button>
-            ) : (
-              <p className="text-center text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+            {hasActiveTrial && trialEndDate ? (
+              <p className="text-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3">
                 {t("premium_trial_active_until")}{" "}
-                {new Date(premium.trialEnds).toLocaleDateString()}
+                {trialEndDate.toLocaleDateString()}
               </p>
+            ) : (
+              <>
+                <p className="mt-1 mb-3 text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center">
+                  {t("premium_7day_trial")}
+                </p>
+
+                <button
+                  onClick={handleStartTrial}
+                  className="block mx-auto text-xs sm:text-sm underline text-blue-600 dark:text-blue-300"
+                >
+                  {t("premium_start_trial")}
+                </button>
+              </>
             )}
           </>
         )}

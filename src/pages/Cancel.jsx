@@ -10,7 +10,7 @@ export default function Cancel() {
 
   useEffect(() => {
     showToast(t("cancel_message"), "error");
-  }, [showToast, t]);
+  }, [t, showToast]);
 
   return (
     <div className="flex justify-center mt-16 px-4">

@@ -16,7 +16,7 @@ export default function Success() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const syncPremium = async () => {
+    const go = async () => {
       try {
         if (!user?.email) {
           showToast(t("premium_sync_failed"), "error");
@@ -24,25 +24,17 @@ export default function Success() {
           return;
         }
 
-        const email = encodeURIComponent(user.email);
-        const res = await fetch(`/api/user/premium-status?email=${email}`);
-        const data = await res.json();
-
-        if (data?.isPremium) {
-          activatePremium();
-          showToast(t("premium_success_message"), "success");
-        } else {
-          showToast(t("premium_sync_failed"), "error");
-        }
+        await activatePremium();
+        showToast(t("premium_success_message"), "success");
       } catch (err) {
-        console.error("Success sync error:", err);
+        console.error("Success error:", err);
         showToast(t("premium_sync_failed"), "error");
       }
 
       setLoading(false);
     };
 
-    syncPremium();
+    go();
   }, [user, activatePremium, showToast, t]);
 
   if (loading) {

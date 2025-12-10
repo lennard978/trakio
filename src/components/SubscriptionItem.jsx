@@ -1,13 +1,59 @@
 // src/components/SubscriptionItem.jsx
-import React, { useRef } from "react";
+
+import React, { useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-// Reusable UI components
 import SwipeToDeleteWrapper from "./ui/SwipeToDeleteWrapper";
 import CategoryChip, { CATEGORY_COLORS } from "./CategoryChip";
 import ProgressBar from "./ui/ProgressBar";
 
+/* --------------------------------------------------------------------------
+ * UNIFIED FREQUENCY TABLE
+ * -------------------------------------------------------------------------- */
+const FREQ = {
+  // Month-based intervals
+  monthly: { months: 1 },
+  quarterly: { months: 3 },
+  semiannual: { months: 6 },
+  nine_months: { months: 9 },
+  yearly: { months: 12 },
+  biennial: { months: 24 },
+  triennial: { months: 36 },
+
+  // Day-based intervals
+  weekly: { days: 7 },
+  biweekly: { days: 14 },
+};
+
+/* --------------------------------------------------------------------------
+ * Helper: compute next renewal date
+ * -------------------------------------------------------------------------- */
+function computeNextRenewal(datePaid, frequency) {
+  if (!datePaid) return null;
+
+  const start = new Date(datePaid);
+  if (isNaN(start)) return null;
+
+  const next = new Date(start);
+  const cfg = FREQ[frequency] || { months: 1 };
+
+  if (cfg.months) next.setMonth(start.getMonth() + cfg.months);
+  if (cfg.days) next.setDate(start.getDate() + cfg.days);
+
+  return next;
+}
+
+/* --------------------------------------------------------------------------
+ * Helper: difference in days (rounded up)
+ * -------------------------------------------------------------------------- */
+function diffInDays(dateA, dateB) {
+  return Math.ceil((dateA - dateB) / 86400000);
+}
+
+/* ==========================================================================
+ * COMPONENT
+ * ========================================================================== */
 export default function SubscriptionItem({
   item,
   currency,
@@ -20,63 +66,31 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
-  // ---------------------------------------------
-  // OPEN DATE PICKER (used by "Paid" button)
-  // ---------------------------------------------
-  const openCalendar = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker?.();
-      dateInputRef.current.click?.();
-    }
-  };
+  /* ------------------------------------------------------------------------
+   * Price conversion (memoized)
+   * ------------------------------------------------------------------------ */
+  const displayPrice = useMemo(() => {
+    if (!rates || !convert) return item.price;
+    return convert(item.price, item.currency || "EUR", currency, rates);
+  }, [item.price, item.currency, currency, rates, convert]);
 
-  // ---------------------------------------------
-  // PRICE CONVERSION
-  // ---------------------------------------------
-  const displayPrice =
-    rates && convert
-      ? convert(item.price, item.currency || "EUR", currency, rates)
-      : item.price;
-
-  // ---------------------------------------------
-  // CATEGORY COLOR (passed to ProgressBar)
-  // ---------------------------------------------
+  /* ------------------------------------------------------------------------
+   * Colors
+   * ------------------------------------------------------------------------ */
   const categoryKey = (item.category || "other").toLowerCase();
   const color = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
-  // ---------------------------------------------
-  // PROGRESS CALCULATION
-  // ---------------------------------------------
-  const calcProgress = () => {
+  /* ------------------------------------------------------------------------
+   * PROGRESS BAR LOGIC (memoized)
+   * ------------------------------------------------------------------------ */
+  const progress = useMemo(() => {
     if (!item.datePaid) return 0;
 
     const start = new Date(item.datePaid);
     const now = new Date();
-    const end = new Date(start);
+    const end = computeNextRenewal(item.datePaid, item.frequency);
 
-    const months = {
-      monthly: 1,
-      quarterly: 3,
-      semiannual: 6,
-      nine_months: 9,
-      yearly: 12,
-      biennial: 24,
-      triennial: 36,
-    };
-
-    const days = {
-      weekly: 7,
-      biweekly: 14,
-    };
-
-    if (months[item.frequency]) {
-      end.setMonth(start.getMonth() + months[item.frequency]);
-    } else if (days[item.frequency]) {
-      end.setDate(start.getDate() + days[item.frequency]);
-    } else {
-      end.setMonth(start.getMonth() + 1);
-    }
-
+    if (!end) return 0;
     const total = end - start;
     const used = now - start;
 
@@ -84,55 +98,46 @@ export default function SubscriptionItem({
     if (used >= total) return 100;
 
     return Math.round((used / total) * 100);
-  };
+  }, [item.datePaid, item.frequency]);
 
-  const progress = calcProgress();
-
-  // ---------------------------------------------
-  // TOOLTIP HELP TEXT
-  // ---------------------------------------------
-  const getNextPaymentText = () => {
+  /* ------------------------------------------------------------------------
+   * NEXT PAYMENT STATUS TEXT (memoized)
+   * ------------------------------------------------------------------------ */
+  const nextPaymentText = useMemo(() => {
     if (!item.datePaid) return t("no_paid_date");
 
-    const start = new Date(item.datePaid);
     const now = new Date();
-    const end = new Date(start);
+    const next = computeNextRenewal(item.datePaid, item.frequency);
+    if (!next) return t("no_paid_date");
 
-    const months = {
-      monthly: 1,
-      quarterly: 3,
-      semiannual: 6,
-      nine_months: 9,
-      yearly: 12,
-      biennial: 24,
-      triennial: 36,
-    };
-
-    const days = { weekly: 7, biweekly: 14 };
-
-    if (months[item.frequency]) {
-      end.setMonth(start.getMonth() + months[item.frequency]);
-    } else if (days[item.frequency]) {
-      end.setDate(start.getDate() + days[item.frequency]);
-    } else {
-      end.setMonth(start.getMonth() + 1);
-    }
-
-    const diff = Math.ceil((end - now) / 86400000);
+    const diff = diffInDays(next, now);
 
     if (diff > 1) return t("payment_in_days", { d: diff });
     if (diff === 1) return t("payment_in_1_day");
     if (diff === 0) return t("due_today");
     if (diff === -1) return t("overdue_1_day");
     return t("overdue_days", { d: Math.abs(diff) });
+  }, [item.datePaid, item.frequency, t]);
+
+  /* ------------------------------------------------------------------------
+   * OPEN DATE PICKER
+   * ------------------------------------------------------------------------ */
+  const openCalendar = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+
+    input.showPicker?.();
+    input.click?.();
   };
 
+  /* ------------------------------------------------------------------------
+   * RENDER
+   * ------------------------------------------------------------------------ */
   return (
     <SwipeToDeleteWrapper
       onDelete={() => onDelete(item.id)}
       deleteLabel={t("delete")}
     >
-      {/* CARD */}
       <div
         className="
           p-5 rounded-3xl
@@ -142,7 +147,7 @@ export default function SubscriptionItem({
           dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
         "
       >
-        {/* HEADER ROW */}
+        {/* HEADER */}
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -162,16 +167,15 @@ export default function SubscriptionItem({
             )}
           </div>
 
-          {/* CATEGORY CHIP */}
           <CategoryChip category={item.category} />
         </div>
 
         {/* BOTTOM ROW */}
         <div className="flex items-center gap-4">
-
           {/* PAID BUTTON */}
           <button
             onClick={openCalendar}
+            title={nextPaymentText}
             className={`
               px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
               backdrop-blur-md border
@@ -185,11 +189,7 @@ export default function SubscriptionItem({
           </button>
 
           {/* PROGRESS BAR */}
-          <ProgressBar
-            progress={progress}
-            color={color}
-            onClick={() => { }}
-          />
+          <ProgressBar progress={progress} color={color} />
 
           {/* EDIT BUTTON */}
           <button

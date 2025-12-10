@@ -1,24 +1,27 @@
 // src/pages/SubscriptionForm.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
-import CurrencySelector from "../components/CurrencySelector";
+
 import CategorySelector from "../components/CategorySelector";
 import FrequencySelector from "../components/FrequencySelector";
 import { usePremium } from "../hooks/usePremium";
 
-// Reusable UI
+// UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
   const { id } = useParams();
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const premium = usePremium();
 
+  /** ------------------------------------------------------------------
+   * Local state
+   * ------------------------------------------------------------------ */
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [frequency, setFrequency] = useState("monthly");
@@ -27,39 +30,49 @@ export default function SubscriptionForm() {
   const [notify, setNotify] = useState(true);
   const [currency, setCurrency] = useState("EUR");
 
-  const advancedFrequencies = [
-    "quarterly",
-    "semiannual",
-    "nine_months",
-    "biennial",
-    "triennial",
-  ];
+  const advancedFrequencies = useMemo(
+    () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
+    []
+  );
 
-  // LOAD EXISTING SUBSCRIPTION
+  /** ------------------------------------------------------------------
+   * Load subscription if editing
+   * ------------------------------------------------------------------ */
   useEffect(() => {
-    if (id) {
-      const saved = JSON.parse(localStorage.getItem("subscriptions")) || [];
-      const existing = saved.find((s) => s.id === Number(id));
-
-      if (existing) {
-        setName(existing.name);
-        setPrice(existing.price);
-        setFrequency(existing.frequency);
-        setCategory(existing.category || "other");
-        setDatePaid(existing.datePaid || "");
-        setNotify(existing.notify !== false);
-        setCurrency(existing.currency || "EUR");
-      }
-    } else {
-      const storedCurrency = localStorage.getItem("selected_currency");
-      if (storedCurrency) setCurrency(storedCurrency);
+    let stored = [];
+    try {
+      stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+    } catch {
+      stored = [];
     }
+
+    if (!id) {
+      const defaultCurrency = localStorage.getItem("selected_currency");
+      if (defaultCurrency) setCurrency(defaultCurrency);
+      return;
+    }
+
+    const existing = stored.find((s) => s.id === Number(id));
+    if (!existing) return;
+
+    setName(existing.name);
+    setPrice(existing.price);
+    setFrequency(existing.frequency);
+    setCategory(existing.category || "other");
+    setDatePaid(existing.datePaid || "");
+    setNotify(existing.notify !== false);
+    setCurrency(existing.currency || "EUR");
   }, [id]);
 
-  function generateRecurringHistory(startDate, price, frequency) {
+  /** ------------------------------------------------------------------
+   * Helper: Recurring history generation
+   * ------------------------------------------------------------------ */
+  function generateHistory(startDate, price, frequency) {
     const history = [];
-    const start = new Date(startDate);
     const today = new Date();
+    const start = new Date(startDate);
+    if (Number.isNaN(start.getTime())) return history;
+
     const date = new Date(start);
 
     while (date <= today) {
@@ -68,27 +81,43 @@ export default function SubscriptionForm() {
         amount: Number(price),
       });
 
-      switch (frequency) {
-        case "monthly":
-          date.setMonth(date.getMonth() + 1);
-          break;
-        case "yearly":
-          date.setFullYear(date.getFullYear() + 1);
-          break;
-        default:
-          return history;
+      if (frequency === "monthly") {
+        date.setMonth(date.getMonth() + 1);
+      } else if (frequency === "yearly") {
+        date.setFullYear(date.getFullYear() + 1);
+      } else {
+        break;
       }
     }
 
     return history;
   }
 
+  /** ------------------------------------------------------------------
+   * Validation helpers
+   * ------------------------------------------------------------------ */
+  const savedSubscriptions = useMemo(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const limitReached =
+    !id && !premium.isPremium && savedSubscriptions.length >= 5;
+
+  const requiresPremiumInterval =
+    !premium.isPremium && advancedFrequencies.includes(frequency);
+
+  /** ------------------------------------------------------------------
+   * Core submit handler
+   * ------------------------------------------------------------------ */
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const saved = JSON.parse(localStorage.getItem("subscriptions")) || [];
-
-    if (!id && !premium.isPremium && saved.length >= 5) {
+    if (limitReached) {
       navigate("/premium?reason=limit");
       return;
     }
@@ -108,21 +137,22 @@ export default function SubscriptionForm() {
       return;
     }
 
-    if (!premium.isPremium && advancedFrequencies.includes(frequency)) {
+    if (requiresPremiumInterval) {
       navigate("/premium?reason=intervals");
       return;
     }
 
-    let updated;
+    let newSubscriptions;
 
     if (id) {
-      updated = saved.map((s) => {
+      // Editing
+      newSubscriptions = savedSubscriptions.map((s) => {
         if (s.id !== Number(id)) return s;
 
-        const newHistory = Array.isArray(s.history) ? [...s.history] : [];
+        const history = Array.isArray(s.history) ? [...s.history] : [];
 
         if (s.datePaid !== datePaid || s.price !== Number(price)) {
-          newHistory.push({
+          history.push({
             date: datePaid,
             amount: Number(price),
           });
@@ -137,14 +167,15 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
-          history: newHistory,
+          history,
         };
       });
 
       showToast(t("toast_updated"), "success");
     } else {
-      updated = [
-        ...saved,
+      // New subscription
+      newSubscriptions = [
+        ...savedSubscriptions,
         {
           id: Date.now(),
           name,
@@ -154,17 +185,20 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
-          history: generateRecurringHistory(datePaid, price, frequency),
+          history: generateHistory(datePaid, price, frequency),
         },
       ];
 
       showToast(t("toast_added"), "success");
     }
 
-    localStorage.setItem("subscriptions", JSON.stringify(updated));
+    localStorage.setItem("subscriptions", JSON.stringify(newSubscriptions));
     navigate("/dashboard");
   };
 
+  /** ------------------------------------------------------------------
+   * UI
+   * ------------------------------------------------------------------ */
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-24">
       <Card>
@@ -255,14 +289,6 @@ export default function SubscriptionForm() {
             />
           </div>
 
-          {/* CURRENCY SELECTOR */}
-          {/* <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_currency")}
-            </label>
-            <CurrencySelector value={currency} onChange={setCurrency} />
-          </div> */}
-
           {/* NOTIFICATIONS */}
           <div className="flex items-center gap-2">
             <input
@@ -278,11 +304,7 @@ export default function SubscriptionForm() {
 
           {/* ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <SettingButton
-              type="submit"
-              variant="primary"
-              className="sm:w-auto"
-            >
+            <SettingButton type="submit" variant="primary" className="sm:w-auto">
               {id ? t("form_save") : t("add_subscription")}
             </SettingButton>
 
