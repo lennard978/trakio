@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 // Reusable UI components
 import SwipeToDeleteWrapper from "./ui/SwipeToDeleteWrapper";
-import CategoryChip, { CATEGORY_COLORS } from "./ui/CategoryChip";
+import CategoryChip, { CATEGORY_COLORS } from "./CategoryChip";
 import ProgressBar from "./ui/ProgressBar";
 
 export default function SubscriptionItem({
