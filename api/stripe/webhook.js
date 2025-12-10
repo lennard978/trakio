@@ -1,9 +1,9 @@
 import Stripe from "stripe";
-import { setPremiumRecord, getPremiumRecord } from "../utils/premiumStore.js";
+import { setPremiumRecord } from "../utils/premiumStore.js";
 
 export const config = {
   api: {
-    bodyParser: false, // IMPORTANT for Stripe webhooks
+    bodyParser: false, // Required for raw body parsing
   },
 };
 
@@ -14,20 +14,24 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   let event;
+  let rawBody;
 
   try {
-    const rawBody = await buffer(req);
-    event = JSON.parse(rawBody.toString());
+    rawBody = await buffer(req);
+
+    // ✅ Secure verification of Stripe webhook signature
+    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (error) {
-    console.error("Webhook parse error:", error);
-    return res.status(400).send("Invalid payload");
+    console.error("Webhook signature error:", error.message);
+    return res.status(400).send("Webhook signature verification failed");
   }
 
   try {
     switch (event.type) {
-
-      // USER COMPLETED CHECKOUT
       case "checkout.session.completed": {
         const session = event.data.object;
         const email =
@@ -38,7 +42,6 @@ export default async function handler(req, res) {
         if (!email) break;
 
         const subscriptionId = session.subscription;
-
         const sub = subscriptionId
           ? await stripe.subscriptions.retrieve(subscriptionId)
           : null;
@@ -55,10 +58,8 @@ export default async function handler(req, res) {
         break;
       }
 
-      // BILLING PORTAL CHANGES (cancel, update plan)
       case "customer.subscription.updated": {
         const sub = event.data.object;
-
         const customer = await stripe.customers.retrieve(sub.customer);
         const email = customer.email;
         if (!email) break;
@@ -74,12 +75,10 @@ export default async function handler(req, res) {
         break;
       }
 
-      // SUBSCRIPTION CANCELED
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         const customer = await stripe.customers.retrieve(sub.customer);
         const email = customer.email;
-
         if (!email) break;
 
         await setPremiumRecord(email, {
@@ -91,7 +90,7 @@ export default async function handler(req, res) {
       }
 
       default:
-        break;
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return res.status(200).json({ received: true });
@@ -101,7 +100,7 @@ export default async function handler(req, res) {
   }
 }
 
-// Needed for raw body
+// Needed for raw body parsing
 function buffer(req) {
   return new Promise((resolve) => {
     let chunks = [];

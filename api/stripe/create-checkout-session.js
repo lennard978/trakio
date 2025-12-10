@@ -3,10 +3,15 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST")
+  if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
 
   const { plan, email } = req.body;
+
+  if (!email || !["monthly", "yearly"].includes(plan)) {
+    return res.status(400).json({ error: "Missing or invalid parameters" });
+  }
 
   const price =
     plan === "monthly"
@@ -22,7 +27,7 @@ export default async function handler(req, res) {
       line_items: [{ price, quantity: 1 }],
       success_url: `${process.env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.APP_URL}/premium?canceled=true`,
-      customer_email: email, // link Stripe customer to your user email
+      customer_email: email,
       metadata: { email },
     });
 

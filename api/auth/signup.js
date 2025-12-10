@@ -6,10 +6,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { email, password } = req.body; // <== FIXED
+  const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Missing fields" });
+  }
+
+  const existing = await kv.get(`user:${email}`);
+  if (existing) {
+    return res.status(409).json({ error: "User already exists" });
   }
 
   const hashed = await bcrypt.hash(password, 10);
