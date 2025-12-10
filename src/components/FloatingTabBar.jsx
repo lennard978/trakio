@@ -3,6 +3,7 @@ import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
+import Footer from "./ui/Footer";
 
 export default function FloatingTabBar({ dir = "ltr" }) {
   const { user } = useAuth();
@@ -80,6 +81,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
           )}
         </NavLink>
       ))}
+      <Footer />
     </nav>
   );
 }
