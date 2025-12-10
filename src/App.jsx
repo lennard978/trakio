@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import DarkModeToggle from "./components/DarkModeToggle";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import AnimatedPage from "./components/AnimatedPage";
+import FloatingTabBar from "./components/FloatingTabBar";
 import LogoIcon from "./icons/icon-192.png";
 import { useAuth } from "./hooks/useAuth";
 import { usePremiumContext } from "./context/PremiumContext";
@@ -53,74 +54,6 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// 4-TAB MOBILE BAR with micro-animations
-function MobileTabBar({ dir }) {
-  const { t } = useTranslation();
-  const location = useLocation();
-  const { user } = useAuth();
-
-  if (!user) return null;
-
-  const isRTL = dir === "rtl";
-
-  const tabs = [
-    { to: "/dashboard", label: t("tab_home"), icon: "🏠" },
-    { to: "/insights", label: t("tab_insights"), icon: "📊" },
-    { to: "/add", label: t("tab_add"), icon: "➕" },
-    { to: "/settings", label: t("tab_settings"), icon: "⚙️" },
-  ];
-
-  return (
-    <nav
-      className="
-        fixed bottom-0 left-0 right-0 z-30 md:hidden
-        bg-white/90 dark:bg-gray-900/90
-        border-t border-gray-200 dark:border-gray-800
-        backdrop-blur-md
-      "
-    >
-      <div
-        className={`flex justify-around items-stretch ${isRTL ? "flex-row-reverse" : ""
-          }`}
-      >
-        {tabs.map((tab) => {
-          const active = location.pathname.startsWith(tab.to);
-          return (
-            <NavLink
-              key={tab.to}
-              to={tab.to}
-              className={`
-                mobile-tab flex flex-col items-center justify-center flex-1 py-2
-                text-xs font-medium relative
-                ${active
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 dark:text-gray-400"
-                }
-              `}
-            >
-              <span
-                className={`
-                  text-lg mb-0.5 transition-transform duration-200
-                  ${active
-                    ? "scale-110 translate-y-[-2px]"
-                    : "scale-95 opacity-80"
-                  }
-                `}
-              >
-                {tab.icon}
-              </span>
-              <span className="truncate max-w-[80px]">{tab.label}</span>
-              {active && (
-                <span className="tab-pill absolute -top-1 h-1 w-10 rounded-full bg-blue-500/90 dark:bg-blue-400/90" />
-              )}
-            </NavLink>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}
-
 export default function App() {
   const { user } = useAuth();
   const premium = usePremiumContext();
@@ -138,14 +71,14 @@ export default function App() {
     >
       <Analytics />
 
-      {/* HEADER with subtle animation */}
+      {/* PREMIUM HEADER */}
       <header
         className="
-          app-header
           w-full sticky top-0 z-20
           border-b border-gray-200 dark:border-gray-800
-          bg-white/80 dark:bg-gray-900/80
-          backdrop-blur-md
+          bg-white/70 dark:bg-gray-900/70
+          backdrop-blur-xl
+          shadow-[0_1px_8px_rgba(0,0,0,0.05)]
         "
       >
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -156,9 +89,9 @@ export default function App() {
             <img
               src={LogoIcon}
               alt="Logo"
-              className="h-10 w-10 rounded-xl shadow-sm"
+              className="h-10 w-10 rounded-2xl shadow-sm"
             />
-            <span className="hidden sm:inline text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <span className="hidden sm:inline text-sm font-semibold">
               Subscription Tracker
             </span>
           </Link>
@@ -172,10 +105,8 @@ export default function App() {
               <Link
                 to="/premium"
                 className="
-                  px-3 py-1 text-xs 
-                  bg-yellow-400 text-black 
-                  rounded-md font-semibold shadow 
-                  hover:bg-yellow-300 
+                  px-3 py-1 text-xs bg-yellow-400 text-black
+                  rounded-md font-semibold shadow hover:bg-yellow-300
                   transition active:scale-95
                 "
               >
@@ -189,130 +120,38 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN ROUTER AREA – same neutral background on all pages */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-20 md:pb-6">
+      {/* MAIN CONTENT */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
         <Suspense fallback={<LoadingSkeleton />}>
           <Routes>
             <Route path="/" element={<AnimatedPage><Welcome /></AnimatedPage>} />
-            <Route
-              path="/premium"
-              element={
-                <AnimatedPage>
-                  <PremiumPage />
-                </AnimatedPage>
-              }
-            />
-            <Route
-              path="/success"
-              element={
-                <AnimatedPage>
-                  <Success />
-                </AnimatedPage>
-              }
-            />
-            <Route
-              path="/cancel"
-              element={
-                <AnimatedPage>
-                  <Cancel />
-                </AnimatedPage>
-              }
-            />
-            <Route
-              path="/trial-expired"
-              element={
-                <AnimatedPage>
-                  <TrialExpired />
-                </AnimatedPage>
-              }
-            />
+            <Route path="/premium" element={<AnimatedPage><PremiumPage /></AnimatedPage>} />
+            <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
+            <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
+            <Route path="/trial-expired" element={<AnimatedPage><TrialExpired /></AnimatedPage>} />
 
             <Route
               path="/login"
-              element={
-                user ? (
-                  <Navigate to="/dashboard" />
-                ) : (
-                  <AnimatedPage>
-                    <Login />
-                  </AnimatedPage>
-                )
-              }
+              element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Login /></AnimatedPage>}
             />
             <Route
               path="/signup"
-              element={
-                user ? (
-                  <Navigate to="/dashboard" />
-                ) : (
-                  <AnimatedPage>
-                    <Signup />
-                  </AnimatedPage>
-                )
-              }
+              element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>}
             />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <Dashboard />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/insights"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <InsightsPage />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/add"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <AddEditSubscription />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit/:id"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <AddEditSubscription />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <Settings />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<ProtectedRoute><AnimatedPage><Dashboard /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/insights" element={<ProtectedRoute><AnimatedPage><InsightsPage /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/add" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/edit/:id" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><AnimatedPage><Settings /></AnimatedPage></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Suspense>
       </main>
 
-      <MobileTabBar dir={dir} />
+      {/* NEW FLOATING iOS DOCK BAR */}
+      <FloatingTabBar dir={dir} />
     </div>
   );
 }

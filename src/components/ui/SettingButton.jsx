@@ -5,6 +5,7 @@ export default function SettingButton({
   children,
   variant = "primary",
   onClick,
+  type = "button",
   className = "",
 }) {
   const styles = {
@@ -37,6 +38,7 @@ export default function SettingButton({
 
   return (
     <button
+      type={type}
       onClick={onClick}
       className={`
         w-full py-2 rounded-xl font-medium transition active:scale-95

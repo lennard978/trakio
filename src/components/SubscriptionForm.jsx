@@ -8,6 +8,10 @@ import CategorySelector from "../components/CategorySelector";
 import FrequencySelector from "../components/FrequencySelector";
 import { usePremium } from "../hooks/usePremium";
 
+// Reusable UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+
 export default function SubscriptionForm() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -72,7 +76,7 @@ export default function SubscriptionForm() {
           date.setFullYear(date.getFullYear() + 1);
           break;
         default:
-          return history; // only monthly/yearly supported now
+          return history;
       }
     }
 
@@ -84,7 +88,6 @@ export default function SubscriptionForm() {
 
     const saved = JSON.parse(localStorage.getItem("subscriptions")) || [];
 
-    // LIMIT: Free users can have max 5 subscriptions
     if (!id && !premium.isPremium && saved.length >= 5) {
       navigate("/premium?reason=limit");
       return;
@@ -105,7 +108,6 @@ export default function SubscriptionForm() {
       return;
     }
 
-    // PREMIUM-ONLY frequencies
     if (!premium.isPremium && advancedFrequencies.includes(frequency)) {
       navigate("/premium?reason=intervals");
       return;
@@ -113,7 +115,6 @@ export default function SubscriptionForm() {
 
     let updated;
 
-    // UPDATE EXISTING SUBSCRIPTION
     if (id) {
       updated = saved.map((s) => {
         if (s.id !== Number(id)) return s;
@@ -142,7 +143,6 @@ export default function SubscriptionForm() {
 
       showToast(t("toast_updated"), "success");
     } else {
-      // CREATE NEW SUBSCRIPTION
       updated = [
         ...saved,
         {
@@ -166,117 +166,136 @@ export default function SubscriptionForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
-      <h1 className="text-xl font-semibold mb-6">
-        {id ? t("edit_title") : t("add_title")}
-      </h1>
+    <div className="max-w-2xl mx-auto mt-4 px-4 pb-24">
+      <Card>
+        <h1 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
+          {id ? t("edit_title") : t("add_title")}
+        </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* NAME */}
-        <div>
-          <label className="block mb-1 text-sm">{t("form_name")}</label>
-          <div className="form-field">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* NAME */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("form_name")}
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Netflix, Gym, Adobe..."
+              className="
+                w-full px-3 py-2 rounded-xl
+                bg-white/80 dark:bg-gray-900/60
+                border border-gray-300/70 dark:border-gray-600
+                shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                transition
+              "
             />
           </div>
-        </div>
 
-        {/* PRICE */}
-        <div>
-          <label className="block mb-1 text-sm">
-            {t("form_price")} ({currency})
-          </label>
-          <div className="form-field">
+          {/* PRICE */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("form_price")} ({currency})
+            </label>
             <input
               type="number"
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              className="
+                w-full px-3 py-2 rounded-xl
+                bg-white/80 dark:bg-gray-900/60
+                border border-gray-300/70 dark:border-gray-600
+                shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                transition
+              "
             />
           </div>
-        </div>
 
-        {/* CURRENCY */}
-        {/* <div>
-          <label className="block mb-1 text-sm">{t("form_currency")}</label>
+          {/* FREQUENCY */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("form_frequency")}
+            </label>
+            <FrequencySelector
+              value={frequency}
+              onChange={setFrequency}
+              isPremium={premium.isPremium}
+              onRequirePremium={() => navigate("/premium?reason=intervals")}
+            />
+          </div>
 
-          {premium.isPremium ? (
-            <CurrencySelector value={currency} onChange={setCurrency} />
-          ) : (
-            <div
-              className="form-field cursor-pointer"
-              onClick={() => navigate("/premium?reason=currency")}
-            >
-              <span>EUR — {t("premium_locked_currency")}</span>
-              <span className="form-arrow">▾</span>
-            </div>
-          )}
-        </div> */}
+          {/* CATEGORY */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("form_category")}
+            </label>
+            <CategorySelector value={category} onChange={setCategory} />
+          </div>
 
-        {/* FREQUENCY */}
-        <div>
-          <label className="block mb-1 text-sm">{t("form_frequency")}</label>
-          <FrequencySelector
-            value={frequency}
-            onChange={setFrequency}
-            isPremium={premium.isPremium}
-            onRequirePremium={() => navigate("/premium?reason=intervals")}
-          />
-        </div>
-
-        {/* CATEGORY */}
-        <div>
-          <label className="block mb-1 text-sm">{t("form_category")}</label>
-          <CategorySelector value={category} onChange={setCategory} />
-        </div>
-
-        {/* DATE PAID */}
-        <div>
-          <label className="block mb-1 text-sm">
-            {t("label_select_paid_date")}
-          </label>
-          <div className="form-field">
+          {/* DATE PAID */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("label_select_paid_date")}
+            </label>
             <input
               type="date"
               value={datePaid}
               onChange={(e) => setDatePaid(e.target.value)}
+              className="
+                w-full px-3 py-2 rounded-xl
+                bg-white/80 dark:bg-gray-900/60
+                border border-gray-300/70 dark:border-gray-600
+                shadow-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                transition
+              "
             />
           </div>
-        </div>
 
-        {/* NOTIFICATIONS */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={notify}
-            onChange={(e) => setNotify(e.target.checked)}
-          />
-          <label className="text-sm">
-            {t("settings_notifications_info")}
-          </label>
-        </div>
+          {/* CURRENCY SELECTOR */}
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("form_currency")}
+            </label>
+            <CurrencySelector value={currency} onChange={setCurrency} />
+          </div>
 
-        {/* ACTION BUTTONS */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button
-            type="submit"
-            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition active:scale-95"
-          >
-            {id ? t("form_save") : t("add_subscription")}
-          </button>
+          {/* NOTIFICATIONS */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={notify}
+              onChange={(e) => setNotify(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label className="text-sm text-gray-700 dark:text-gray-300">
+              {t("settings_notifications_info")}
+            </label>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="w-full sm:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition active:scale-95"
-          >
-            {t("button_cancel")}
-          </button>
-        </div>
-      </form>
+          {/* ACTION BUTTONS */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <SettingButton
+              type="submit"
+              variant="primary"
+              className="sm:w-auto"
+            >
+              {id ? t("form_save") : t("add_subscription")}
+            </SettingButton>
+
+            <SettingButton
+              variant="neutral"
+              className="sm:w-auto"
+              onClick={() => navigate("/dashboard")}
+            >
+              {t("button_cancel")}
+            </SettingButton>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

@@ -5,6 +5,10 @@ import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
 
+// UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+
 export default function Signup() {
   const { signup } = useAuth();
   const { showToast } = useToast();
@@ -43,56 +47,69 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex justify-center mt-12 px-4">
-      <div className="max-w-md w-full p-8 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
-        <h1 className="text-2xl font-semibold text-center mb-6">
-          {t("signup_title")}
-        </h1>
+    <div className="flex justify-center mt-12 px-4 pb-24">
+      <div className="max-w-md w-full">
+        <Card>
+          <h1 className="text-2xl font-semibold text-center mb-6">
+            {t("signup_title")}
+          </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("signup_email")}
-            </label>
-            <input
-              type="email"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("signup_email")}
+              </label>
+              <input
+                type="email"
+                className="
+                  w-full px-3 py-2 rounded-xl
+                  bg-white/80 dark:bg-gray-900/60
+                  border border-gray-300/70 dark:border-gray-600
+                  shadow-sm
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                  transition
+                "
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("signup_password")}
-            </label>
-            <input
-              type="password"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              placeholder="******"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("signup_password")}
+              </label>
+              <input
+                type="password"
+                className="
+                  w-full px-3 py-2 rounded-xl
+                  bg-white/80 dark:bg-gray-900/60
+                  border border-gray-300/70 dark:border-gray-600
+                  shadow-sm
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                  transition
+                "
+                placeholder="******"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition active:scale-95"
-          >
-            {t("signup_button")}
-          </button>
-        </form>
+            <SettingButton type="submit" variant="primary">
+              {t("signup_button")}
+            </SettingButton>
+          </form>
 
-        <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-300">
-          {t("signup_have_account")}{" "}
-          <Link
-            to="/login"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            {t("signup_login_link")}
-          </Link>
-        </p>
+          <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-300">
+            {t("signup_have_account")}{" "}
+            <Link
+              to="/login"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {t("signup_login_link")}
+            </Link>
+          </p>
+        </Card>
       </div>
     </div>
   );

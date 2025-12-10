@@ -6,6 +6,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { usePremiumContext } from "../context/PremiumContext";
 import { useAuth } from "../hooks/useAuth";
 
+// Reusable UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+
 export default function PremiumPage() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -50,8 +54,8 @@ export default function PremiumPage() {
   ];
 
   return (
-    <div className="w-full px-4 py-6 sm:py-10 flex justify-center">
-      <div className="max-w-3xl w-full rounded-2xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+    <div className="w-full px-4 py-6 sm:py-10 flex justify-center pb-24">
+      <Card className="max-w-3xl w-full">
         {/* HEADER */}
         <div className="text-center mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
@@ -76,7 +80,7 @@ export default function PremiumPage() {
         </div>
 
         {/* FEATURES */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 p-5 sm:p-6 mb-6">
+        <Card className="bg-gray-50/90 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 mb-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-3 text-center">
             {t("premium_whats_included")}
           </h2>
@@ -89,12 +93,13 @@ export default function PremiumPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
 
         {/* PAID PREMIUM INFO */}
         {isPaidPremium && (
           <div className="text-center text-green-600 dark:text-green-400 font-semibold mb-6">
-            {t("premium_active_message") || "Your Premium subscription is active."}
+            {t("premium_active_message") ||
+              "Your Premium subscription is active."}
           </div>
         )}
 
@@ -102,7 +107,7 @@ export default function PremiumPage() {
         {!isPaidPremium && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
             {/* MONTHLY */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/70 p-5 shadow-sm">
+            <Card className="bg-gray-50/90 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700">
               <h3 className="text-lg sm:text-xl font-semibold mb-1 text-center">
                 {t("premium_monthly")}
               </h3>
@@ -113,16 +118,17 @@ export default function PremiumPage() {
                 {t("premium_month")}
               </div>
 
-              <button
+              <SettingButton
+                variant="success"
                 onClick={() => handleCheckout("monthly")}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition active:scale-95"
+                className="mt-2"
               >
                 {t("premium_button_upgrade")}
-              </button>
-            </div>
+              </SettingButton>
+            </Card>
 
             {/* YEARLY */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/70 p-5 shadow-sm">
+            <Card className="bg-gray-50/90 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700">
               <h3 className="text-lg sm:text-xl font-semibold mb-1 text-center">
                 {t("premium_yearly")}
               </h3>
@@ -133,22 +139,25 @@ export default function PremiumPage() {
                 {t("premium_year")}
               </div>
 
-              <button
+              <SettingButton
+                variant="success"
                 onClick={() => handleCheckout("yearly")}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition active:scale-95"
+                className="mt-2"
               >
                 {t("premium_button_upgrade")}
-              </button>
-            </div>
+              </SettingButton>
+            </Card>
           </div>
         )}
 
         {/* TRIAL (if not paid) */}
         {!isPaidPremium && (
           <>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 p-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200 text-center mb-3">
-              <p>“{t("premium_testimonial")}”</p>
-            </div>
+            <Card className="bg-gray-50/90 dark:bg-gray-900/70 border-gray-200 dark:border-gray-700 mb-3">
+              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 text-center">
+                “{t("premium_testimonial")}”
+              </p>
+            </Card>
 
             <p className="mt-1 mb-3 text-xs sm:text-sm text-gray-600 dark:text-gray-300 text-center">
               {t("premium_7day_trial")}
@@ -179,7 +188,7 @@ export default function PremiumPage() {
             {t("button_back") || "Back"}
           </button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
