@@ -1,6 +1,6 @@
 // src/components/DarkModeToggle.jsx
 import React from "react";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../hooks/useDarkMode";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 
 export default function DarkModeToggle() {
