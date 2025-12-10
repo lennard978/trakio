@@ -1,21 +1,13 @@
 // src/context/PremiumContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 const PremiumContext = createContext(null);
 
-// Reads email from auth LocalStorage
-function getCurrentEmail() {
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return null;
-    return JSON.parse(raw)?.email || null;
-  } catch {
-    return null;
-  }
-}
-
 export function PremiumProvider({ children }) {
-  // Local cache while waiting for server
+  const { user } = useAuth(); // ✅ Use current user from AuthContext
+  const email = user?.email;  // ✅ Derived email
+
   const [isPremium, setIsPremium] = useState(() => {
     return localStorage.getItem("isPremium") === "true";
   });
@@ -26,9 +18,7 @@ export function PremiumProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  /* ------------------------------------------------------------
-   * Persist state
-   * ------------------------------------------------------------ */
+  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem("isPremium", isPremium ? "true" : "false");
   }, [isPremium]);
@@ -41,10 +31,7 @@ export function PremiumProvider({ children }) {
     }
   }, [trialEnds]);
 
-  /* ------------------------------------------------------------
-   * Trial Helpers
-   * ------------------------------------------------------------ */
-
+  // Trial status helpers
   const isTrialExpired = () => {
     if (!trialEnds) return false;
     return new Date() > new Date(trialEnds);
@@ -55,11 +42,8 @@ export function PremiumProvider({ children }) {
     return !isTrialExpired();
   };
 
-  /* ------------------------------------------------------------
-   * Sync status from backend
-   * ------------------------------------------------------------ */
+  // Sync status from backend
   const refreshPremiumStatus = async () => {
-    const email = getCurrentEmail();
     if (!email) {
       setIsPremium(false);
       setTrialEnds(null);
@@ -67,10 +51,7 @@ export function PremiumProvider({ children }) {
     }
 
     try {
-      const res = await fetch(
-        `/api/user/premium-status?email=${encodeURIComponent(email)}`
-      );
-
+      const res = await fetch(`/api/user/premium-status?email=${encodeURIComponent(email)}`);
       if (!res.ok) {
         console.error("premium-status HTTP error:", res.status);
         return;
@@ -78,17 +59,11 @@ export function PremiumProvider({ children }) {
 
       const data = await res.json();
 
-      // Premium from backend
       if (typeof data.isPremium === "boolean") {
         setIsPremium(data.isPremium);
-
-        // Premium overrides trial
-        if (data.isPremium) {
-          setTrialEnds(null);
-        }
+        if (data.isPremium) setTrialEnds(null); // clear trial if premium
       }
 
-      // Trial from backend
       if (data.trialEnds || data.trialEnds === null) {
         setTrialEnds(data.trialEnds);
       }
@@ -97,18 +72,14 @@ export function PremiumProvider({ children }) {
     }
   };
 
-  // Run once on mount, refresh every 5 min
   useEffect(() => {
     refreshPremiumStatus();
     const id = setInterval(refreshPremiumStatus, 5 * 60 * 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [email]);
 
-  /* ------------------------------------------------------------
-   * Start trial (server-controlled)
-   * ------------------------------------------------------------ */
+  // Start trial
   const startTrial = async () => {
-    const email = getCurrentEmail();
     if (!email) {
       alert("Please log in first.");
       return false;
@@ -125,16 +96,12 @@ export function PremiumProvider({ children }) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert("Could not start trial.");
+        alert(data?.error || "Could not start trial.");
         return false;
       }
 
       if (data.trialEnds) setTrialEnds(data.trialEnds);
-
-      // Some backends set isPremium=true during trial
-      if (typeof data.isPremium === "boolean") {
-        setIsPremium(data.isPremium);
-      }
+      if (typeof data.isPremium === "boolean") setIsPremium(data.isPremium);
 
       return true;
     } catch (err) {
@@ -146,12 +113,10 @@ export function PremiumProvider({ children }) {
     }
   };
 
-  /* ------------------------------------------------------------
-   * Stripe Checkout
-   * ------------------------------------------------------------ */
+  // Start Stripe Checkout
   const startCheckout = async (plan, emailOverride) => {
-    const email = emailOverride || getCurrentEmail();
-    if (!email) {
+    const checkoutEmail = emailOverride || email;
+    if (!checkoutEmail) {
       alert("Please log in first.");
       return;
     }
@@ -161,7 +126,7 @@ export function PremiumProvider({ children }) {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email }),
+        body: JSON.stringify({ plan, email: checkoutEmail }),
       });
 
       const data = await res.json();
@@ -179,11 +144,7 @@ export function PremiumProvider({ children }) {
     }
   };
 
-  /* ------------------------------------------------------------
-   * After Stripe success → trust backend → refresh
-   * ------------------------------------------------------------ */
   const activatePremium = async () => {
-    // Refresh local state based on server
     await refreshPremiumStatus();
   };
 
@@ -195,7 +156,6 @@ export function PremiumProvider({ children }) {
         isTrialExpired: isTrialExpired(),
         isTrialActive: isTrialActive(),
         loading,
-
         startTrial,
         startCheckout,
         activatePremium,
@@ -210,7 +170,7 @@ export function PremiumProvider({ children }) {
 export function usePremiumContext() {
   const ctx = useContext(PremiumContext);
   if (!ctx) {
-    throw new Error("usePremiumContext must be inside <PremiumProvider>");
+    throw new Error("usePremiumContext must be used within <PremiumProvider>");
   }
   return ctx;
 }
