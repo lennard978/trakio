@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
 const freqMap = {
   weekly: { days: 7 },
@@ -13,6 +15,8 @@ const freqMap = {
 };
 
 export default function useNotifications(subscriptions) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!subscriptions || subscriptions.length === 0) return;
 
@@ -57,9 +61,13 @@ export default function useNotifications(subscriptions) {
 
         if (reminder.toDateString() === today.toDateString()) {
           notify(
-            "Upcoming Subscription Renewal",
-            `${sub.name} renews in ${d} day(s).`
+            t("notification_title"),
+            t("notification_body", {
+              name: sub.name,
+              date: next.toLocaleDateString()
+            })
           );
+
         }
       });
     });

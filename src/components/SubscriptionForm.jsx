@@ -181,7 +181,7 @@ export default function SubscriptionForm() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Netflix, Gym, Adobe..."
+              placeholder={t("placeholder_examples")}
               className="
                 w-full px-3 py-2 rounded-xl
                 bg-white/80 dark:bg-gray-900/60
