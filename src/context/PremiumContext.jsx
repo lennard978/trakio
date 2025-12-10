@@ -1,12 +1,11 @@
-// src/context/PremiumContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
 const PremiumContext = createContext(null);
 
 export function PremiumProvider({ children }) {
-  const { user } = useAuth(); // ✅ Use current user from AuthContext
-  const email = user?.email;  // ✅ Derived email
+  const { user } = useAuth();
+  const email = user?.email;
 
   const [isPremium, setIsPremium] = useState(() => {
     return localStorage.getItem("isPremium") === "true";
@@ -16,9 +15,13 @@ export function PremiumProvider({ children }) {
     return localStorage.getItem("trialEnds") || null;
   });
 
+  const [status, setStatus] = useState(() => {
+    return localStorage.getItem("premiumStatus") || null; // e.g., "trial" or "active"
+  });
+
   const [loading, setLoading] = useState(false);
 
-  // Persist to localStorage
+  // Persist state
   useEffect(() => {
     localStorage.setItem("isPremium", isPremium ? "true" : "false");
   }, [isPremium]);
@@ -31,7 +34,15 @@ export function PremiumProvider({ children }) {
     }
   }, [trialEnds]);
 
-  // Trial status helpers
+  useEffect(() => {
+    if (status) {
+      localStorage.setItem("premiumStatus", status);
+    } else {
+      localStorage.removeItem("premiumStatus");
+    }
+  }, [status]);
+
+  // Helpers
   const isTrialExpired = () => {
     if (!trialEnds) return false;
     return new Date() > new Date(trialEnds);
@@ -42,11 +53,11 @@ export function PremiumProvider({ children }) {
     return !isTrialExpired();
   };
 
-  // Sync status from backend
   const refreshPremiumStatus = async () => {
     if (!email) {
       setIsPremium(false);
       setTrialEnds(null);
+      setStatus(null);
       return;
     }
 
@@ -61,11 +72,17 @@ export function PremiumProvider({ children }) {
 
       if (typeof data.isPremium === "boolean") {
         setIsPremium(data.isPremium);
-        if (data.isPremium) setTrialEnds(null); // clear trial if premium
+        if (data.isPremium && !data.trialEnds) {
+          setTrialEnds(null); // Paid user without trial
+        }
       }
 
       if (data.trialEnds || data.trialEnds === null) {
         setTrialEnds(data.trialEnds);
+      }
+
+      if (data.status) {
+        setStatus(data.status); // "trial", "active", etc.
       }
     } catch (err) {
       console.error("Premium refresh error:", err);
@@ -78,7 +95,6 @@ export function PremiumProvider({ children }) {
     return () => clearInterval(id);
   }, [email]);
 
-  // Start trial
   const startTrial = async () => {
     if (!email) {
       alert("Please log in first.");
@@ -102,6 +118,7 @@ export function PremiumProvider({ children }) {
 
       if (data.trialEnds) setTrialEnds(data.trialEnds);
       if (typeof data.isPremium === "boolean") setIsPremium(data.isPremium);
+      if (data.status) setStatus(data.status);
 
       return true;
     } catch (err) {
@@ -113,7 +130,6 @@ export function PremiumProvider({ children }) {
     }
   };
 
-  // Start Stripe Checkout
   const startCheckout = async (plan, emailOverride) => {
     const checkoutEmail = emailOverride || email;
     if (!checkoutEmail) {
@@ -153,6 +169,7 @@ export function PremiumProvider({ children }) {
       value={{
         isPremium,
         trialEnds,
+        status,
         isTrialExpired: isTrialExpired(),
         isTrialActive: isTrialActive(),
         loading,

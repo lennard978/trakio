@@ -16,6 +16,7 @@ export default function Settings() {
 
   const {
     isPremium,
+    status,
     trialEndDate,
     hasActiveTrial,
     trialExpired,
@@ -183,7 +184,10 @@ export default function Settings() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           {t("settings_premium_title")}
         </h2>
-        {renderPremiumSection()}
+
+        if (isPremium && status !== "trial") {
+          renderPremiumSection()
+        }
       </Card>
 
       {/* LOGOUT + BACK */}
