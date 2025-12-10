@@ -10,7 +10,7 @@ export default function ProgressBar({
     <div className="relative flex-1">
       <div
         className="
-          w-full h-4 rounded-full overflow-hidden relative cursor-pointer
+          w-full px-4 py-1.5 rounded-full overflow-hidden relative cursor-pointer
           backdrop-blur-md border
           bg-gray-200 dark:bg-gray-700
           border-gray-300 dark:border-white/20

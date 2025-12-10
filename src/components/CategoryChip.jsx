@@ -23,7 +23,7 @@ export default function CategoryChip({ category }) {
     <div
       className="
         px-3 py-1 text-xs font-semibold rounded-full
-        text-gray-900 dark:text-white
+        text-gray-900 dark:text-black capitalize
         backdrop-blur-md border border-white/40
         shadow-md
       "
