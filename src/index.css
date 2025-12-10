@@ -293,3 +293,7 @@ html.ready {
 .tab-pill {
 	transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
+
+.dark .logo-img {
+	filter: brightness(1.8) saturate(1.2);
+}

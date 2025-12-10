@@ -9,7 +9,6 @@ export default function FloatingTabBar({ dir = "ltr" }) {
   const location = useLocation();
   const { t } = useTranslation();
 
-  // Hide when not logged in
   if (!user) return null;
 
   const isRTL = dir === "rtl";
@@ -24,80 +23,71 @@ export default function FloatingTabBar({ dir = "ltr" }) {
   return (
     <nav
       className="
-        fixed bottom-4 left-1/2 -translate-x-1/2
-        z-50 md:hidden
-        w-[90%] max-w-sm
+        fixed bottom-3 left-1/2 -translate-x-1/2
+        w-[94%] max-w-md
+        rounded-3xl
         px-4 py-2
-        rounded-full
-        bg-white/18 dark:bg-black/22
-        backdrop-blur-2xl
-        border border-white/35 dark:border-white/12
-        shadow-[0_14px_40px_rgba(0,0,0,0.45)]
+        z-50 md:hidden
+        bg-white/85 dark:bg-gray-900/70
+        backdrop-blur-xl
+        border border-gray-300/60 dark:border-white/10
+        shadow-[0_8px_28px_rgba(0,0,0,0.35)]
         flex items-center justify-between
       "
       style={{ direction: isRTL ? "rtl" : "ltr" }}
     >
-      {tabs.map((tab) => {
-        const active = location.pathname.startsWith(tab.to);
+      {tabs.map(tab => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          className="flex-1 flex justify-center"
+        >
+          {({ isActive }) => (
+            <div
+              className={`
+                relative flex flex-col items-center justify-center
+                text-[12px] font-medium
+                transition-all duration-200
 
-        return (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className={`
-              flex-1 flex justify-center
-            `}
-          >
-            {({ isActive }) => (
-              <div
+                ${isActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-600 dark:text-gray-300"
+                }
+              `}
+            >
+              {/* Active spotlight */}
+              {isActive && (
+                <div
+                  className="
+                    absolute -top-1
+                    w-10 h-10
+                    rounded-full
+                    bg-blue-500/15
+                    blur-xl
+                  "
+                />
+              )}
+
+              {/* Icon */}
+              <span
                 className={`
-                  relative flex flex-col items-center justify-center
-                  text-[11px] font-medium
+                  relative z-10 
+                  text-[22px] mb-0.5
                   transition-all duration-200
-                  ${isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 opacity-85"
-                  }
+                  ${isActive ? "scale-110 -translate-y-0.5" : "opacity-80"}
                 `}
               >
-                {/* Active pill background */}
-                <div
-                  className={`
-                    absolute inset-0 mx-auto
-                    w-10 h-8
-                    rounded-2xl
-                    transition-all duration-200
-                    ${isActive
-                      ? "bg-white/55 dark:bg-white/10 shadow-[0_0_12px_rgba(37,99,235,0.55)]"
-                      : "bg-transparent shadow-none"
-                    }
-                  `}
-                />
+                {tab.icon}
+              </span>
 
-                {/* Icon */}
-                <span
-                  className={`
-                    relative z-10
-                    text-[20px] mb-0.5
-                    transition-transform duration-200
-                    ${isActive
-                      ? "scale-110 -translate-y-0.5"
-                      : "scale-95 translate-y-0"
-                    }
-                  `}
-                >
-                  {tab.icon}
-                </span>
-
-                {/* Label */}
-                <span className="relative z-10 truncate max-w-[60px]">
-                  {tab.label}
-                </span>
-              </div>
-            )}
-          </NavLink>
-        );
-      })}
+              {/* Label */}
+              <span className="relative z-10">
+                {tab.label}
+              </span>
+            </div>
+          )}
+        </NavLink>
+      ))}
     </nav>
   );
 }

@@ -89,7 +89,7 @@ export default function App() {
             <img
               src={LogoIcon}
               alt="Logo"
-              className="h-10 w-10 rounded-2xl shadow-sm"
+              className="h-10 w-10 rounded-2xl shadow-sm logo-img"
             />
             <span className="hidden sm:inline text-sm font-semibold">
               Subscription Tracker
