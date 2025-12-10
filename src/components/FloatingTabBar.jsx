@@ -9,6 +9,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
   const location = useLocation();
   const { t } = useTranslation();
 
+  // Hide when not logged in
   if (!user) return null;
 
   const isRTL = dir === "rtl";
@@ -25,18 +26,16 @@ export default function FloatingTabBar({ dir = "ltr" }) {
       className="
         fixed bottom-4 left-1/2 -translate-x-1/2
         z-50 md:hidden
-        px-4 py-2
-        rounded-3xl
-        bg-white/20 dark:bg-black/20
-        backdrop-blur-2xl
-        border border-white/30 dark:border-white/10
-        shadow-[0_8px_30px_rgba(0,0,0,0.35)]
-        flex items-center justify-around
         w-[90%] max-w-sm
+        px-4 py-2
+        rounded-full
+        bg-white/18 dark:bg-black/22
+        backdrop-blur-2xl
+        border border-white/35 dark:border-white/12
+        shadow-[0_14px_40px_rgba(0,0,0,0.45)]
+        flex items-center justify-between
       "
-      style={{
-        direction: isRTL ? "rtl" : "ltr",
-      }}
+      style={{ direction: isRTL ? "rtl" : "ltr" }}
     >
       {tabs.map((tab) => {
         const active = location.pathname.startsWith(tab.to);
@@ -46,25 +45,56 @@ export default function FloatingTabBar({ dir = "ltr" }) {
             key={tab.to}
             to={tab.to}
             className={`
-              flex flex-col items-center justify-center
-              text-xs font-medium transition-all
-              ${active
-                ? "text-blue-600 dark:text-blue-400 scale-110"
-                : "text-gray-700 dark:text-gray-300 opacity-80"
-              }
+              flex-1 flex justify-center
             `}
           >
-            <span
-              className={`
-                text-xl mb-0.5 transition-all
-                ${active
-                  ? "translate-y-[-2px] drop-shadow-[0_0_6px_rgba(0,0,0,0.2)]"
-                  : "opacity-80"
-                }
-              `}
-            >
-              {tab.icon}
-            </span>
+            {({ isActive }) => (
+              <div
+                className={`
+                  relative flex flex-col items-center justify-center
+                  text-[11px] font-medium
+                  transition-all duration-200
+                  ${isActive
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-700 dark:text-gray-300 opacity-85"
+                  }
+                `}
+              >
+                {/* Active pill background */}
+                <div
+                  className={`
+                    absolute inset-0 mx-auto
+                    w-10 h-8
+                    rounded-2xl
+                    transition-all duration-200
+                    ${isActive
+                      ? "bg-white/55 dark:bg-white/10 shadow-[0_0_12px_rgba(37,99,235,0.55)]"
+                      : "bg-transparent shadow-none"
+                    }
+                  `}
+                />
+
+                {/* Icon */}
+                <span
+                  className={`
+                    relative z-10
+                    text-[20px] mb-0.5
+                    transition-transform duration-200
+                    ${isActive
+                      ? "scale-110 -translate-y-0.5"
+                      : "scale-95 translate-y-0"
+                    }
+                  `}
+                >
+                  {tab.icon}
+                </span>
+
+                {/* Label */}
+                <span className="relative z-10 truncate max-w-[60px]">
+                  {tab.label}
+                </span>
+              </div>
+            )}
           </NavLink>
         );
       })}

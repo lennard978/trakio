@@ -48,7 +48,7 @@ export default function Welcome() {
             <SettingButton
               variant="primary"
               className="w-auto px-6"
-              onClick={() => { }}
+              onClick={() => navigate("/login")}
             >
               <Link to="/login">{t("button_sign_in")}</Link>
             </SettingButton>
@@ -56,7 +56,7 @@ export default function Welcome() {
             <SettingButton
               variant="neutral"
               className="w-auto px-6"
-              onClick={() => { }}
+              onClick={() => navigate("/signup")}
             >
               <Link to="/signup">{t("button_sign_up")}</Link>
             </SettingButton>
