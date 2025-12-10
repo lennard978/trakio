@@ -16,12 +16,37 @@ export default function Settings() {
 
   const {
     isPremium,
-    status,
     trialEndDate,
     hasActiveTrial,
     trialExpired,
     noTrial,
+    trialDaysLeft,
   } = usePremium();
+
+  /** ------------------------------------------------------------------
+   *  Trial Upgrade Banner (countdown)
+   * ------------------------------------------------------------------ */
+  const renderTrialUpgradeBanner = () => {
+    if (!hasActiveTrial || isPremium || trialDaysLeft == null) return null;
+
+    return (
+      <Card className="bg-yellow-100 dark:bg-yellow-800 border-l-4 border-yellow-500 shadow-md p-4">
+        <div className="flex flex-col space-y-2">
+          <p className="text-sm text-gray-900 dark:text-white">
+            You're on a <strong>free trial</strong>. Your trial ends in{" "}
+            <strong>{trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}</strong>.
+          </p>
+          <SettingButton
+            variant="success"
+            className="w-fit"
+            onClick={() => navigate("/premium")}
+          >
+            Upgrade to Premium
+          </SettingButton>
+        </div>
+      </Card>
+    );
+  };
 
   /** ------------------------------------------------------------------
    *  Stripe Customer Portal
@@ -65,7 +90,6 @@ export default function Settings() {
    *  TRIAL TEXT LOGIC
    * ------------------------------------------------------------------ */
   const renderTrialContent = () => {
-    // Paid premium and no trial info
     if (isPremium && !trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -74,27 +98,22 @@ export default function Settings() {
       );
     }
 
-    // Active trial, not premium
     if (hasActiveTrial && trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_trial_ends")}:{" "}
-          {trialEndDate.toLocaleDateString()}
+          {t("settings_trial_ends")}: {trialEndDate.toLocaleDateString()}
         </p>
       );
     }
 
-    // Trial expired, not premium
     if (trialExpired && trialEndDate) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("settings_premium_trial_expired")}:{" "}
-          {trialEndDate.toLocaleDateString()}
+          {t("settings_premium_trial_expired")}: {trialEndDate.toLocaleDateString()}
         </p>
       );
     }
 
-    // No trial, not premium
     if (noTrial && !isPremium) {
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -103,7 +122,6 @@ export default function Settings() {
       );
     }
 
-    // Fallback
     return (
       <p className="text-sm text-gray-700 dark:text-gray-300">
         {t("settings_trial_not_started")}
@@ -115,14 +133,12 @@ export default function Settings() {
    *  PREMIUM SECTION CONTENT
    * ------------------------------------------------------------------ */
   const renderPremiumSection = () => {
-    // Paid premium user
     if (isPremium) {
       return (
         <>
           <p className="text-sm text-gray-700 dark:text-gray-300">
             {t("settings_premium_active")}
           </p>
-
           <SettingButton
             variant="primary"
             className="mt-4"
@@ -134,13 +150,11 @@ export default function Settings() {
       );
     }
 
-    // Not premium
     return (
       <>
         <p className="text-sm text-gray-700 dark:text-gray-300">
           {t("settings_premium_none")}
         </p>
-
         <SettingButton
           variant="success"
           className="mt-4"
@@ -159,6 +173,8 @@ export default function Settings() {
       <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
         {t("settings_title")}
       </h1>
+
+      {renderTrialUpgradeBanner()} {/* ✅ Trial countdown banner */}
 
       {/* ACCOUNT INFO */}
       <Card>
@@ -184,10 +200,7 @@ export default function Settings() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           {t("settings_premium_title")}
         </h2>
-
-        if (isPremium && status !== "trial") {
-          renderPremiumSection()
-        }
+        {renderPremiumSection()}
       </Card>
 
       {/* LOGOUT + BACK */}
