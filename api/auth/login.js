@@ -1,3 +1,7 @@
+import { kv } from "@vercel/kv";
+import bcrypt from "bcryptjs";
+import { signToken } from "../utils/jwt.js";
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
@@ -21,12 +25,11 @@ export default async function handler(req, res) {
     }
 
     const token = signToken({ email });
-
     const { password: _, ...safeUser } = user;
 
     return res.status(200).json({ ok: true, token, user: safeUser });
   } catch (err) {
-    console.error("LOGIN API ERROR:", err); // 👈 you’ll see this in Vercel logs
+    console.error("LOGIN API ERROR:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
