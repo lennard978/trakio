@@ -18,7 +18,8 @@ import LogoIcon from "./icons/icon-192.png";
 import { useAuth } from "./hooks/useAuth";
 import { usePremiumContext } from "./context/PremiumContext";
 import { Analytics } from "@vercel/analytics/react";
-import { Footer } from "./components/ui/Footer"
+import Footer from "./components/ui/Footer";
+
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AddEditSubscription = lazy(() =>
   import("./pages/AddEditSubscription")
