@@ -153,13 +153,15 @@ export default function Settings() {
         )}
       </Card>
 
-      <SettingButton variant="danger" onClick={logout}>
-        {t("settings_logout")}
-      </SettingButton>
+      <Card>
+        <SettingButton variant="danger" onClick={logout}>
+          {t("settings_logout")}
+        </SettingButton>
 
-      <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
-        {t("settings_back_to_dashboard")}
-      </SettingButton>
+        <SettingButton variant="neutral" onClick={() => navigate("/dashboard")}>
+          {t("settings_back_to_dashboard")}
+        </SettingButton>
+      </Card>
     </div>
   );
 }
