@@ -256,12 +256,12 @@ export default function SubscriptionForm() {
           </div>
 
           {/* CURRENCY SELECTOR */}
-          <div>
+          {/* <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_currency")}
             </label>
             <CurrencySelector value={currency} onChange={setCurrency} />
-          </div>
+          </div> */}
 
           {/* NOTIFICATIONS */}
           <div className="flex items-center gap-2">
