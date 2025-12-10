@@ -32,6 +32,7 @@ const TrialExpired = lazy(() => import("./pages/TrialExpired"));
 const Success = lazy(() => import("./pages/Success"));
 const Cancel = lazy(() => import("./pages/Cancel"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
+const Impressum = lazy(() => import("./pages/Impressum"));
 
 function LoadingSkeleton() {
   return (
@@ -129,6 +130,7 @@ export default function App() {
             <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
             <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
             <Route path="/trial-expired" element={<AnimatedPage><TrialExpired /></AnimatedPage>} />
+            <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
 
             <Route
               path="/login"
@@ -149,9 +151,10 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
-
+      <Footer />
       {/* NEW FLOATING iOS DOCK BAR */}
       <FloatingTabBar dir={dir} />
+
     </div>
   );
 }
