@@ -68,11 +68,9 @@ export default function SwipeToDeleteWrapper({
       uppercase active:scale-95 transition border
       bg-red-500/80 border-red-400/70
       dark:bg-red-600/80 dark:border-red-400/50
-
+      opacity: Math.abs(translateX) > 10 ? 1 : 0.15,
       shadow-[0_0_10px_rgba(255,70,70,0.35)]
       dark:shadow-[0_0_14px_rgba(255,50,50,0.45)]
-
-      backdrop-blur-xl
     "
         >
           {deleteLabel}
