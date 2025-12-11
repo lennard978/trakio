@@ -110,7 +110,7 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             {premium.isPremium ? (
-              <span className="px-2 py-1 text-xs bg-yellow-400 text-black rounded-md font-semibold shadow">
+              <span className="px-2 hidden py-1 text-xs bg-yellow-400 text-black rounded-md font-semibold shadow">
                 PREMIUM
               </span>
             ) : (
