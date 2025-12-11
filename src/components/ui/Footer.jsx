@@ -11,7 +11,6 @@ export default function Footer() {
         <Link to="/datenschutz" className="underline hover:text-blue-600">Datenschutz</Link>{" | "}
         <Link to="/agb" className="underline hover:text-blue-600">AGB</Link>
       </p>
-
     </footer>
   );
 }
