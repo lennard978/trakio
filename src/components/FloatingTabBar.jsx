@@ -36,56 +36,51 @@ export default function FloatingTabBar({ dir = "ltr" }) {
         border border-gray-200/80 dark:border-slate-700/70
 
         shadow-[0_6px_20px_rgba(15,23,42,0.22)]
-        flex flex-col items-center justify-between
+        flex items-center justify-between
       "
       style={{ direction: isRTL ? "rtl" : "ltr" }}
     >
-      <div className="flex justify-between items-center">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className="flex-1 flex justify-center"
-          >
-            {({ isActive }) => (
-              <div
-                className={`
+      {tabs.map((tab) => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          className="flex-1 flex justify-center"
+        >
+          {({ isActive }) => (
+            <div
+              className={`
                 relative flex flex-col items-center justify-center
                 text-[11px] font-medium
                 transition-all duration-200
                 ${isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 opacity-85"
-                  }
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-700 dark:text-gray-300 opacity-85"
+                }
               `}
-              >
-                {/* Icon */}
-                <span
-                  className={`
+            >
+              {/* Icon */}
+              <span
+                className={`
                   relative z-10
                   text-[20px] mb-0.5
                   transition-transform duration-200
                   ${isActive
-                      ? "scale-110 -translate-y-0.5"
-                      : "scale-95 translate-y-0"
-                    }
+                    ? "scale-110 -translate-y-0.5"
+                    : "scale-95 translate-y-0"
+                  }
                 `}
-                >
-                  {tab.icon}
-                </span>
+              >
+                {tab.icon}
+              </span>
 
-                {/* Label */}
-                <span className="relative z-10 truncate max-w-[60px]">
-                  {tab.label}
-                </span>
-              </div>
-            )}
-          </NavLink>
-        ))}
-      </div>
-      <div>
-        <Footer />
-      </div>
+              {/* Label */}
+              <span className="relative z-10 truncate max-w-[60px]">
+                {tab.label}
+              </span>
+            </div>
+          )}
+        </NavLink>
+      ))}
     </nav>
   );
 }
