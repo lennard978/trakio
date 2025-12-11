@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import {
   Routes,
   Route,
@@ -7,6 +7,7 @@ import {
   NavLink,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,7 @@ import LanguageSwitcher from "./components/LanguageSwitcher";
 import AnimatedPage from "./components/AnimatedPage";
 import FloatingTabBar from "./components/FloatingTabBar";
 import LogoIcon from "./icons/icon-192.png";
+import CurrencySelector from "./components/CurrencySelector";
 import { useAuth } from "./hooks/useAuth";
 import { usePremiumContext } from "./context/PremiumContext";
 import { Analytics } from "@vercel/analytics/react";
@@ -61,9 +63,21 @@ function ProtectedRoute({ children }) {
 export default function App() {
   const { user } = useAuth();
   const premium = usePremiumContext();
-  const { i18n } = useTranslation();
-
+  const { i18n, t } = useTranslation();
   const dir = i18n.dir();
+  const navigate = useNavigate();
+
+  // Currency state
+  const [currency, setCurrency] = useState(() => localStorage.getItem("selected_currency") || "EUR");
+
+  const handleCurrency = (value) => {
+    if (!premium.isPremium) {
+      navigate("/premium?reason=currency");
+      return;
+    }
+    setCurrency(value);
+    localStorage.setItem("selected_currency", value);
+  };
 
   return (
     <div
@@ -101,26 +115,17 @@ export default function App() {
             </span>
           </Link>
 
-
-
           <div className="flex items-center gap-3">
             {premium.isPremium ? (
-              <span className="px-2 hidden py-1 text-xs bg-yellow-400 text-black rounded-md font-semibold shadow">
-                PREMIUM
-              </span>
+              <CurrencySelector value={currency} onChange={handleCurrency} />
             ) : (
-              <Link
-                to="/premium"
-                className="
-                  px-3 py-1 text-xs bg-yellow-400 text-black
-                  rounded-md font-semibold shadow hover:bg-yellow-300
-                  transition active:scale-95
-                "
+              <button
+                onClick={() => navigate("/premium?reason=currency")}
+                className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200"
               >
-                UPGRADE
-              </Link>
+                EUR · {t("premium_locked_currency")}
+              </button>
             )}
-
             <DarkModeToggle />
             <LanguageSwitcher />
           </div>
@@ -149,7 +154,16 @@ export default function App() {
               element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>}
             />
 
-            <Route path="/dashboard" element={<ProtectedRoute><AnimatedPage><Dashboard /></AnimatedPage></ProtectedRoute>} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AnimatedPage>
+                    <Dashboard currency={currency} />
+                  </AnimatedPage>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/insights" element={<ProtectedRoute><AnimatedPage><InsightsPage /></AnimatedPage></ProtectedRoute>} />
             <Route path="/add" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
@@ -159,6 +173,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+
       {/* NEW FLOATING iOS DOCK BAR */}
       <FloatingTabBar dir={dir} />
       <div className="fixed bottom-0.5 w-full flex justify-center items-center mb-1 font-bold">

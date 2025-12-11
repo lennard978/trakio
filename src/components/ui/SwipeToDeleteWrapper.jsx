@@ -51,23 +51,34 @@ export default function SwipeToDeleteWrapper({
   return (
     <div className="relative mb-6">
       {/* DELETE BUTTON */}
-      <div className="absolute inset-y-0 right-3 flex items-center">
+      <div
+        className={`
+    absolute inset-y-0 right-3 flex items-center
+    transition-opacity duration-300 ease-in-out
+  `}
+        style={{
+          opacity: Math.abs(translateX) > 10 ? 1 : 0.3, // Adjust visibility depending on swipe
+          filter: 'blur(1.5px)', // Additional blur effect
+        }}
+      >
         <button
           onClick={onDelete}
           className="
-            px-4 py-2 rounded-xl text-xs font-semibold text-white
-            backdrop-blur-md active:scale-95 transition border uppercase
+      px-4 py-2 rounded-xl text-xs font-semibold text-white
+      uppercase active:scale-95 transition border
+      bg-red-500/80 border-red-400/70
+      dark:bg-red-600/80 dark:border-red-400/50
 
-            bg-red-500/85 border-red-400/70
-            shadow-[0_0_18px_rgba(255,70,70,0.55)]
+      shadow-[0_0_10px_rgba(255,70,70,0.35)]
+      dark:shadow-[0_0_14px_rgba(255,50,50,0.45)]
 
-            dark:bg-red-600/90 dark:border-red-400/40
-            dark:shadow-[0_0_22px_rgba(255,50,50,0.65)]
-          "
+      backdrop-blur-xl
+    "
         >
           {deleteLabel}
         </button>
       </div>
+
 
       <div
         style={{

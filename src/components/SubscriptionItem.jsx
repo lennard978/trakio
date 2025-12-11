@@ -116,8 +116,8 @@ export default function SubscriptionItem({
       <div
         className="
           p-5 rounded-3xl
-          bg-white/90 dark:bg-black/25
-          border border-gray-300 dark:border-white/10
+          bg-white/90 dark:bg-black/35
+          border  dark:border-white/10
           backdrop-blur-xl shadow-lg capitalize
           dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
         "

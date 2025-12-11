@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import SubscriptionItem from "../components/SubscriptionItem";
 import TrialBanner from "../components/TrialBanner";
 import useNotifications from "../hooks/useNotifications";
-import CurrencySelector from "../components/CurrencySelector";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 
@@ -40,14 +39,10 @@ function computeNextRenewal(datePaid, frequency) {
   return next;
 }
 
-export default function Dashboard() {
+export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
-  const [currency, setCurrency] = useState(
-    () => localStorage.getItem("selected_currency") || "EUR"
-  );
   const [rates, setRates] = useState(null);
 
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const premium = usePremium();
 
@@ -61,7 +56,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Load FX
+  // Load FX rates
   useEffect(() => {
     fetchRates("EUR").then((r) => {
       if (r) setRates(r);
@@ -73,15 +68,6 @@ export default function Dashboard() {
 
   const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
-
-  const handleCurrency = (value) => {
-    if (!premium.isPremium) {
-      navigate("/premium?reason=currency");
-      return;
-    }
-    setCurrency(value);
-    localStorage.setItem("selected_currency", value);
-  };
 
   // Sorted by next renewal date (soonest first)
   const sorted = subscriptions
@@ -101,21 +87,12 @@ export default function Dashboard() {
     <div className="max-w-2xl mx-auto mt-2 pb-20">
       <TrialBanner />
 
-      <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
+      <div className="">
         {hasSubscriptions && (
           <div className="flex items-center justify-between mb-4 p-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white px-2">{t("dashboard_title")}</h1>
-
-            {premium.isPremium ? (
-              <CurrencySelector value={currency} onChange={handleCurrency} />
-            ) : (
-              <button
-                onClick={() => navigate("/premium?reason=currency")}
-                className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-              >
-                EUR · {t("premium_locked_currency")}
-              </button>
-            )}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white px-2">
+              {t("dashboard_title")}
+            </h1>
           </div>
         )}
 
