@@ -49,7 +49,7 @@ export default function SwipeToDeleteWrapper({
   };
 
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-3">
       {/* DELETE BUTTON */}
       <div
         className={`
