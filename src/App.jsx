@@ -86,6 +86,16 @@ export default function App() {
         "
       >
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          {!user && (
+            <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300 ml-12">
+              <Link to="/impressum" className="hover:underline">Impressum</Link>
+              <span>|</span>
+              <Link to="/datenschutz" className="hover:underline">Datenschutz</Link>
+              <span>|</span>
+              <Link to="/agb" className="hover:underline">AGB</Link>
+            </div>
+          )}
+
           <Link
             to={user ? "/dashboard" : "/"}
             className="flex items-center gap-2"
@@ -156,7 +166,6 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
-      <Footer />
       {/* NEW FLOATING iOS DOCK BAR */}
       <FloatingTabBar dir={dir} />
 
