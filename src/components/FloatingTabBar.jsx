@@ -40,7 +40,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
       "
       style={{ direction: isRTL ? "rtl" : "ltr" }}
     >
-      <div>
+      <div className="flex justify-between items-center">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
