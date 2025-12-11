@@ -84,13 +84,13 @@ export default function Dashboard({ currency }) {
     });
 
   return (
-    <div className="max-w-2xl mx-auto mt-2 pb-20">
+    <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
 
       <div className="">
         {hasSubscriptions && (
-          <div className="flex items-center justify-between mb-4 p-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white px-2">
+          <div className="mb-6 p-0">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
               {t("dashboard_title")}
             </h1>
           </div>

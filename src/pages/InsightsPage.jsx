@@ -109,10 +109,10 @@ export default function InsightsPage() {
       : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
 
   return (
-    <div className="max-w-4xl mx-auto mt-4 p-4 pb-24 space-y-4">
+    <div className="max-w-4xl mx-auto mt-0 p-2 pb-4 space-y-4">
 
 
-      <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
         {t("insights_title")}
       </h1>
 

@@ -147,8 +147,8 @@ export default function Settings() {
   /** ------------------------------------------------------------------ */
 
   return (
-    <div className="max-w-lg mx-auto mt-2 space-y-6 pb-20">
-      <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
+    <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
+      <h1 className="text-2xl text-center font-bold mb-2 text-gray-900 dark:text-white px-2">
         {t("settings_title") || "Settings"}
       </h1>
 
