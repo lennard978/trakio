@@ -8,11 +8,8 @@ import SwipeToDeleteWrapper from "./ui/SwipeToDeleteWrapper";
 import CategoryChip, { CATEGORY_COLORS } from "./CategoryChip";
 import ProgressBar from "./ui/ProgressBar";
 
-/* --------------------------------------------------------------------------
- * UNIFIED FREQUENCY TABLE
- * -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 const FREQ = {
-  // Month-based intervals
   monthly: { months: 1 },
   quarterly: { months: 3 },
   semiannual: { months: 6 },
@@ -20,15 +17,10 @@ const FREQ = {
   yearly: { months: 12 },
   biennial: { months: 24 },
   triennial: { months: 36 },
-
-  // Day-based intervals
   weekly: { days: 7 },
   biweekly: { days: 14 },
 };
 
-/* --------------------------------------------------------------------------
- * Helper: compute next renewal date
- * -------------------------------------------------------------------------- */
 function computeNextRenewal(datePaid, frequency) {
   if (!datePaid) return null;
 
@@ -44,16 +36,11 @@ function computeNextRenewal(datePaid, frequency) {
   return next;
 }
 
-/* --------------------------------------------------------------------------
- * Helper: difference in days (rounded up)
- * -------------------------------------------------------------------------- */
 function diffInDays(dateA, dateB) {
   return Math.ceil((dateA - dateB) / 86400000);
 }
 
-/* ==========================================================================
- * COMPONENT
- * ========================================================================== */
+/* -------------------------------------------------------------------------- */
 export default function SubscriptionItem({
   item,
   currency,
@@ -66,23 +53,20 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
-  /* ------------------------------------------------------------------------
-   * Price conversion (memoized)
-   * ------------------------------------------------------------------------ */
+  // Calculate daysLeft
+  const nextRenewal = computeNextRenewal(item.datePaid, item.frequency);
+  const today = new Date();
+  const daysLeft = nextRenewal ? Math.max(diffInDays(nextRenewal, today), 0) : null;
+
+
   const displayPrice = useMemo(() => {
     if (!rates || !convert) return item.price;
     return convert(item.price, item.currency || "EUR", currency, rates);
   }, [item.price, item.currency, currency, rates, convert]);
 
-  /* ------------------------------------------------------------------------
-   * Colors
-   * ------------------------------------------------------------------------ */
   const categoryKey = (item.category || "other").toLowerCase();
   const color = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
-  /* ------------------------------------------------------------------------
-   * PROGRESS BAR LOGIC (memoized)
-   * ------------------------------------------------------------------------ */
   const progress = useMemo(() => {
     if (!item.datePaid) return 0;
 
@@ -100,9 +84,6 @@ export default function SubscriptionItem({
     return Math.round((used / total) * 100);
   }, [item.datePaid, item.frequency]);
 
-  /* ------------------------------------------------------------------------
-   * NEXT PAYMENT STATUS TEXT (memoized)
-   * ------------------------------------------------------------------------ */
   const nextPaymentText = useMemo(() => {
     if (!item.datePaid) return t("no_paid_date");
 
@@ -119,9 +100,6 @@ export default function SubscriptionItem({
     return t("overdue_days", { d: Math.abs(diff) });
   }, [item.datePaid, item.frequency, t]);
 
-  /* ------------------------------------------------------------------------
-   * OPEN DATE PICKER
-   * ------------------------------------------------------------------------ */
   const openCalendar = () => {
     const input = dateInputRef.current;
     if (!input) return;
@@ -130,9 +108,6 @@ export default function SubscriptionItem({
     input.click?.();
   };
 
-  /* ------------------------------------------------------------------------
-   * RENDER
-   * ------------------------------------------------------------------------ */
   return (
     <SwipeToDeleteWrapper
       onDelete={() => onDelete(item.id)}
@@ -171,7 +146,7 @@ export default function SubscriptionItem({
         </div>
 
         {/* BOTTOM ROW */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           {/* PAID BUTTON */}
           <button
             onClick={openCalendar}
@@ -189,20 +164,32 @@ export default function SubscriptionItem({
           </button>
 
           {/* PROGRESS BAR */}
-          <ProgressBar progress={progress} color={color} />
+          <ProgressBar progress={progress} color={color} datePaid={item.datePaid} daysLeft={daysLeft}
+            frequency={item.frequency} />
 
           {/* EDIT BUTTON */}
           <button
             onClick={() => navigate(`/edit/${item.id}`)}
-            className="
-              px-4 py-1.5 rounded-xl text-xs font-semibold
+            className="px-4 py-1.5 rounded-xl text-xs font-semibold
               text-white bg-blue-500/85 capitalize
               backdrop-blur-md border border-blue-300/40
               shadow-[0_4px_14px_rgba(0,0,0,0.15)]
-              active:scale-95
-            "
+              active:scale-95"
           >
             {t("edit")}
+          </button>
+
+          {/* DESKTOP DELETE BUTTON (Trash Icon) */}
+          <button
+            onClick={() => onDelete(item.id)}
+            title={t("button_delete")}
+            className="hidden md:inline-block px-3 py-1.5 rounded-xl text-sm
+              text-white bg-red-500/90
+              backdrop-blur-md border border-red-300/40
+              shadow-[0_4px_14px_rgba(0,0,0,0.15)]
+              hover:bg-red-600 active:scale-95"
+          >
+            🗑️
           </button>
         </div>
 

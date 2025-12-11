@@ -202,7 +202,7 @@ export default function SubscriptionForm() {
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-24">
       <Card>
-        <h1 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white py-4">
           {id ? t("edit_title") : t("add_title")}
         </h1>
 

@@ -140,7 +140,7 @@
 	"premium_sync_failed": "We couldn't verify your Premium status. Please try again.",
 	"premium_testimonial": "“This app totally changed how I keep track of subscriptions — absolutely worth it!”",
 	"premium_title": "Go Premium",
-	"premium_trial_active_until": "Your free trial is active until {{date}}.",
+	"premium_trial_active_until": "Your free trial is active until ",
 	"premium_trial_not_started": "You do not have a free trial.",
 	"premium_trial_started": "Your free trial has started!",
 	"premium_upgrade": "UPGRADE",

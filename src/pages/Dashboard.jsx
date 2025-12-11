@@ -101,10 +101,10 @@ export default function Dashboard() {
     <div className="max-w-2xl mx-auto mt-2 pb-20">
       <TrialBanner />
 
-      <div className="mt-2 p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
+      <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800">
         {hasSubscriptions && (
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold">{t("dashboard_title")}</h1>
+          <div className="flex items-center justify-between mb-4 p-4">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white px-2">{t("dashboard_title")}</h1>
 
             {premium.isPremium ? (
               <CurrencySelector value={currency} onChange={handleCurrency} />

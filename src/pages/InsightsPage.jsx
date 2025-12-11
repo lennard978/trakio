@@ -110,19 +110,9 @@ export default function InsightsPage() {
 
   return (
     <div className="max-w-4xl mx-auto mt-4 p-4 pb-24 space-y-4">
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="
-          mb-4 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700
-          bg-white/70 dark:bg-black/30 backdrop-blur-md
-          shadow-[0_3px_12px_rgba(0,0,0,0.08)]
-          hover:bg-gray-100 dark:hover:bg-gray-800 transition
-        "
-      >
-        ← {t("button_back")}
-      </button>
 
-      <h1 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white px-1">
+
+      <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white px-2">
         {t("insights_title")}
       </h1>
 
@@ -161,6 +151,17 @@ export default function InsightsPage() {
       </div>
 
       <Analytics subscriptions={subscriptions} />
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="
+          mb-4 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700
+          bg-white/70 dark:bg-black/30 backdrop-blur-md
+          shadow-[0_3px_12px_rgba(0,0,0,0.08)]
+          hover:bg-gray-100 dark:hover:bg-gray-800 transition
+        "
+      >
+        ← {t("button_back")}
+      </button>
     </div>
   );
 }

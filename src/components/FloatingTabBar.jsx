@@ -27,7 +27,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
       className="
         fixed bottom-5 left-1/2 -translate-x-1/2
         z-50 md:hidden
-        w-[92%] max-w-sm
+        w-[96%]
         px-4 py-2
         rounded-full
 

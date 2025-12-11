@@ -18,7 +18,7 @@ import LogoIcon from "./icons/icon-192.png";
 import { useAuth } from "./hooks/useAuth";
 import { usePremiumContext } from "./context/PremiumContext";
 import { Analytics } from "@vercel/analytics/react";
-import Footer from "./components/ui/Footer";
+import { Toaster } from "react-hot-toast";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AddEditSubscription = lazy(() =>
@@ -73,6 +73,7 @@ export default function App() {
         text-gray-900 dark:text-gray-100
       `}
     >
+      <Toaster position="top-center" />
       <Analytics />
 
       {/* PREMIUM HEADER */}
@@ -100,13 +101,7 @@ export default function App() {
             </span>
           </Link>
 
-          <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300 ml-12">
-            <Link to="/impressum" className="hover:underline">Impressum</Link>
-            <span>|</span>
-            <Link to="/datenschutz" className="hover:underline">Datenschutz</Link>
-            <span>|</span>
-            <Link to="/agb" className="hover:underline">AGB</Link>
-          </div>
+
 
           <div className="flex items-center gap-3">
             {premium.isPremium ? (
@@ -166,7 +161,15 @@ export default function App() {
       </main>
       {/* NEW FLOATING iOS DOCK BAR */}
       <FloatingTabBar dir={dir} />
-
+      <div className="fixed bottom-0 w-full flex justify-center items-center mb-1">
+        <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300 ml-12">
+          <Link to="/impressum" className="hover:underline">Impressum</Link>
+          <span>|</span>
+          <Link to="/datenschutz" className="hover:underline">Datenschutz</Link>
+          <span>|</span>
+          <Link to="/agb" className="hover:underline">AGB</Link>
+        </div>
+      </div>
     </div>
   );
 }

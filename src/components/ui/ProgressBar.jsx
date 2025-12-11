@@ -1,11 +1,17 @@
 // src/components/ui/ProgressBar.jsx
 import React from "react";
+import toast from "react-hot-toast";
 
-export default function ProgressBar({
-  progress,
-  color,
-  onClick,
-}) {
+export default function ProgressBar({ progress, color, onClick, daysLeft }) {
+  const handleClick = () => {
+    if (typeof daysLeft === "number") {
+      toast(`${daysLeft} day${daysLeft === 1 ? "" : "s"} until next payment`, {
+        icon: "⏳",
+      });
+    }
+    if (onClick) onClick();
+  };
+
   return (
     <div className="relative flex-1">
       <div
@@ -15,7 +21,7 @@ export default function ProgressBar({
           bg-gray-200 dark:bg-gray-700
           border-gray-300 dark:border-white/20
         "
-        onClick={onClick}
+        onClick={handleClick}
       >
         <div
           className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
@@ -26,7 +32,6 @@ export default function ProgressBar({
           }}
         />
 
-        {/* Center % */}
         <div
           className="
             absolute inset-0 flex items-center justify-center
