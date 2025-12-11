@@ -1,6 +1,6 @@
 // src/pages/Impressum.jsx
 import React from "react";
-
+import { Link } from "react-router-dom";
 export default function Impressum() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 text-sm text-gray-800 dark:text-gray-200">
@@ -39,6 +39,9 @@ export default function Impressum() {
 
       <p className="mt-4"><strong>Urheberrecht:</strong><br />
         Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht.</p>
+      <p className="mt-8">
+        <Link to="/" className="underline text-blue-600 hover:text-blue-800">Zurück zur Startseite</Link>
+      </p>
     </div>
   );
 }

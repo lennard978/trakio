@@ -161,7 +161,7 @@ export default function App() {
       </main>
       {/* NEW FLOATING iOS DOCK BAR */}
       <FloatingTabBar dir={dir} />
-      <div className="fixed bottom-0 w-full flex justify-center items-center mb-1">
+      <div className="fixed bottom-0.5 w-full flex justify-center items-center mb-1 font-bold">
         <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300 ml-12">
           <Link to="/impressum" className="hover:underline">Impressum</Link>
           <span>|</span>
