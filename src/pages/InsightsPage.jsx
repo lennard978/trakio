@@ -161,7 +161,14 @@ export default function InsightsPage() {
           Icon={ClockIcon} // you'll need to import this icon
         /> */}
         {/* SUBSCRIPTION PAYMENT HISTORY TABLE */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="p-5 rounded-2xl
+        bg-white/90 dark:bg-black/30
+        border border-gray-300/60 dark:border-white/10
+        backdrop-blur-xl
+        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+        transition-all
+        flex flex-col items-center gap-3 py-5">
           <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white text-center">
             {t("insights_payment_history")}
           </h2>
@@ -174,11 +181,11 @@ export default function InsightsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm table-auto">
                 <thead>
-                  <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-700">
+                  <tr className="text-center text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-700">
                     <th className="py-2 px-2">{t("subscription")}</th>
                     <th className="py-2 px-2">{t("frequency")}</th>
                     <th className="py-2 px-2">{t("total_payments")}</th>
-                    <th className="py-2 px-2">{t("previous_payments")}</th>
+                    <th className="py-2 px-2 text-center">{t("previous_payments")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -197,7 +204,7 @@ export default function InsightsPage() {
                     return (
                       <tr
                         key={sub.id}
-                        className="border-b border-gray-200 dark:border-gray-800"
+                        className="border-b text-center border-gray-200 dark:border-gray-800"
                       >
                         <td className="py-2 px-2 font-medium text-gray-900 dark:text-gray-100">
                           {sub.name}
@@ -234,8 +241,6 @@ export default function InsightsPage() {
       </div>
 
       <Analytics subscriptions={subscriptions} />
-
-
 
       <button
         onClick={() => navigate("/dashboard")}

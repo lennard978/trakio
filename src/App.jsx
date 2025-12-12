@@ -226,7 +226,7 @@ export default function App() {
       <FloatingTabBar dir={dir} />
 
       {/* FOOTER */}
-      <div className="fixed bottom-0.5 w-full flex justify-center items-center mb-1 font-bold">
+      <div className="fixed bottom-0.5 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center mb-1 font-bold">
         <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300">
           <Link to="/impressum" className="hover:underline">Impressum</Link>
           <span>|</span>
