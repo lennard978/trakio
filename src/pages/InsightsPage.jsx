@@ -14,7 +14,7 @@ import Analytics from "../components/Analytics";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
-
+import SettingButton from "../components/ui/SettingButton";
 import Card from "../components/ui/Card";
 
 const FREQ = {
@@ -161,7 +161,7 @@ export default function InsightsPage() {
           Icon={ClockIcon} // you'll need to import this icon
         /> */}
         {/* SUBSCRIPTION PAYMENT HISTORY TABLE */}
-        <div className="p-5 rounded-2xl
+        <div className="rounded-2xl
         bg-white/90 dark:bg-black/30
         border border-gray-300/60 dark:border-white/10
         backdrop-blur-xl
@@ -225,22 +225,17 @@ export default function InsightsPage() {
               </table>
             </div>
           )}
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => exportPaymentHistoryCSV(subscriptions)}
-              className="
-    bg-gray-700 hover:bg-gray-800
-    text-white px-4 py-2 rounded-xl text-sm
-  "
-            >
+          <div className="w-2/3 mt-2">
+            <SettingButton variant="primary" onClick={() => navigate("/dashboard")}>
               Export payment history (CSV)
-            </button>
+            </SettingButton>
           </div>
         </div>
 
       </div>
 
       <Analytics subscriptions={subscriptions} />
+      <PaymentTimelineChart subscriptions={subscriptions} />
 
       <button
         onClick={() => navigate("/dashboard")}
@@ -253,8 +248,6 @@ export default function InsightsPage() {
       >
         ← {t("button_back")}
       </button>
-
-      <PaymentTimelineChart subscriptions={subscriptions} />
 
     </div>
   );
