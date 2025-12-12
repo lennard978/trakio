@@ -35,6 +35,53 @@ function computeNextRenewal(datePaid, frequency) {
   return next;
 }
 
+/** Normalize history to [{date, amount, currency}] */
+function normalizeHistory(sub) {
+  const raw = Array.isArray(sub.history) ? sub.history : [];
+
+  const normalized = raw
+    .map((h) => {
+      // Old format: "YYYY-MM-DD"
+      if (typeof h === "string") {
+        const d = new Date(h);
+        if (Number.isNaN(d.getTime())) return null;
+        return {
+          date: h,
+          amount: Number(sub.price) || 0,
+          currency: sub.currency || "EUR",
+        };
+      }
+
+      // New format: {date, amount}
+      if (h && typeof h === "object") {
+        const date = typeof h.date === "string" ? h.date : "";
+        const d = new Date(date);
+        if (!date || Number.isNaN(d.getTime())) return null;
+
+        return {
+          date,
+          amount: typeof h.amount === "number" ? h.amount : Number(h.amount) || Number(sub.price) || 0,
+          currency: h.currency || sub.currency || "EUR",
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  // de-dupe by date+amount+currency (prevents duplicates from mixed formats)
+  const seen = new Set();
+  const deduped = [];
+  for (const e of normalized) {
+    const key = `${e.date}|${e.amount}|${e.currency}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(e);
+  }
+
+  return deduped;
+}
+
 export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
@@ -51,7 +98,15 @@ export default function Dashboard({ currency }) {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      const fixed = Array.isArray(saved) ? saved.map(ensureId) : [];
+      const fixed = Array.isArray(saved)
+        ? saved.map((s) => {
+          const withId = ensureId(s);
+          return {
+            ...withId,
+            history: normalizeHistory(withId),
+          };
+        })
+        : [];
       setSubscriptions(fixed);
       localStorage.setItem("subscriptions", JSON.stringify(fixed));
     } catch {
@@ -113,18 +168,39 @@ export default function Dashboard({ currency }) {
                 }}
                 onUpdatePaidDate={(id, newDate) => {
                   const updated = subscriptions.map((s) => {
-                    if (s.id === id) {
-                      const newHistory = s.datePaid
-                        ? [...(Array.isArray(s.history) ? s.history : []), s.datePaid]
-                        : Array.isArray(s.history) ? s.history : [];
+                    if (s.id !== id) return s;
 
-                      return {
-                        ...s,
-                        datePaid: newDate,
-                        history: newHistory,
-                      };
+                    // Normalize first (handles legacy data)
+                    const history = normalizeHistory(s);
+
+                    // Store the previous paid date as a history event (if valid)
+                    const prev = s.datePaid;
+                    if (prev) {
+                      const d = new Date(prev);
+                      if (!Number.isNaN(d.getTime())) {
+                        history.push({
+                          date: prev,
+                          amount: Number(s.price) || 0,
+                          currency: s.currency || "EUR",
+                        });
+                      }
                     }
-                    return s;
+
+                    // de-dupe again
+                    const seen = new Set();
+                    const deduped = [];
+                    for (const e of history) {
+                      const key = `${e.date}|${e.amount}|${e.currency}`;
+                      if (seen.has(key)) continue;
+                      seen.add(key);
+                      deduped.push(e);
+                    }
+
+                    return {
+                      ...s,
+                      datePaid: newDate,
+                      history: deduped,
+                    };
                   });
 
                   setSubscriptions(updated);
@@ -163,7 +239,12 @@ export default function Dashboard({ currency }) {
               reader.onload = (event) => {
                 try {
                   const imported = JSON.parse(event.target.result);
-                  const fixed = Array.isArray(imported) ? imported.map(ensureId) : [];
+                  const fixed = Array.isArray(imported)
+                    ? imported.map((s) => {
+                      const withId = ensureId(s);
+                      return { ...withId, history: normalizeHistory(withId) };
+                    })
+                    : [];
                   setSubscriptions(fixed);
                   localStorage.setItem("subscriptions", JSON.stringify(fixed));
                 } catch {

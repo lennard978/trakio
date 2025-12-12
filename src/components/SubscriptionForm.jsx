@@ -1,14 +1,13 @@
 // src/pages/SubscriptionForm.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
 
 import CategorySelector from "../components/CategorySelector";
 import FrequencySelector from "../components/FrequencySelector";
-import { usePremium } from "../hooks/usePremium";
+import CurrencySelector from "../components/CurrencySelector";
 
-// UI
+import { usePremium } from "../hooks/usePremium";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
@@ -16,307 +15,156 @@ export default function SubscriptionForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useTranslation();
-  const { showToast } = useToast();
   const premium = usePremium();
 
-  /** ------------------------------------------------------------------
-   * Local state
-   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------ */
+  /* Local state                                                         */
+  /* ------------------------------------------------------------------ */
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [frequency, setFrequency] = useState("monthly");
   const [category, setCategory] = useState("other");
-  const [datePaid, setDatePaid] = useState("");
-  const [notify, setNotify] = useState(true);
   const [currency, setCurrency] = useState("EUR");
+  const [datePaid, setDatePaid] = useState("");
 
-  const advancedFrequencies = useMemo(
-    () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
-    []
-  );
+  const isEdit = Boolean(id);
 
-  /** ------------------------------------------------------------------
-   * Load subscription if editing
-   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------ */
+  /* Load existing subscription (edit mode)                              */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
-    let stored = [];
-    try {
-      stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-    } catch {
-      stored = [];
-    }
+    if (!isEdit) return;
 
-    if (!id) {
-      const defaultCurrency = localStorage.getItem("selected_currency");
-      if (defaultCurrency) setCurrency(defaultCurrency);
-      return;
-    }
-
-    const existing = stored.find((s) => s.id === Number(id));
+    const stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+    const existing = stored.find((s) => s.id === id);
     if (!existing) return;
 
-    setName(existing.name);
-    setPrice(existing.price);
-    setFrequency(existing.frequency);
+    setName(existing.name || "");
+    setPrice(String(existing.price ?? ""));
+    setFrequency(existing.frequency || "monthly");
     setCategory(existing.category || "other");
-    setDatePaid(existing.datePaid || "");
-    setNotify(existing.notify !== false);
     setCurrency(existing.currency || "EUR");
-  }, [id]);
+    setDatePaid(existing.datePaid || "");
+  }, [id, isEdit]);
 
-  /** ------------------------------------------------------------------
-   * Helper: Recurring history generation
-   * ------------------------------------------------------------------ */
-  function generateHistory(startDate, price, frequency) {
-    const history = [];
-    const today = new Date();
-    const start = new Date(startDate);
-    if (Number.isNaN(start.getTime())) return history;
-
-    const date = new Date(start);
-
-    while (date <= today) {
-      history.push({
-        date: date.toISOString().split("T")[0],
-        amount: Number(price),
-      });
-
-      if (frequency === "monthly") {
-        date.setMonth(date.getMonth() + 1);
-      } else if (frequency === "yearly") {
-        date.setFullYear(date.getFullYear() + 1);
-      } else {
-        break;
-      }
-    }
-
-    return history;
-  }
-
-  /** ------------------------------------------------------------------
-   * Validation helpers
-   * ------------------------------------------------------------------ */
-  const savedSubscriptions = useMemo(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }, []);
-
-  const limitReached =
-    !id && !premium.isPremium && savedSubscriptions.length >= 5;
-
-  const requiresPremiumInterval =
-    !premium.isPremium && advancedFrequencies.includes(frequency);
-
-  /** ------------------------------------------------------------------
-   * Core submit handler
-   * ------------------------------------------------------------------ */
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (limitReached) {
-      navigate("/premium?reason=limit");
+  /* ------------------------------------------------------------------ */
+  /* Save handler                                                        */
+  /* ------------------------------------------------------------------ */
+  const handleSave = () => {
+    if (!name || !price) {
+      alert(t("form_required_fields"));
       return;
     }
 
-    if (!name.trim()) {
-      showToast(t("error_required"), "error");
-      return;
-    }
+    const stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
 
-    if (!price || Number(price) <= 0) {
-      showToast(t("error_price_invalid"), "error");
-      return;
-    }
-
-    if (!datePaid) {
-      showToast(t("error_paid_date_required"), "error");
-      return;
-    }
-
-    if (requiresPremiumInterval) {
-      navigate("/premium?reason=intervals");
-      return;
-    }
-
-    let newSubscriptions;
-
-    if (id) {
-      // Editing
-      newSubscriptions = savedSubscriptions.map((s) => {
-        if (s.id !== Number(id)) return s;
-
-        const history = Array.isArray(s.history) ? [...s.history] : [];
-
-        if (s.datePaid !== datePaid || s.price !== Number(price)) {
-          history.push({
-            date: datePaid,
-            amount: Number(price),
-          });
-        }
+    if (isEdit) {
+      const updated = stored.map((s) => {
+        if (s.id !== id) return s;
 
         return {
           ...s,
-          name,
+          name: name.trim(),
           price: Number(price),
           frequency,
           category,
-          datePaid,
-          notify,
           currency,
-          history,
+          datePaid: datePaid || null,
+          // IMPORTANT:
+          // history is NOT touched here
+          // only "Mark as Paid" adds to history
         };
       });
 
-      showToast(t("toast_updated"), "success");
+      localStorage.setItem("subscriptions", JSON.stringify(updated));
     } else {
-      // New subscription
-      newSubscriptions = [
-        ...savedSubscriptions,
-        {
-          id: Date.now(),
-          name,
-          price: Number(price),
-          frequency,
-          category,
-          datePaid,
-          notify,
-          currency,
-          history: generateHistory(datePaid, price, frequency),
-        },
-      ];
+      const newSubscription = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        price: Number(price),
+        frequency,
+        category,
+        currency,
+        datePaid: datePaid || null,
+        history: [], // ← always start empty
+        createdAt: new Date().toISOString(),
+      };
 
-      showToast(t("toast_added"), "success");
+      localStorage.setItem(
+        "subscriptions",
+        JSON.stringify([...stored, newSubscription])
+      );
     }
 
-    localStorage.setItem("subscriptions", JSON.stringify(newSubscriptions));
     navigate("/dashboard");
   };
 
-  /** ------------------------------------------------------------------
-   * UI
-   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------ */
+  /* UI                                                                  */
+  /* ------------------------------------------------------------------ */
   return (
-    <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
+    <div className="max-w-xl mx-auto mt-4 px-3">
       <Card>
-        <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white py-4">
-          {id ? t("edit_title") : t("add_title")}
+        <h1 className="text-xl font-bold mb-4 text-center">
+          {isEdit ? t("edit_subscription") : t("add_subscription")}
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* NAME */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_name")}
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("placeholder_examples")}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
-            />
-          </div>
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("subscription_name")}
+            className="w-full p-3 rounded-xl border dark:border-gray-700
+                       bg-white dark:bg-black/40"
+          />
 
-          {/* PRICE */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_price")} ({currency})
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
-            />
-          </div>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder={t("price")}
+            className="w-full p-3 rounded-xl border dark:border-gray-700
+                       bg-white dark:bg-black/40"
+          />
 
-          {/* FREQUENCY */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_frequency")}
-            </label>
-            <FrequencySelector
-              value={frequency}
-              onChange={setFrequency}
-              isPremium={premium.isPremium}
-              onRequirePremium={() => navigate("/premium?reason=intervals")}
-            />
-          </div>
+          <CurrencySelector value={currency} onChange={setCurrency} />
 
-          {/* CATEGORY */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_category")}
-            </label>
-            <CategorySelector value={category} onChange={setCategory} />
-          </div>
+          <FrequencySelector value={frequency} onChange={setFrequency} />
 
-          {/* DATE PAID */}
+          <CategorySelector value={category} onChange={setCategory} />
+
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("label_select_paid_date")}
+            <label className="block text-sm text-gray-500 mb-1">
+              {t("label_last_paid")}
             </label>
             <input
               type="date"
-              value={datePaid}
+              value={datePaid || ""}
               onChange={(e) => setDatePaid(e.target.value)}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
+              className="w-full p-3 rounded-xl border dark:border-gray-700
+                         bg-white dark:bg-black/40"
             />
           </div>
 
-          {/* NOTIFICATIONS */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={notify}
-              onChange={(e) => setNotify(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label className="text-sm text-gray-700 dark:text-gray-300">
-              {t("settings_notifications_info")}
-            </label>
-          </div>
+          {!premium.isPremium && (
+            <div className="text-xs text-center text-gray-500 mt-2">
+              {t("premium_currency_hint")}
+            </div>
+          )}
+        </div>
 
-          {/* ACTION BUTTONS */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <SettingButton type="submit" variant="primary" className="sm:w-auto">
-              {id ? t("form_save") : t("add_subscription")}
-            </SettingButton>
+        <div className="flex gap-3 mt-6">
+          <SettingButton onClick={() => navigate("/dashboard")} variant="secondary">
+            {t("button_cancel")}
+          </SettingButton>
 
-            <SettingButton
-              variant="neutral"
-              className="sm:w-auto"
-              onClick={() => navigate("/dashboard")}
-            >
-              {t("button_cancel")}
-            </SettingButton>
-          </div>
-        </form>
+          <SettingButton onClick={handleSave} variant="primary">
+            {t("button_save")}
+          </SettingButton>
+        </div>
       </Card>
     </div>
   );

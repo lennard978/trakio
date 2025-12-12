@@ -9,33 +9,79 @@ import {
   Legend,
 } from "recharts";
 
+function normalizeHistory(sub) {
+  const raw = Array.isArray(sub.history) ? sub.history : [];
+  return raw
+    .map((h) => {
+      if (typeof h === "string") {
+        const d = new Date(h);
+        if (Number.isNaN(d.getTime())) return null;
+        return { date: h, amount: Number(sub.price) || 0, currency: sub.currency || "EUR" };
+      }
+      if (h && typeof h === "object") {
+        const date = typeof h.date === "string" ? h.date : "";
+        const d = new Date(date);
+        if (!date || Number.isNaN(d.getTime())) return null;
+        return {
+          date,
+          amount: typeof h.amount === "number" ? h.amount : Number(h.amount) || Number(sub.price) || 0,
+          currency: h.currency || sub.currency || "EUR",
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+function getAllPaymentEvents(sub) {
+  const events = normalizeHistory(sub);
+  if (sub.datePaid) {
+    const d = new Date(sub.datePaid);
+    if (!Number.isNaN(d.getTime())) {
+      events.push({
+        date: sub.datePaid,
+        amount: Number(sub.price) || 0,
+        currency: sub.currency || "EUR",
+      });
+    }
+  }
+
+  // Sort ascending for timeline
+  events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // De-dupe
+  const seen = new Set();
+  const deduped = [];
+  for (const e of events) {
+    const key = `${e.date}|${e.amount}|${e.currency}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(e);
+  }
+  return deduped;
+}
+
 export default function PaymentTimelineChart({ subscriptions }) {
   const data = [];
 
   subscriptions.forEach((sub) => {
-    const name = sub.name;
-    const allDates = [
-      ...(Array.isArray(sub.history) ? sub.history : []),
-      ...(sub.datePaid ? [sub.datePaid] : []),
-    ].filter((d) => !isNaN(new Date(d).getTime()));
+    const events = getAllPaymentEvents(sub);
 
-    allDates.forEach((dateStr) => {
+    events.forEach((e) => {
       data.push({
-        id: sub.id,           // Include the ID for navigation
-        name,
-        date: new Date(dateStr),
+        id: sub.id, // Include the ID for navigation
+        name: sub.name,
+        dateISO: e.date,
+        timestamp: new Date(e.date).getTime(),
+        y: sub.name,
+        amount: e.amount,
+        currency: e.currency || sub.currency || "EUR",
       });
     });
   });
 
-  // Sort by date
-  data.sort((a, b) => a.date - b.date);
-
-  const chartData = data.map((item, index) => ({
-    ...item,
-    timestamp: item.date.getTime(),
-    y: item.name,
-  }));
+  // Sort by timestamp
+  data.sort((a, b) => a.timestamp - b.timestamp);
 
   return (
     <div
@@ -53,32 +99,28 @@ export default function PaymentTimelineChart({ subscriptions }) {
             domain={["auto", "auto"]}
             name="Date"
             type="number"
-            tickFormatter={(unixTime) =>
-              new Date(unixTime).toLocaleDateString()
-            }
+            tickFormatter={(unixTime) => new Date(unixTime).toLocaleDateString()}
           />
-          <YAxis
-            type="category"
-            dataKey="y"
-            name="Subscription"
-            width={120}
-          />
+          <YAxis type="category" dataKey="y" name="Subscription" width={120} />
+
           <Tooltip
             formatter={(value, name, props) => {
-              const date = new Date(props.payload.timestamp);
-              return [date.toLocaleDateString(), "Payment Date"];
+              const p = props?.payload;
+              if (!p) return ["", ""];
+              const date = new Date(p.timestamp).toLocaleDateString();
+              const amount = `${p.currency} ${Number(p.amount || 0).toFixed(2)}`;
+              return [`${date} • ${amount}`, "Payment"];
             }}
           />
+
           <Legend />
           <Scatter
             name="Payments"
-            data={chartData}
+            data={data}
             fill="#8884d8"
-            onClick={(data) => {
-              const id = data.payload.id;
-              if (id) {
-                window.location.href = `/edit/${id}`;
-              }
+            onClick={(d) => {
+              const id = d?.payload?.id;
+              if (id) window.location.href = `/edit/${id}`;
             }}
           />
         </ScatterChart>

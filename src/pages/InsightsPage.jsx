@@ -5,7 +5,6 @@ import {
   TagIcon,
   ArrowTrendingUpIcon,
   ArrowPathIcon,
-  ClockIcon, // NEW ICON for payment count
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import PaymentTimelineChart from "../components/PaymentTimelineChart";
@@ -28,6 +27,59 @@ const FREQ = {
   triennial: { monthlyFactor: 1 / 36 },
 };
 
+function normalizeHistory(sub) {
+  const raw = Array.isArray(sub.history) ? sub.history : [];
+  return raw
+    .map((h) => {
+      if (typeof h === "string") {
+        const d = new Date(h);
+        if (Number.isNaN(d.getTime())) return null;
+        return { date: h, amount: Number(sub.price) || 0, currency: sub.currency || "EUR" };
+      }
+      if (h && typeof h === "object") {
+        const date = typeof h.date === "string" ? h.date : "";
+        const d = new Date(date);
+        if (!date || Number.isNaN(d.getTime())) return null;
+        return {
+          date,
+          amount: typeof h.amount === "number" ? h.amount : Number(h.amount) || Number(sub.price) || 0,
+          currency: h.currency || sub.currency || "EUR",
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
+function getAllPaymentEvents(sub) {
+  // Events = normalized history + current datePaid as an event (if valid)
+  const events = normalizeHistory(sub);
+  if (sub.datePaid) {
+    const d = new Date(sub.datePaid);
+    if (!Number.isNaN(d.getTime())) {
+      events.push({
+        date: sub.datePaid,
+        amount: Number(sub.price) || 0,
+        currency: sub.currency || "EUR",
+      });
+    }
+  }
+
+  // Sort desc for display
+  events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // De-dupe (date+amount+currency)
+  const seen = new Set();
+  const deduped = [];
+  for (const e of events) {
+    const key = `${e.date}|${e.amount}|${e.currency}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(e);
+  }
+  return deduped;
+}
+
 export default function InsightsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -42,7 +94,7 @@ export default function InsightsPage() {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-    setSubscriptions(saved);
+    setSubscriptions(Array.isArray(saved) ? saved : []);
   }, []);
 
   useEffect(() => {
@@ -61,16 +113,13 @@ export default function InsightsPage() {
 
     const converted =
       rates && preferredCurrency
-        ? convert(item.price, base, preferredCurrency, rates)
-        : item.price;
+        ? convert(Number(item.price) || 0, base, preferredCurrency, rates)
+        : Number(item.price) || 0;
 
     return converted * cfg.monthlyFactor;
   };
 
-  const totalMonthly = subscriptions.reduce(
-    (sum, item) => sum + monthlyCost(item),
-    0
-  );
+  const totalMonthly = subscriptions.reduce((sum, item) => sum + monthlyCost(item), 0);
 
   const categoryTotals = subscriptions.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + monthlyCost(item);
@@ -78,23 +127,22 @@ export default function InsightsPage() {
   }, {});
 
   const topCategory =
-    Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-    t("none");
+    Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || t("none");
 
   const highestSub =
     subscriptions.length === 0
       ? null
-      : subscriptions.reduce((p, c) => (p.price > c.price ? p : c));
+      : subscriptions.reduce((p, c) => (Number(p.price) > Number(c.price) ? p : c));
 
   const highestSubConverted =
     rates && highestSub
       ? convert(
-        highestSub.price,
+        Number(highestSub.price) || 0,
         highestSub.currency || "EUR",
         preferredCurrency,
         rates
       )
-      : highestSub?.price || 0;
+      : Number(highestSub?.price) || 0;
 
   const freqCount = subscriptions.reduce((acc, item) => {
     acc[item.frequency] = (acc[item.frequency] || 0) + 1;
@@ -106,13 +154,10 @@ export default function InsightsPage() {
       ? "-"
       : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
 
-  // ✅ NEW: Total number of payments (from history[] + datePaid)
-  const totalPayments = [
-    ...(Array.isArray(subscriptions.history) ? subscriptions.history : []),
-    ...(subscriptions.datePaid ? [subscriptions.datePaid] : [])
-  ].filter((d) => !isNaN(new Date(d).getTime())).length;
-
-
+  // Total payments across all subscriptions
+  const totalPayments = useMemo(() => {
+    return subscriptions.reduce((sum, sub) => sum + getAllPaymentEvents(sub).length, 0);
+  }, [subscriptions]);
 
   return (
     <div className="max-w-4xl mx-auto mt-0 p-2 pb-4 space-y-4">
@@ -127,19 +172,13 @@ export default function InsightsPage() {
           Icon={CurrencyEuroIcon}
         />
 
-        <InsightsCard
-          title={t("dashboard_top_category")}
-          value={topCategory}
-          Icon={TagIcon}
-        />
+        <InsightsCard title={t("dashboard_top_category")} value={topCategory} Icon={TagIcon} />
 
         <InsightsCard
           title={t("dashboard_highest_sub")}
           value={
             highestSub
-              ? `${highestSub.name} (${preferredCurrency} ${highestSubConverted.toFixed(
-                2
-              )})`
+              ? `${highestSub.name} (${preferredCurrency} ${highestSubConverted.toFixed(2)})`
               : t("none")
           }
           Icon={ArrowTrendingUpIcon}
@@ -147,122 +186,102 @@ export default function InsightsPage() {
 
         <InsightsCard
           title={t("dashboard_common_frequency")}
-          value={
-            mostCommonFreq === "-" ? "-" : t(`frequency_${mostCommonFreq}`)
-          }
+          value={mostCommonFreq === "-" ? "-" : t(`frequency_${mostCommonFreq}`)}
           Icon={ArrowPathIcon}
         />
+      </div>
 
-        {/* ✅ NEW Payment History card */}
-        {/* <InsightsCard
-          title={t("dashboard_total_payments")}
-          value={`${totalPayments} ${t("payments")}`}
-          Icon={ClockIcon} // you'll need to import this icon
-        /> */}
-        {/* SUBSCRIPTION PAYMENT HISTORY TABLE */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white text-center">
-            {t("insights_payment_history")}
-          </h2>
+      {/* PAYMENT HISTORY TABLE */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white text-center">
+          {t("insights_payment_history")}
+        </h2>
 
-          {subscriptions.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center">
-              {t("insights_no_subscriptions")}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm table-auto">
-                <thead>
-                  <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-700">
-                    <th className="py-2 px-2">{t("subscription")}</th>
-                    <th className="py-2 px-2">{t("frequency")}</th>
-                    <th className="py-2 px-2">{t("total_payments")}</th>
-                    <th className="py-2 px-2">{t("previous_payments")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscriptions.map((sub) => {
-                    const allPayments = [
-                      ...(Array.isArray(sub.history) ? sub.history : []),
-                      ...(sub.datePaid ? [sub.datePaid] : []),
-                    ].filter((d) => !isNaN(new Date(d).getTime()));
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t("total_payments")}: <span className="font-semibold">{totalPayments}</span>
+        </div>
 
-                    const formattedDates = allPayments
-                      .slice()
-                      .sort((a, b) => new Date(b) - new Date(a))
-                      .map((d) => new Date(d).toLocaleDateString())
-                      .join(", ");
+        {subscriptions.length === 0 ? (
+          <p className="text-gray-500 text-sm text-center">{t("insights_no_subscriptions")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm table-auto">
+              <thead>
+                <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-700">
+                  <th className="py-2 px-2">{t("subscription")}</th>
+                  <th className="py-2 px-2">{t("frequency")}</th>
+                  <th className="py-2 px-2">{t("total_payments")}</th>
+                  <th className="py-2 px-2">{t("previous_payments")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subscriptions.map((sub) => {
+                  const events = getAllPaymentEvents(sub);
 
-                    return (
-                      <tr
-                        key={sub.id}
-                        className="border-b border-gray-200 dark:border-gray-800"
-                      >
-                        <td className="py-2 px-2 font-medium text-gray-900 dark:text-gray-100">
-                          {sub.name}
-                        </td>
-                        <td className="py-2 px-2 capitalize text-gray-600 dark:text-gray-400">
-                          {t(`frequency_${sub.frequency}`)}
-                        </td>
-                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
-                          {allPayments.length}
-                        </td>
-                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
-                          {formattedDates || "-"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => {
-                const csvRows = [
-                  ["Subscription", "Frequency", "Total Payments", "Payment Dates"],
-                ];
+                  const formattedDates = events
+                    .slice(0, 8)
+                    .map((e) => new Date(e.date).toLocaleDateString())
+                    .join(", ");
 
-                subscriptions.forEach((sub) => {
-                  const payments = [
-                    ...(Array.isArray(sub.history) ? sub.history : []),
-                    ...(sub.datePaid ? [sub.datePaid] : []),
-                  ].filter((d) => !isNaN(new Date(d).getTime()));
+                  return (
+                    <tr key={sub.id} className="border-b border-gray-200 dark:border-gray-800">
+                      <td className="py-2 px-2 font-medium text-gray-900 dark:text-gray-100">
+                        {sub.name}
+                      </td>
+                      <td className="py-2 px-2 capitalize text-gray-600 dark:text-gray-400">
+                        {t(`frequency_${sub.frequency}`)}
+                      </td>
+                      <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
+                        {events.length}
+                      </td>
+                      <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
+                        {formattedDates || "-"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-                  const formattedDates = payments
-                    .slice()
-                    .sort((a, b) => new Date(b) - new Date(a))
-                    .map((d) => new Date(d).toLocaleDateString())
-                    .join(" | ");
+        {/* EXPORT */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => {
+              // CSV rows: include amount + currency now
+              const csvRows = [
+                ["Subscription", "Frequency", "Payment Date", "Amount", "Currency"],
+              ];
 
+              subscriptions.forEach((sub) => {
+                const events = getAllPaymentEvents(sub);
+
+                // Export newest -> oldest
+                events.forEach((e) => {
                   csvRows.push([
                     sub.name,
                     sub.frequency,
-                    payments.length,
-                    `"${formattedDates}"`,
+                    e.date, // keep ISO for Excel safety
+                    String(e.amount ?? ""),
+                    e.currency || sub.currency || "EUR",
                   ]);
                 });
+              });
 
-                const csvContent = csvRows
-                  .map((row) => row.join(","))
-                  .join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "subscription_payment_history.csv";
-                link.click();
-              }}
-              className="px-4 py-2 mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-xl"
-            >
-              {t("button_export_payment_history")}
-
-            </button>
-          </div>
+              const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+              const blob = new Blob([csvContent], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "subscription_payment_history.csv";
+              link.click();
+            }}
+            className="px-4 py-2 mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-xl"
+          >
+            {t("button_export_payment_history")}
+          </button>
         </div>
-
       </div>
 
       <Analytics subscriptions={subscriptions} />
@@ -280,7 +299,6 @@ export default function InsightsPage() {
       </button>
 
       <PaymentTimelineChart subscriptions={subscriptions} />
-
     </div>
   );
 }
@@ -290,9 +308,7 @@ function InsightsCard({ title, value, Icon }) {
     <Card className="flex items-center gap-3 py-5">
       <Icon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
       <div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {title}
-        </div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{title}</div>
         <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {value}
         </div>
