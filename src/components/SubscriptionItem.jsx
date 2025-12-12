@@ -40,31 +40,6 @@ function diffInDays(dateA, dateB) {
   return Math.ceil((dateA - dateB) / 86400000);
 }
 
-/** Normalize history to [{date, amount, currency}] */
-function normalizeHistory(item) {
-  const raw = Array.isArray(item.history) ? item.history : [];
-  return raw
-    .map((h) => {
-      if (typeof h === "string") {
-        const d = new Date(h);
-        if (Number.isNaN(d.getTime())) return null;
-        return { date: h, amount: Number(item.price) || 0, currency: item.currency || "EUR" };
-      }
-      if (h && typeof h === "object") {
-        const date = typeof h.date === "string" ? h.date : "";
-        const d = new Date(date);
-        if (!date || Number.isNaN(d.getTime())) return null;
-        return {
-          date,
-          amount: typeof h.amount === "number" ? h.amount : Number(h.amount) || Number(item.price) || 0,
-          currency: h.currency || item.currency || "EUR",
-        };
-      }
-      return null;
-    })
-    .filter(Boolean);
-}
-
 /* -------------------------------------------------------------------------- */
 export default function SubscriptionItem({
   item,
@@ -83,8 +58,8 @@ export default function SubscriptionItem({
   const daysLeft = nextRenewal ? Math.max(diffInDays(nextRenewal, today), 0) : null;
 
   const displayPrice = useMemo(() => {
-    if (!rates || !convert) return Number(item.price) || 0;
-    return convert(Number(item.price) || 0, item.currency || "EUR", currency, rates);
+    if (!rates || !convert) return item.price;
+    return convert(item.price, item.currency || "EUR", currency, rates);
   }, [item.price, item.currency, currency, rates, convert]);
 
   const categoryKey = (item.category || "other").toLowerCase();
@@ -131,20 +106,11 @@ export default function SubscriptionItem({
     input.click?.();
   };
 
-  // For "previous payments" preview: show last 3 history events (not datePaid)
-  const historyPreview = useMemo(() => {
-    const hist = normalizeHistory(item);
-    const sorted = hist
-      .slice()
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 3)
-      .map((e) => new Date(e.date).toLocaleDateString())
-      .join(", ");
-    return sorted;
-  }, [item]);
-
   return (
-    <SwipeToDeleteWrapper onDelete={() => onDelete(item.id)} deleteLabel={t("delete")}>
+    <SwipeToDeleteWrapper
+      onDelete={() => onDelete(item.id)}
+      deleteLabel={t("delete")}
+    >
       <div
         className="
           p-5 rounded-3xl
@@ -162,20 +128,30 @@ export default function SubscriptionItem({
             </div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {currency} {Number(displayPrice).toFixed(2)} / {t(`frequency_${item.frequency}`)}
+              {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {t("label_last_paid")}: {new Date(item.datePaid).toLocaleDateString()}
+                {t("label_last_paid")}:{" "}
+                {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
 
-            {historyPreview && (
+            {item.history && item.history.length > 0 && (
               <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                {t("previous_payments")}: {historyPreview}
+                {t("previous_payments")}:{" "}
+                {item.history
+                  .filter((d) => !isNaN(new Date(d).getTime())) // Only valid dates
+                  .slice()
+                  .reverse()
+                  .slice(0, 3)
+                  .map((d) => new Date(d).toLocaleDateString())
+                  .join(", ")}
               </div>
             )}
+
+
           </div>
 
           <CategoryChip category={item.category} />
