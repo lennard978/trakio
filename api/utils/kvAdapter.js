@@ -1,7 +1,6 @@
 let kv = null;
 
 if (process.env.VERCEL) {
-  // Only import KV on Vercel
   const mod = await import("@vercel/kv");
   kv = mod.kv;
 }
