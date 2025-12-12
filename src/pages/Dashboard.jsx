@@ -8,32 +8,11 @@ import TrialBanner from "../components/TrialBanner";
 import useNotifications from "../hooks/useNotifications";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
-
-const FREQ = {
-  monthly: { months: 1 },
-  weekly: { days: 7 },
-  biweekly: { days: 14 },
-  quarterly: { months: 3 },
-  semiannual: { months: 6 },
-  nine_months: { months: 9 },
-  yearly: { months: 12 },
-  biennial: { months: 24 },
-  triennial: { months: 36 },
-};
-
-function computeNextRenewal(datePaid, frequency) {
-  if (!datePaid) return null;
-  const start = new Date(datePaid);
-  if (Number.isNaN(start.getTime())) return null;
-
-  const next = new Date(start);
-  const cfg = FREQ[frequency] || FREQ.monthly;
-
-  if (cfg.months) next.setMonth(start.getMonth() + cfg.months);
-  if (cfg.days) next.setDate(start.getDate() + cfg.days);
-
-  return next;
-}
+import UpcomingPayments from "../components/UpcomingPayments";
+import MonthlyBudget from "../components/MonthlyBudget";
+import { detectPriceIncrease } from "../utils/priceAlert";
+import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
+import { computeNextRenewal } from "../utils/renewal";
 
 export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -98,6 +77,27 @@ export default function Dashboard({ currency }) {
         )}
 
         {hasSubscriptions && (
+          <UpcomingPayments
+            subscriptions={subscriptions}
+            currency={preferredCurrency}
+            rates={rates}
+            convert={convert}
+          />
+        )}
+
+        {hasSubscriptions && (
+          <MonthlyBudget
+            subscriptions={subscriptions}
+            currency={preferredCurrency}
+          />
+        )}
+
+        {premium.isPremium && (
+          <ForgottenSubscriptions subscriptions={subscriptions} />
+        )}
+
+
+        {hasSubscriptions && (
           <div className="space-y-3 mt-3">
             {sorted.map((sub) => (
               <SubscriptionItem
@@ -113,18 +113,40 @@ export default function Dashboard({ currency }) {
                 }}
                 onUpdatePaidDate={(id, newDate) => {
                   const updated = subscriptions.map((s) => {
-                    if (s.id === id) {
-                      const newHistory = s.datePaid
-                        ? [...(Array.isArray(s.history) ? s.history : []), s.datePaid]
-                        : Array.isArray(s.history) ? s.history : [];
+                    if (s.id !== id) return s;
 
-                      return {
-                        ...s,
-                        datePaid: newDate,
-                        history: newHistory,
-                      };
-                    }
-                    return s;
+                    const previousPrice =
+                      Array.isArray(s.priceHistory) && s.priceHistory.length > 0
+                        ? s.priceHistory[s.priceHistory.length - 1].price
+                        : s.price;
+
+                    const alert = detectPriceIncrease({
+                      previousPrice,
+                      newPrice: s.price,
+                    });
+
+                    const priceHistory = [
+                      ...(Array.isArray(s.priceHistory) ? s.priceHistory : []),
+                      {
+                        date: newDate,
+                        price: s.price,
+                        currency: s.currency || "EUR",
+                      },
+                    ];
+
+                    const newHistory = s.datePaid
+                      ? [...(Array.isArray(s.history) ? s.history : []), s.datePaid]
+                      : Array.isArray(s.history)
+                        ? s.history
+                        : [];
+
+                    return {
+                      ...s,
+                      datePaid: newDate,
+                      history: newHistory,
+                      priceHistory,
+                      priceAlert: alert || null,
+                    };
                   });
 
                   setSubscriptions(updated);
@@ -135,47 +157,6 @@ export default function Dashboard({ currency }) {
           </div>
         )}
       </div>
-
-      {hasSubscriptions && (
-        <div className="flex gap-3 mt-6 justify-center">
-          <button
-            onClick={() => {
-              const dataStr = JSON.stringify(subscriptions, null, 2);
-              const blob = new Blob([dataStr], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "subscriptions.json";
-              link.click();
-            }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl"
-          >
-            Export Subscriptions
-          </button>
-
-          <input
-            type="file"
-            accept="application/json"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              const reader = new FileReader();
-              reader.onload = (event) => {
-                try {
-                  const imported = JSON.parse(event.target.result);
-                  const fixed = Array.isArray(imported) ? imported.map(ensureId) : [];
-                  setSubscriptions(fixed);
-                  localStorage.setItem("subscriptions", JSON.stringify(fixed));
-                } catch {
-                  alert("Error importing data");
-                }
-              };
-              reader.readAsText(file);
-            }}
-            className="bg-white dark:bg-black text-sm"
-          />
-        </div>
-      )}
     </div>
   );
 }

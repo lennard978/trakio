@@ -163,6 +163,14 @@ export default function Settings() {
         </p>
       </Card>
 
+      <button
+        onClick={() => navigate("/premium")}
+        className="text-blue-500 underline"
+      >
+        Upgrade to Premium
+      </button>
+
+
       {/* TRIAL INFO */}
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">

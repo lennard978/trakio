@@ -13,6 +13,7 @@ import PaymentTimelineChart from "../components/PaymentTimelineChart";
 import Analytics from "../components/Analytics";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
+import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 
 import Card from "../components/ui/Card";
 
@@ -219,46 +220,13 @@ export default function InsightsPage() {
           )}
           <div className="mt-4 flex justify-center">
             <button
-              onClick={() => {
-                const csvRows = [
-                  ["Subscription", "Frequency", "Total Payments", "Payment Dates"],
-                ];
-
-                subscriptions.forEach((sub) => {
-                  const payments = [
-                    ...(Array.isArray(sub.history) ? sub.history : []),
-                    ...(sub.datePaid ? [sub.datePaid] : []),
-                  ].filter((d) => !isNaN(new Date(d).getTime()));
-
-                  const formattedDates = payments
-                    .slice()
-                    .sort((a, b) => new Date(b) - new Date(a))
-                    .map((d) => new Date(d).toLocaleDateString())
-                    .join(" | ");
-
-                  csvRows.push([
-                    sub.name,
-                    sub.frequency,
-                    payments.length,
-                    `"${formattedDates}"`,
-                  ]);
-                });
-
-                const csvContent = csvRows
-                  .map((row) => row.join(","))
-                  .join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "subscription_payment_history.csv";
-                link.click();
-              }}
-              className="px-4 py-2 mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-xl"
+              onClick={() => exportPaymentHistoryCSV(subscriptions)}
+              className="
+    bg-gray-700 hover:bg-gray-800
+    text-white px-4 py-2 rounded-xl text-sm
+  "
             >
-              {t("button_export_payment_history")}
-
+              Export payment history (CSV)
             </button>
           </div>
         </div>
@@ -266,6 +234,8 @@ export default function InsightsPage() {
       </div>
 
       <Analytics subscriptions={subscriptions} />
+
+
 
       <button
         onClick={() => navigate("/dashboard")}

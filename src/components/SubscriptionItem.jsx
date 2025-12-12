@@ -1,5 +1,3 @@
-// src/components/SubscriptionItem.jsx
-
 import React, { useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -7,35 +5,14 @@ import { useTranslation } from "react-i18next";
 import SwipeToDeleteWrapper from "./ui/SwipeToDeleteWrapper";
 import CategoryChip, { CATEGORY_COLORS } from "./CategoryChip";
 import ProgressBar from "./ui/ProgressBar";
+import HealthBadge from "./HealthBadge";
+import PriceAlertBadge from "./PriceAlertBadge";
+
+import { computeNextRenewal } from "../utils/renewal";
+import { getSubscriptionHealth } from "../utils/subscriptionHealth";
+import { usePremium } from "../hooks/usePremium";
 
 /* -------------------------------------------------------------------------- */
-const FREQ = {
-  monthly: { months: 1 },
-  quarterly: { months: 3 },
-  semiannual: { months: 6 },
-  nine_months: { months: 9 },
-  yearly: { months: 12 },
-  biennial: { months: 24 },
-  triennial: { months: 36 },
-  weekly: { days: 7 },
-  biweekly: { days: 14 },
-};
-
-function computeNextRenewal(datePaid, frequency) {
-  if (!datePaid) return null;
-
-  const start = new Date(datePaid);
-  if (isNaN(start)) return null;
-
-  const next = new Date(start);
-  const cfg = FREQ[frequency] || { months: 1 };
-
-  if (cfg.months) next.setMonth(start.getMonth() + cfg.months);
-  if (cfg.days) next.setDate(start.getDate() + cfg.days);
-
-  return next;
-}
-
 function diffInDays(dateA, dateB) {
   return Math.ceil((dateA - dateB) / 86400000);
 }
@@ -51,12 +28,23 @@ export default function SubscriptionItem({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const premium = usePremium();
   const dateInputRef = useRef(null);
 
+  /* ----------------------- HEALTH STATUS ----------------------- */
+  const health = useMemo(
+    () => getSubscriptionHealth(item),
+    [item]
+  );
+
+  /* ----------------------- RENEWAL LOGIC ----------------------- */
   const nextRenewal = computeNextRenewal(item.datePaid, item.frequency);
   const today = new Date();
-  const daysLeft = nextRenewal ? Math.max(diffInDays(nextRenewal, today), 0) : null;
+  const daysLeft = nextRenewal
+    ? Math.max(diffInDays(nextRenewal, today), 0)
+    : null;
 
+  /* ----------------------- PRICE DISPLAY ----------------------- */
   const displayPrice = useMemo(() => {
     if (!rates || !convert) return item.price;
     return convert(item.price, item.currency || "EUR", currency, rates);
@@ -65,6 +53,7 @@ export default function SubscriptionItem({
   const categoryKey = (item.category || "other").toLowerCase();
   const color = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
+  /* ----------------------- PROGRESS ----------------------- */
   const progress = useMemo(() => {
     if (!item.datePaid) return 0;
 
@@ -73,6 +62,7 @@ export default function SubscriptionItem({
     const end = computeNextRenewal(item.datePaid, item.frequency);
 
     if (!end) return 0;
+
     const total = end - start;
     const used = now - start;
 
@@ -82,6 +72,7 @@ export default function SubscriptionItem({
     return Math.round((used / total) * 100);
   }, [item.datePaid, item.frequency]);
 
+  /* ----------------------- NEXT PAYMENT TEXT ----------------------- */
   const nextPaymentText = useMemo(() => {
     if (!item.datePaid) return t("no_paid_date");
 
@@ -101,7 +92,6 @@ export default function SubscriptionItem({
   const openCalendar = () => {
     const input = dateInputRef.current;
     if (!input) return;
-
     input.showPicker?.();
     input.click?.();
   };
@@ -121,14 +111,16 @@ export default function SubscriptionItem({
         "
       >
         {/* HEADER */}
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-3 gap-3">
           <div>
+            <HealthBadge label={health.label} color={health.color} />
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               {item.name}
             </div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
+              {currency} {displayPrice.toFixed(2)} /{" "}
+              {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
@@ -138,11 +130,11 @@ export default function SubscriptionItem({
               </div>
             )}
 
-            {item.history && item.history.length > 0 && (
+            {item.history?.length > 0 && (
               <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {t("previous_payments")}:{" "}
                 {item.history
-                  .filter((d) => !isNaN(new Date(d).getTime())) // Only valid dates
+                  .filter((d) => !isNaN(new Date(d)))
                   .slice()
                   .reverse()
                   .slice(0, 3)
@@ -151,15 +143,19 @@ export default function SubscriptionItem({
               </div>
             )}
 
-
           </div>
 
-          <CategoryChip category={item.category} />
+          {/* CATEGORY + HEALTH + PRICE ALERT */}
+          <div className="flex flex-col items-end gap-1">
+            <CategoryChip category={item.category} />
+            {premium.isPremium && item.priceAlert && (
+              <PriceAlertBadge alert={item.priceAlert} />
+            )}
+          </div>
         </div>
 
-        {/* BOTTOM ROW */}
+        {/* ACTION ROW */}
         <div className="flex items-center gap-4 flex-wrap">
-          {/* PAID BUTTON */}
           <button
             onClick={openCalendar}
             title={nextPaymentText}
@@ -175,7 +171,6 @@ export default function SubscriptionItem({
             {t("paid")}
           </button>
 
-          {/* PROGRESS BAR */}
           <ProgressBar
             progress={progress}
             color={color}
@@ -184,27 +179,29 @@ export default function SubscriptionItem({
             frequency={item.frequency}
           />
 
-          {/* EDIT BUTTON */}
           <button
             onClick={() => navigate(`/edit/${item.id}`)}
-            className="px-4 py-1.5 rounded-xl text-xs font-semibold
+            className="
+              px-4 py-1.5 rounded-xl text-xs font-semibold
               text-white bg-blue-500/85 capitalize
               backdrop-blur-md border border-blue-300/40
               shadow-[0_4px_14px_rgba(0,0,0,0.15)]
-              active:scale-95"
+              active:scale-95
+            "
           >
             {t("edit")}
           </button>
 
-          {/* DELETE ICON (DESKTOP ONLY) */}
           <button
             onClick={() => onDelete(item.id)}
             title={t("button_delete")}
-            className="hidden md:inline-block px-3 py-1.5 rounded-xl text-sm
+            className="
+              hidden md:inline-block px-3 py-1.5 rounded-xl text-sm
               text-white bg-red-500/90
               backdrop-blur-md border border-red-300/40
               shadow-[0_4px_14px_rgba(0,0,0,0.15)]
-              hover:bg-red-600 active:scale-95"
+              hover:bg-red-600 active:scale-95
+            "
           >
             🗑️
           </button>
@@ -216,7 +213,9 @@ export default function SubscriptionItem({
           type="date"
           className="hidden"
           value={item.datePaid || ""}
-          onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
+          onChange={(e) =>
+            onUpdatePaidDate(item.id, e.target.value)
+          }
         />
       </div>
     </SwipeToDeleteWrapper>

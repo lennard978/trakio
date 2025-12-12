@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -9,73 +9,126 @@ import {
   Legend,
 } from "recharts";
 
+/* -------------------------------------------------------------------------- */
+/* Tooltip formatter                                                          */
+/* -------------------------------------------------------------------------- */
+function CustomTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+
+  const { name, label } = payload[0].payload;
+
+  return (
+    <div className="px-3 py-2 rounded-lg bg-black/80 text-white text-xs">
+      <div className="font-semibold">{name}</div>
+      <div>{label}</div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 export default function PaymentTimelineChart({ subscriptions }) {
-  const data = [];
+  const [filter, setFilter] = useState("all");
 
-  subscriptions.forEach((sub) => {
-    const name = sub.name;
-    const allDates = [
-      ...(Array.isArray(sub.history) ? sub.history : []),
-      ...(sub.datePaid ? [sub.datePaid] : []),
-    ].filter((d) => !isNaN(new Date(d).getTime()));
+  /* ----------------------- Normalize + Sort Data ----------------------- */
+  const data = useMemo(() => {
+    const rows = [];
 
-    allDates.forEach((dateStr) => {
-      data.push({
-        id: sub.id,           // Include the ID for navigation
-        name,
-        date: new Date(dateStr),
+    subscriptions.forEach((sub) => {
+      const dates = [
+        ...(Array.isArray(sub.history) ? sub.history : []),
+        sub.datePaid,
+      ]
+        .filter(Boolean)
+        .map((d) => new Date(d))
+        .filter((d) => !isNaN(d.getTime()));
+
+      dates.forEach((date) => {
+        rows.push({
+          id: sub.id,
+          name: sub.name,
+          timestamp: date.getTime(),
+          label: date.toLocaleDateString(),
+        });
       });
     });
-  });
 
-  // Sort by date
-  data.sort((a, b) => a.date - b.date);
+    return rows.sort((a, b) => a.timestamp - b.timestamp);
+  }, [subscriptions]);
 
-  const chartData = data.map((item, index) => ({
-    ...item,
-    timestamp: item.date.getTime(),
-    y: item.name,
-  }));
+  /* ----------------------- Filter Logic ----------------------- */
+  const filteredData =
+    filter === "all"
+      ? data
+      : data.filter((d) => d.id === filter);
+
+  if (filteredData.length === 0) return null;
 
   return (
     <div
-      className="w-full bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4"
-      style={{ minHeight: "360px" }}
+      className="
+        w-full bg-white dark:bg-gray-900
+        rounded-xl shadow-lg
+        border border-gray-200 dark:border-gray-800
+        p-4 mt-4 mb-10
+      "
+      style={{ minHeight: "380px" }}
     >
       <h3 className="text-sm mb-3 text-gray-700 dark:text-gray-300 font-medium text-center">
-        Payment Timeline (All Subscriptions)
+        Payment timeline
       </h3>
 
+      {/* FILTER */}
+      <div className="mb-3 flex justify-center">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="
+            px-3 py-1.5 text-sm rounded-lg
+            bg-white dark:bg-gray-800
+            border border-gray-300 dark:border-gray-700
+            text-gray-800 dark:text-gray-200
+          "
+        >
+          <option value="all">All subscriptions</option>
+          {subscriptions.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* CHART */}
       <ResponsiveContainer width="100%" height={300}>
         <ScatterChart>
           <XAxis
+            type="number"
             dataKey="timestamp"
             domain={["auto", "auto"]}
-            name="Date"
-            type="number"
-            tickFormatter={(unixTime) =>
-              new Date(unixTime).toLocaleDateString()
+            tickFormatter={(ts) =>
+              new Date(ts).toLocaleDateString()
             }
+            name="Date"
           />
+
           <YAxis
             type="category"
-            dataKey="y"
-            name="Subscription"
+            dataKey="name"
             width={120}
+            name="Subscription"
           />
-          <Tooltip
-            formatter={(value, name, props) => {
-              const date = new Date(props.payload.timestamp);
-              return [date.toLocaleDateString(), "Payment Date"];
-            }}
-          />
+
+          <Tooltip content={<CustomTooltip />} />
           <Legend />
+
           <Scatter
             name="Payments"
-            data={chartData}
-            fill="#8884d8"
-            onClick={(data) => {
-              const id = data.payload.id;
+            data={filteredData}
+            fill="#3b82f6"
+            onClick={(e) => {
+              const id = e?.payload?.id;
               if (id) {
                 window.location.href = `/edit/${id}`;
               }

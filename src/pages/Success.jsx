@@ -1,69 +1,87 @@
-// src/pages/Success.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePremiumContext } from "../context/PremiumContext";
-import { useAuth } from "../hooks/useAuth";
-import { useTranslation } from "react-i18next";
-import { useToast } from "../context/ToastContext";
+import { usePremium } from "../hooks/usePremium";
 
 export default function Success() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { activatePremium } = usePremiumContext();
-  const { user } = useAuth();
-  const { showToast } = useToast();
-
-  const [loading, setLoading] = useState(true);
+  const premium = usePremium();
+  const [status, setStatus] = useState("activating"); // activating | ready | timeout
 
   useEffect(() => {
-    const go = async () => {
-      try {
-        if (!user?.email) {
-          showToast(t("premium_sync_failed"), "error");
-          setLoading(false);
-          return;
-        }
+    let attempts = 0;
+    const maxAttempts = 10;
 
-        await activatePremium();
-        showToast(t("premium_success_message"), "success");
+    const interval = setInterval(async () => {
+      attempts++;
+
+      try {
+        await premium.refreshPremiumStatus();
+
+        if (premium.isPremium) {
+          clearInterval(interval);
+          setStatus("ready");
+
+          // Small delay for UX smoothness
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1200);
+        }
       } catch (err) {
-        console.error("Success error:", err);
-        showToast(t("premium_sync_failed"), "error");
+        console.error("Premium refresh failed:", err);
       }
 
-      setLoading(false);
-    };
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setStatus("timeout");
+      }
+    }, 2000);
 
-    go();
-  }, [user, activatePremium, showToast, t]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center mt-16 px-4">
-        <div className="max-w-md w-full p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">
-          <h1 className="text-xl font-semibold">{t("loading")}</h1>
-        </div>
-      </div>
-    );
-  }
+    return () => clearInterval(interval);
+  }, [premium, navigate]);
 
   return (
-    <div className="flex justify-center mt-16 px-4">
-      <div className="max-w-md w-full p-8 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">
-        <h1 className="text-2xl font-bold mb-3">
-          {t("premium_success_title")}
-        </h1>
+    <div className="flex justify-center mt-20 px-4">
+      <div className="max-w-md w-full p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-center">
+        {status === "activating" && (
+          <>
+            <h1 className="text-xl font-semibold mb-3">
+              Activating Premium…
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              We’re confirming your subscription. This may take a few seconds.
+            </p>
+          </>
+        )}
 
-        <p className="mb-6 text-sm text-gray-700 dark:text-gray-200">
-          {t("premium_success_message")}
-        </p>
+        {status === "ready" && (
+          <>
+            <h1 className="text-xl font-semibold mb-3">
+              Premium activated 🎉
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Redirecting to your dashboard…
+            </p>
+          </>
+        )}
 
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="px-6 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition active:scale-95"
-        >
-          {t("button_continue")}
-        </button>
+        {status === "timeout" && (
+          <>
+            <h1 className="text-xl font-semibold mb-3">
+              Payment received
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Your payment was successful, but Premium is still syncing.
+              This usually resolves within a minute.
+            </p>
+
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl"
+            >
+              Go to Dashboard
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
