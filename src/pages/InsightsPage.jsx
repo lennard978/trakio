@@ -12,6 +12,7 @@ import PaymentTimelineChart from "../components/PaymentTimelineChart";
 import Analytics from "../components/Analytics";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
+import useSubscriptionsKV from "../hooks/useSubscriptionsKV";
 
 import Card from "../components/ui/Card";
 
@@ -85,17 +86,17 @@ export default function InsightsPage() {
   const navigate = useNavigate();
   const premium = usePremium();
 
-  const [subscriptions, setSubscriptions] = useState([]);
+  const { subscriptions, loading } = useSubscriptionsKV();
   const [rates, setRates] = useState(null);
 
   useEffect(() => {
     if (!premium.isPremium) navigate("/dashboard");
   }, [premium, navigate]);
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-    setSubscriptions(Array.isArray(saved) ? saved : []);
-  }, []);
+  if (loading) {
+    return <div className="text-center mt-8">{t("loading")}</div>;
+  }
+
 
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));

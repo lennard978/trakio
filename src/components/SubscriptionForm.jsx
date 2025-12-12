@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import CategorySelector from "../components/CategorySelector";
 import FrequencySelector from "../components/FrequencySelector";
 import CurrencySelector from "../components/CurrencySelector";
+import useSubscriptionsKV from "../hooks/useSubscriptionsKV";
 
 import { usePremium } from "../hooks/usePremium";
 import Card from "../components/ui/Card";
@@ -16,6 +17,7 @@ export default function SubscriptionForm() {
   const { id } = useParams();
   const { t } = useTranslation();
   const premium = usePremium();
+  const { create, update } = useSubscriptionsKV();
 
   /* ------------------------------------------------------------------ */
   /* Local state                                                         */
@@ -50,54 +52,33 @@ export default function SubscriptionForm() {
   /* ------------------------------------------------------------------ */
   /* Save handler                                                        */
   /* ------------------------------------------------------------------ */
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !price) {
       alert(t("form_required_fields"));
       return;
     }
 
-    const stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+    const payload = {
+      id: isEdit ? id : crypto.randomUUID(),
+      name: name.trim(),
+      price: Number(price),
+      frequency,
+      category,
+      currency,
+      datePaid: datePaid || null,
+      history: [],
+      createdAt: new Date().toISOString(),
+    };
 
     if (isEdit) {
-      const updated = stored.map((s) => {
-        if (s.id !== id) return s;
-
-        return {
-          ...s,
-          name: name.trim(),
-          price: Number(price),
-          frequency,
-          category,
-          currency,
-          datePaid: datePaid || null,
-          // IMPORTANT:
-          // history is NOT touched here
-          // only "Mark as Paid" adds to history
-        };
-      });
-
-      localStorage.setItem("subscriptions", JSON.stringify(updated));
+      await update(payload);
     } else {
-      const newSubscription = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        price: Number(price),
-        frequency,
-        category,
-        currency,
-        datePaid: datePaid || null,
-        history: [], // ← always start empty
-        createdAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem(
-        "subscriptions",
-        JSON.stringify([...stored, newSubscription])
-      );
+      await create(payload);
     }
 
     navigate("/dashboard");
   };
+
 
   /* ------------------------------------------------------------------ */
   /* UI                                                                  */
