@@ -1,14 +1,12 @@
 export const config = { runtime: "nodejs" };
 
-import { login, signup } from "./utils/authHandlers";
+import { signup, login } from "./utils/authHandlers";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { action } = req.query;
-
-    if (action === "login") return login(req, res);
-    if (action === "signup") return signup(req, res);
+    if (req.query.action === "signup") return signup(req, res);
+    if (req.query.action === "login") return login(req, res);
   }
 
-  res.status(405).json({ error: "Method not allowed" });
+  return res.status(405).json({ error: "Method not allowed" });
 }
