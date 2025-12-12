@@ -4,79 +4,63 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    const savedToken = localStorage.getItem("token");
-
-    if (savedUser && savedToken) {
+    if (savedUser) {
       setUser(JSON.parse(savedUser));
-      setToken(savedToken);
     }
   }, []);
 
-  const saveAuth = (user, token) => {
+  const saveUser = (user) => {
     setUser(user);
-    setToken(token);
     localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", token);
   };
 
-  // ✅ SAFER signup
+  // ✅ SIGNUP (NEW ENDPOINT)
   const signup = async (email, password) => {
-    let data;
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const res = await fetch("/api/auth?action=signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
-      data = await res.json(); // still might throw, so in try
-      if (!res.ok) throw new Error(data.error || "Signup failed");
-
-      return login(email, password); // auto-login
-    } catch (err) {
-      console.error("Signup failed:", err);
-      throw new Error(data?.error || err.message || "Signup failed");
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Signup failed");
     }
+
+    // auto-login after signup
+    return login(email, password);
   };
 
-  // ✅ SAFER login
+  // ✅ LOGIN (NEW ENDPOINT)
   const login = async (email, password) => {
-    let data;
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const res = await fetch("/api/auth?action=login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
-      data = await res.json(); // catch invalid JSON too
-      if (!res.ok) throw new Error(data.error || "Login failed");
-
-      saveAuth(data.user, data.token);
-      return true;
-    } catch (err) {
-      console.error("Login failed:", err);
-      throw new Error(data?.error || err.message || "Login failed");
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Login failed");
     }
+
+    const data = await res.json();
+    saveUser(data.user);
+    return true;
   };
 
   const logout = () => {
     setUser(null);
-    setToken(null);
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, signup, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

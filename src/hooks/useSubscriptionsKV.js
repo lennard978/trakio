@@ -52,12 +52,13 @@ export default function useSubscriptionsKV() {
   };
 
   const remove = async (id) => {
-    await fetch(`/api/subscriptions/${id}`, {
+    await fetch(`/api/subscriptions?id=${id}`, {
       method: "DELETE",
-      credentials: "include", // 🔴 REQUIRED
+      credentials: "include",
     });
     fetchAll();
   };
+
 
   useEffect(() => {
     fetchAll();
