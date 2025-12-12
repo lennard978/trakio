@@ -215,5 +215,14 @@
 	"overdue_days": "Overdue by {{d}} days.",
 	"label_premium_badge": "PRO",
 	"settings_manage_subscription": "Manage subscription",
-	"none": "None"
+	"none": "None",
+	"dashboard_total_payments": "Total Payments",
+	"payments": "payments",
+	"insights_payment_history": "Payment History",
+	"insights_no_subscriptions": "No subscriptions found",
+	"subscription": "Subscription",
+	"frequency": "Frequency",
+	"total_payments": "Total Payments",
+	"previous_payments": "Previous Payments",
+	"button_export_payment_history": "Export Payment History"
 }

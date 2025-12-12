@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import SubscriptionItem from "../components/SubscriptionItem";
@@ -9,9 +9,6 @@ import useNotifications from "../hooks/useNotifications";
 import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 
-/** -------------------------------------------------------------
- * Shared frequency config (matches SubscriptionItem & Insights)
- * ------------------------------------------------------------- */
 const FREQ = {
   monthly: { months: 1 },
   weekly: { days: 7 },
@@ -26,7 +23,6 @@ const FREQ = {
 
 function computeNextRenewal(datePaid, frequency) {
   if (!datePaid) return null;
-
   const start = new Date(datePaid);
   if (Number.isNaN(start.getTime())) return null;
 
@@ -46,63 +42,56 @@ export default function Dashboard({ currency }) {
   const { t } = useTranslation();
   const premium = usePremium();
 
-  // Load subscriptions
+  // Ensure subscription has a unique ID
+  const ensureId = (sub) => ({
+    ...sub,
+    id: sub.id || crypto.randomUUID(),
+  });
+
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      if (Array.isArray(saved)) setSubscriptions(saved);
+      const fixed = Array.isArray(saved) ? saved.map(ensureId) : [];
+      setSubscriptions(fixed);
+      localStorage.setItem("subscriptions", JSON.stringify(fixed));
     } catch {
       setSubscriptions([]);
     }
   }, []);
 
-  // Load FX rates
   useEffect(() => {
-    fetchRates("EUR").then((r) => {
-      if (r) setRates(r);
-    });
+    fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
-  // Notifications for renewals
   useNotifications(subscriptions);
 
   const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
 
-  // Sorted by next renewal date (soonest first)
-  const sorted = subscriptions
-    .slice()
-    .sort((a, b) => {
-      const nextA = computeNextRenewal(a.datePaid, a.frequency);
-      const nextB = computeNextRenewal(b.datePaid, b.frequency);
-
-      if (!nextA && !nextB) return 0;
-      if (!nextA) return 1;
-      if (!nextB) return -1;
-
-      return nextA - nextB;
-    });
+  const sorted = subscriptions.slice().sort((a, b) => {
+    const nextA = computeNextRenewal(a.datePaid, a.frequency);
+    const nextB = computeNextRenewal(b.datePaid, b.frequency);
+    if (!nextA && !nextB) return 0;
+    if (!nextA) return 1;
+    if (!nextB) return -1;
+    return nextA - nextB;
+  });
 
   return (
     <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
 
-      <div className="">
-        {hasSubscriptions && (
-          <div className="mb-6 p-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">
+      <div>
+        {hasSubscriptions ? (
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
               {t("dashboard_title")}
             </h1>
           </div>
-        )}
-
-        {!hasSubscriptions && (
+        ) : (
           <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
             <p className="mb-3">{t("dashboard_empty")}</p>
-            <Link
-              to="/add"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <Link to="/add" className="text-blue-600 dark:text-blue-400 hover:underline">
               {t("dashboard_empty_cta")}
             </Link>
           </div>
@@ -120,26 +109,73 @@ export default function Dashboard({ currency }) {
                 onDelete={(id) => {
                   const updated = subscriptions.filter((s) => s.id !== id);
                   setSubscriptions(updated);
-                  localStorage.setItem(
-                    "subscriptions",
-                    JSON.stringify(updated)
-                  );
+                  localStorage.setItem("subscriptions", JSON.stringify(updated));
                 }}
                 onUpdatePaidDate={(id, newDate) => {
-                  const updated = subscriptions.map((s) =>
-                    s.id === id ? { ...s, datePaid: newDate } : s
-                  );
+                  const updated = subscriptions.map((s) => {
+                    if (s.id === id) {
+                      const newHistory = s.datePaid
+                        ? [...(Array.isArray(s.history) ? s.history : []), s.datePaid]
+                        : Array.isArray(s.history) ? s.history : [];
+
+                      return {
+                        ...s,
+                        datePaid: newDate,
+                        history: newHistory,
+                      };
+                    }
+                    return s;
+                  });
+
                   setSubscriptions(updated);
-                  localStorage.setItem(
-                    "subscriptions",
-                    JSON.stringify(updated)
-                  );
+                  localStorage.setItem("subscriptions", JSON.stringify(updated));
                 }}
               />
             ))}
           </div>
         )}
       </div>
+
+      {hasSubscriptions && (
+        <div className="flex gap-3 mt-6 justify-center">
+          <button
+            onClick={() => {
+              const dataStr = JSON.stringify(subscriptions, null, 2);
+              const blob = new Blob([dataStr], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "subscriptions.json";
+              link.click();
+            }}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl"
+          >
+            Export Subscriptions
+          </button>
+
+          <input
+            type="file"
+            accept="application/json"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                try {
+                  const imported = JSON.parse(event.target.result);
+                  const fixed = Array.isArray(imported) ? imported.map(ensureId) : [];
+                  setSubscriptions(fixed);
+                  localStorage.setItem("subscriptions", JSON.stringify(fixed));
+                } catch {
+                  alert("Error importing data");
+                }
+              };
+              reader.readAsText(file);
+            }}
+            className="bg-white dark:bg-black text-sm"
+          />
+        </div>
+      )}
     </div>
   );
 }

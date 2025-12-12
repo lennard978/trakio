@@ -53,11 +53,9 @@ export default function SubscriptionItem({
   const { t } = useTranslation();
   const dateInputRef = useRef(null);
 
-  // Calculate daysLeft
   const nextRenewal = computeNextRenewal(item.datePaid, item.frequency);
   const today = new Date();
   const daysLeft = nextRenewal ? Math.max(diffInDays(nextRenewal, today), 0) : null;
-
 
   const displayPrice = useMemo(() => {
     if (!rates || !convert) return item.price;
@@ -117,7 +115,7 @@ export default function SubscriptionItem({
         className="
           p-5 rounded-3xl
           bg-white/90 dark:bg-black/35
-          border  dark:border-white/10
+          border dark:border-white/10
           backdrop-blur-xl shadow-lg capitalize
           dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
         "
@@ -130,8 +128,7 @@ export default function SubscriptionItem({
             </div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {currency} {displayPrice.toFixed(2)} /{" "}
-              {t(`frequency_${item.frequency}`)}
+              {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
@@ -140,6 +137,21 @@ export default function SubscriptionItem({
                 {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
+
+            {item.history && item.history.length > 0 && (
+              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                {t("previous_payments")}:{" "}
+                {item.history
+                  .filter((d) => !isNaN(new Date(d).getTime())) // Only valid dates
+                  .slice()
+                  .reverse()
+                  .slice(0, 3)
+                  .map((d) => new Date(d).toLocaleDateString())
+                  .join(", ")}
+              </div>
+            )}
+
+
           </div>
 
           <CategoryChip category={item.category} />
@@ -164,8 +176,13 @@ export default function SubscriptionItem({
           </button>
 
           {/* PROGRESS BAR */}
-          <ProgressBar progress={progress} color={color} datePaid={item.datePaid} daysLeft={daysLeft}
-            frequency={item.frequency} />
+          <ProgressBar
+            progress={progress}
+            color={color}
+            datePaid={item.datePaid}
+            daysLeft={daysLeft}
+            frequency={item.frequency}
+          />
 
           {/* EDIT BUTTON */}
           <button
@@ -179,7 +196,7 @@ export default function SubscriptionItem({
             {t("edit")}
           </button>
 
-          {/* DESKTOP DELETE BUTTON (Trash Icon) */}
+          {/* DELETE ICON (DESKTOP ONLY) */}
           <button
             onClick={() => onDelete(item.id)}
             title={t("button_delete")}

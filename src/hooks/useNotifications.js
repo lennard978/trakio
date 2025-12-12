@@ -1,74 +1,54 @@
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 
-const freqMap = {
-  weekly: { days: 7 },
-  biweekly: { days: 14 },
-  monthly: { months: 1 },
-  quarterly: { months: 3 },
-  semiannual: { months: 6 },
-  nine_months: { months: 9 },
-  yearly: { months: 12 },
-  biennial: { months: 24 },
-  triennial: { months: 36 },
-};
+// ✅ Utility must exist!
+function computeNextRenewal(datePaid, frequency) {
+  if (!datePaid) return null;
+  const date = new Date(datePaid);
+  if (isNaN(date.getTime())) return null;
+
+  const next = new Date(date);
+  const FREQ = {
+    monthly: { months: 1 },
+    weekly: { days: 7 },
+    biweekly: { days: 14 },
+    quarterly: { months: 3 },
+    semiannual: { months: 6 },
+    nine_months: { months: 9 },
+    yearly: { months: 12 },
+    biennial: { months: 24 },
+    triennial: { months: 36 },
+  };
+  const cfg = FREQ[frequency] || FREQ.monthly;
+
+  if (cfg.months) next.setMonth(date.getMonth() + cfg.months);
+  if (cfg.days) next.setDate(date.getDate() + cfg.days);
+
+  return next;
+}
 
 export default function useNotifications(subscriptions) {
-  const { t } = useTranslation();
-
   useEffect(() => {
-    if (!subscriptions || subscriptions.length === 0) return;
+    if (!("Notification" in window)) return;
 
-    if (Notification.permission !== "granted") {
+    if (Notification.permission === "default") {
       Notification.requestPermission();
     }
 
-    const interval = setInterval(checkRenewals, 24 * 60 * 60 * 1000);
-    checkRenewals();
+    if (Notification.permission !== "granted") return;
 
-    return () => clearInterval(interval);
-  }, [subscriptions]);
+    const now = new Date();
 
-  function notify(title, body) {
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/subscription-tracker/icon-192.png",
-      });
-    }
-  }
+    subscriptions.forEach((s) => {
+      const next = computeNextRenewal(s.datePaid, s.frequency);
+      if (!next) return;
 
-  function checkRenewals() {
-    const today = new Date();
+      const diff = Math.ceil((next - now) / 86400000);
 
-    subscriptions.forEach((sub) => {
-      if (!sub.datePaid || sub.notify === false) return;
-
-      const cfg = freqMap[sub.frequency] || { months: 1 };
-
-      const paid = new Date(sub.datePaid);
-      const next = new Date(paid);
-
-      if (cfg.months) next.setMonth(next.getMonth() + cfg.months);
-      if (cfg.days) next.setDate(next.getDate() + cfg.days);
-
-      const reminders = [5, 3];
-
-      reminders.forEach((d) => {
-        const reminder = new Date(next);
-        reminder.setDate(next.getDate() - d);
-
-        if (reminder.toDateString() === today.toDateString()) {
-          notify(
-            t("notification_title"),
-            t("notification_body", {
-              name: sub.name,
-              date: next.toLocaleDateString()
-            })
-          );
-
-        }
-      });
+      if (diff === 0) {
+        new Notification(`🔔 ${s.name} is due today!`);
+      } else if (diff === 1) {
+        new Notification(`📅 ${s.name} is due tomorrow.`);
+      }
     });
-  }
+  }, [subscriptions]);
 }

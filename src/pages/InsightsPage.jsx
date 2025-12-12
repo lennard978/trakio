@@ -1,4 +1,3 @@
-// src/pages/InsightsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,8 +5,10 @@ import {
   TagIcon,
   ArrowTrendingUpIcon,
   ArrowPathIcon,
+  ClockIcon, // NEW ICON for payment count
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import PaymentTimelineChart from "../components/PaymentTimelineChart";
 
 import Analytics from "../components/Analytics";
 import { fetchRates, convert } from "../utils/fx";
@@ -35,18 +36,15 @@ export default function InsightsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
 
-  // Block access for non-premium users
   useEffect(() => {
     if (!premium.isPremium) navigate("/dashboard");
   }, [premium, navigate]);
 
-  // Load subs
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
     setSubscriptions(saved);
   }, []);
 
-  // Load FX
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
@@ -108,10 +106,16 @@ export default function InsightsPage() {
       ? "-"
       : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
 
+  // ✅ NEW: Total number of payments (from history[] + datePaid)
+  const totalPayments = [
+    ...(Array.isArray(subscriptions.history) ? subscriptions.history : []),
+    ...(subscriptions.datePaid ? [subscriptions.datePaid] : [])
+  ].filter((d) => !isNaN(new Date(d).getTime())).length;
+
+
+
   return (
     <div className="max-w-4xl mx-auto mt-0 p-2 pb-4 space-y-4">
-
-
       <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
         {t("insights_title")}
       </h1>
@@ -148,9 +152,121 @@ export default function InsightsPage() {
           }
           Icon={ArrowPathIcon}
         />
+
+        {/* ✅ NEW Payment History card */}
+        {/* <InsightsCard
+          title={t("dashboard_total_payments")}
+          value={`${totalPayments} ${t("payments")}`}
+          Icon={ClockIcon} // you'll need to import this icon
+        /> */}
+        {/* SUBSCRIPTION PAYMENT HISTORY TABLE */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white text-center">
+            {t("insights_payment_history")}
+          </h2>
+
+          {subscriptions.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center">
+              {t("insights_no_subscriptions")}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm table-auto">
+                <thead>
+                  <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-300 dark:border-gray-700">
+                    <th className="py-2 px-2">{t("subscription")}</th>
+                    <th className="py-2 px-2">{t("frequency")}</th>
+                    <th className="py-2 px-2">{t("total_payments")}</th>
+                    <th className="py-2 px-2">{t("previous_payments")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions.map((sub) => {
+                    const allPayments = [
+                      ...(Array.isArray(sub.history) ? sub.history : []),
+                      ...(sub.datePaid ? [sub.datePaid] : []),
+                    ].filter((d) => !isNaN(new Date(d).getTime()));
+
+                    const formattedDates = allPayments
+                      .slice()
+                      .sort((a, b) => new Date(b) - new Date(a))
+                      .map((d) => new Date(d).toLocaleDateString())
+                      .join(", ");
+
+                    return (
+                      <tr
+                        key={sub.id}
+                        className="border-b border-gray-200 dark:border-gray-800"
+                      >
+                        <td className="py-2 px-2 font-medium text-gray-900 dark:text-gray-100">
+                          {sub.name}
+                        </td>
+                        <td className="py-2 px-2 capitalize text-gray-600 dark:text-gray-400">
+                          {t(`frequency_${sub.frequency}`)}
+                        </td>
+                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
+                          {allPayments.length}
+                        </td>
+                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">
+                          {formattedDates || "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => {
+                const csvRows = [
+                  ["Subscription", "Frequency", "Total Payments", "Payment Dates"],
+                ];
+
+                subscriptions.forEach((sub) => {
+                  const payments = [
+                    ...(Array.isArray(sub.history) ? sub.history : []),
+                    ...(sub.datePaid ? [sub.datePaid] : []),
+                  ].filter((d) => !isNaN(new Date(d).getTime()));
+
+                  const formattedDates = payments
+                    .slice()
+                    .sort((a, b) => new Date(b) - new Date(a))
+                    .map((d) => new Date(d).toLocaleDateString())
+                    .join(" | ");
+
+                  csvRows.push([
+                    sub.name,
+                    sub.frequency,
+                    payments.length,
+                    `"${formattedDates}"`,
+                  ]);
+                });
+
+                const csvContent = csvRows
+                  .map((row) => row.join(","))
+                  .join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "subscription_payment_history.csv";
+                link.click();
+              }}
+              className="px-4 py-2 mt-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-xl"
+            >
+              {t("button_export_payment_history")}
+
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <Analytics subscriptions={subscriptions} />
+
       <button
         onClick={() => navigate("/dashboard")}
         className="
@@ -162,6 +278,9 @@ export default function InsightsPage() {
       >
         ← {t("button_back")}
       </button>
+
+      <PaymentTimelineChart subscriptions={subscriptions} />
+
     </div>
   );
 }
