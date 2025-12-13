@@ -27,13 +27,16 @@ export function AuthProvider({ children }) {
   const signup = async (email, password) => {
     let data;
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "signup",
+          email,
+          password,
+        }),
       });
+
 
       data = await res.json(); // still might throw, so in try
       if (!res.ok) throw new Error(data.error || "Signup failed");
@@ -49,13 +52,16 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     let data;
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "login",
+          email,
+          password,
+        }),
       });
+
 
       data = await res.json(); // catch invalid JSON too
       if (!res.ok) throw new Error(data.error || "Login failed");

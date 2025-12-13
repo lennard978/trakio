@@ -161,11 +161,16 @@ export function PremiumProvider({ children }) {
 
     try {
       setLoading(true);
-      const res = await fetch("/api/stripe/create-checkout-session", {
+      const res = await fetch("/api/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email: checkoutEmail }),
+        body: JSON.stringify({
+          action: "checkout",
+          plan,
+          email: checkoutEmail,
+        }),
       });
+
 
       const data = await res.json();
 

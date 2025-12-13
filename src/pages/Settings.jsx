@@ -29,11 +29,16 @@ export default function Settings() {
    * ------------------------------------------------------------------ */
   const handleManageSubscription = async () => {
     try {
-      const res = await fetch("/api/stripe/customer-portal", {
+      const res = await fetch("/api/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email }),
+        body: JSON.stringify({
+          action: "portal",
+          email,
+        }),
       });
+
+
 
       const data = await res.json();
 
