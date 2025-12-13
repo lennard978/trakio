@@ -13,7 +13,7 @@ import SettingButton from "../components/ui/SettingButton";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
-  const { id } = useParams(); // string ID
+  const { id } = useParams(); // string
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { user } = useAuth();
@@ -21,9 +21,6 @@ export default function SubscriptionForm() {
 
   const email = user?.email;
 
-  /* ------------------------------------------------------------------
-   * Local form state
-   * ------------------------------------------------------------------ */
   const [subscriptions, setSubscriptions] = useState([]);
 
   const [name, setName] = useState("");
@@ -56,12 +53,14 @@ export default function SubscriptionForm() {
         if (!res.ok) throw new Error("Failed to load subscriptions");
 
         const data = await res.json();
-        const list = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+        const list = Array.isArray(data.subscriptions)
+          ? data.subscriptions
+          : [];
+
         setSubscriptions(list);
 
-        // Editing existing subscription
         if (id) {
-          const existing = list.find((s) => s.id === id);
+          const existing = list.find((s) => String(s.id) === String(id));
           if (!existing) return;
 
           setName(existing.name);
@@ -72,7 +71,6 @@ export default function SubscriptionForm() {
           setNotify(existing.notify !== false);
           setCurrency(existing.currency || "EUR");
         } else {
-          // New subscription → default currency
           const savedCurrency = localStorage.getItem("selected_currency");
           if (savedCurrency) setCurrency(savedCurrency);
         }
@@ -95,7 +93,7 @@ export default function SubscriptionForm() {
     !premium.isPremium && advancedFrequencies.includes(frequency);
 
   /* ------------------------------------------------------------------
-   * Save to KV helper
+   * Save helper
    * ------------------------------------------------------------------ */
   const saveToKV = async (updated) => {
     await fetch("/api/subscriptions", {
@@ -148,25 +146,32 @@ export default function SubscriptionForm() {
     let updated;
 
     if (id) {
-      // ✏️ Edit existing
-      updated = subscriptions.map((s) =>
-        s.id !== id
-          ? s
-          : {
-            ...s,
-            name,
-            price: Number(price),
-            frequency,
-            category,
-            datePaid,
-            notify,
-            currency,
-          }
-      );
+      // ✏️ Edit
+      updated = subscriptions.map((s) => {
+        if (String(s.id) !== String(id)) return s;
+
+        const history = Array.isArray(s.history) ? [...s.history] : [];
+
+        if (s.datePaid && s.datePaid !== datePaid) {
+          history.push(s.datePaid);
+        }
+
+        return {
+          ...s,
+          name,
+          price: Number(price),
+          frequency,
+          category,
+          datePaid,
+          notify,
+          currency,
+          history,
+        };
+      });
 
       showToast(t("toast_updated"), "success");
     } else {
-      // ➕ New subscription
+      // ➕ New
       updated = [
         ...subscriptions,
         {
@@ -194,44 +199,31 @@ export default function SubscriptionForm() {
     }
   };
 
-  /* ------------------------------------------------------------------
-   * UI
-   * ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------ */
+
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
       <Card>
-        <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white py-4">
+        <h1 className="text-2xl font-bold mb-2 py-4">
           {id ? t("edit_title") : t("add_title")}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* NAME */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              {t("form_name")}
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border"
-            />
-          </div>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("form_name")}
+            className="w-full px-3 py-2 rounded-xl border"
+          />
 
-          {/* PRICE */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              {t("form_price")} ({currency})
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border"
-            />
-          </div>
+          <input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border"
+          />
 
-          {/* FREQUENCY */}
           <FrequencySelector
             value={frequency}
             onChange={setFrequency}
@@ -239,10 +231,8 @@ export default function SubscriptionForm() {
             onRequirePremium={() => navigate("/premium?reason=intervals")}
           />
 
-          {/* CATEGORY */}
           <CategorySelector value={category} onChange={setCategory} />
 
-          {/* DATE */}
           <input
             type="date"
             value={datePaid}
@@ -250,7 +240,6 @@ export default function SubscriptionForm() {
             className="w-full px-3 py-2 rounded-xl border"
           />
 
-          {/* NOTIFY */}
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -260,8 +249,7 @@ export default function SubscriptionForm() {
             {t("settings_notifications_info")}
           </label>
 
-          {/* ACTIONS */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2">
             <SettingButton type="submit" variant="primary">
               {id ? t("form_save") : t("add_subscription")}
             </SettingButton>

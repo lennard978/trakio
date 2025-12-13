@@ -53,22 +53,21 @@ export default function Dashboard({ currency }) {
     }
   };
 
-  const persistSubscriptions = (subs) => {
-    // 1) Update UI immediately
+  const persistSubscriptions = async (subs) => {
     setSubscriptions(subs);
 
-    // 2) Keep localStorage temporarily (rollback safety)
-    try {
-      localStorage.setItem("subscriptions", JSON.stringify(subs));
-    } catch {
-      // ignore localStorage failures (private mode / quota)
-    }
-
-    // 3) KV is source of truth (fire-and-forget, but logged)
-    saveToKV(subs).catch((err) => {
-      console.error("KV save error:", err);
+    // KV is the only source of truth
+    await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save",
+        email,
+        subscriptions: subs,
+      }),
     });
   };
+
 
   // --- KV-only load ----------------------------------------------------
   useEffect(() => {
@@ -101,13 +100,6 @@ export default function Dashboard({ currency }) {
 
         if (!cancelled) {
           setSubscriptions(fixed);
-
-          // Optional: keep localStorage mirrored for now (rollback safety)
-          try {
-            localStorage.setItem("subscriptions", JSON.stringify(fixed));
-          } catch {
-            // ignore
-          }
         }
       } catch (err) {
         console.error("Subscription KV load failed:", err);
