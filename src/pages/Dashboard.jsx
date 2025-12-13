@@ -53,6 +53,17 @@ export default function Dashboard({ currency }) {
     });
   };
 
+  const persistSubscriptions = async (subs) => {
+    setSubscriptions(subs);
+
+    // Keep localStorage temporarily (rollback safety)
+    localStorage.setItem("subscriptions", JSON.stringify(subs));
+
+    // Write to KV
+    await saveToKV(subs);
+  };
+
+
   useEffect(() => {
     if (!email) return;
 
@@ -162,8 +173,7 @@ export default function Dashboard({ currency }) {
                 convert={convert}
                 onDelete={(id) => {
                   const updated = subscriptions.filter((s) => s.id !== id);
-                  setSubscriptions(updated);
-                  localStorage.setItem("subscriptions", JSON.stringify(updated));
+                  persistSubscriptions(updated);
                 }}
                 onUpdatePaidDate={(id, newDate) => {
                   const updated = subscriptions.map((s) => {
@@ -202,9 +212,7 @@ export default function Dashboard({ currency }) {
                       priceAlert: alert || null,
                     };
                   });
-
-                  setSubscriptions(updated);
-                  localStorage.setItem("subscriptions", JSON.stringify(updated));
+                  persistSubscriptions(updated);
                 }}
               />
             ))}
