@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -18,9 +18,13 @@ import { useAuth } from "../hooks/useAuth";
 export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
+  const [loadingSubs, setLoadingSubs] = useState(true);
 
   const { t } = useTranslation();
   const premium = usePremium();
+
+  const { user } = useAuth();
+  const email = user?.email;
 
   // Ensure subscription has a unique ID
   const ensureId = (sub) => ({
@@ -28,21 +32,11 @@ export default function Dashboard({ currency }) {
     id: sub.id || crypto.randomUUID(),
   });
 
-  const { user } = useAuth();
-  const email = user?.email;
-
-  const loadFromLocal = () => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      return Array.isArray(saved) ? saved.map(ensureId) : [];
-    } catch {
-      return [];
-    }
-  };
-
+  // --- KV helpers ------------------------------------------------------
   const saveToKV = async (subs) => {
     if (!email) return;
-    await fetch("/api/subscriptions", {
+
+    const res = await fetch("/api/subscriptions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -51,82 +45,117 @@ export default function Dashboard({ currency }) {
         subscriptions: subs,
       }),
     });
+
+    if (!res.ok) {
+      // Do not break UI, but log for diagnosis
+      const text = await res.text().catch(() => "");
+      throw new Error(`KV save failed (${res.status}): ${text}`);
+    }
   };
 
-  const persistSubscriptions = async (subs) => {
+  const persistSubscriptions = (subs) => {
+    // 1) Update UI immediately
     setSubscriptions(subs);
 
-    // Keep localStorage temporarily (rollback safety)
-    localStorage.setItem("subscriptions", JSON.stringify(subs));
+    // 2) Keep localStorage temporarily (rollback safety)
+    try {
+      localStorage.setItem("subscriptions", JSON.stringify(subs));
+    } catch {
+      // ignore localStorage failures (private mode / quota)
+    }
 
-    // Write to KV
-    await saveToKV(subs);
+    // 3) KV is source of truth (fire-and-forget, but logged)
+    saveToKV(subs).catch((err) => {
+      console.error("KV save error:", err);
+    });
   };
 
-
+  // --- KV-only load ----------------------------------------------------
   useEffect(() => {
-    if (!email) return;
+    if (!email) {
+      setSubscriptions([]);
+      setLoadingSubs(false);
+      return;
+    }
+
+    let cancelled = false;
 
     const load = async () => {
+      setLoadingSubs(true);
+
       try {
-        // 1️⃣ Try KV
         const res = await fetch("/api/subscriptions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "get", email }),
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
-            const fixed = data.subscriptions.map(ensureId);
-            setSubscriptions(fixed);
-            return;
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`KV get failed (${res.status}): ${text}`);
+        }
+
+        const data = await res.json();
+        const list = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+        const fixed = list.map(ensureId);
+
+        if (!cancelled) {
+          setSubscriptions(fixed);
+
+          // Optional: keep localStorage mirrored for now (rollback safety)
+          try {
+            localStorage.setItem("subscriptions", JSON.stringify(fixed));
+          } catch {
+            // ignore
           }
         }
-
-        // 2️⃣ Fallback to localStorage
-        const local = loadFromLocal();
-        setSubscriptions(local);
-
-        // 3️⃣ One-time migration to KV
-        if (local.length > 0) {
-          await saveToKV(local);
-        }
       } catch (err) {
-        console.error("Subscription load failed:", err);
-        setSubscriptions(loadFromLocal());
+        console.error("Subscription KV load failed:", err);
+        if (!cancelled) setSubscriptions([]);
+      } finally {
+        if (!cancelled) setLoadingSubs(false);
       }
     };
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [email]);
 
-
+  // --- FX rates --------------------------------------------------------
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
   useNotifications(subscriptions);
 
-  const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
+  const hasSubscriptions = subscriptions.length > 0;
 
-  const sorted = subscriptions.slice().sort((a, b) => {
-    const nextA = computeNextRenewal(a.datePaid, a.frequency);
-    const nextB = computeNextRenewal(b.datePaid, b.frequency);
-    if (!nextA && !nextB) return 0;
-    if (!nextA) return 1;
-    if (!nextB) return -1;
-    return nextA - nextB;
-  });
+  const sorted = useMemo(() => {
+    return subscriptions.slice().sort((a, b) => {
+      const nextA = computeNextRenewal(a.datePaid, a.frequency);
+      const nextB = computeNextRenewal(b.datePaid, b.frequency);
+      if (!nextA && !nextB) return 0;
+      if (!nextA) return 1;
+      if (!nextB) return -1;
+      return nextA - nextB;
+    });
+  }, [subscriptions]);
 
   return (
     <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
 
       <div>
-        {hasSubscriptions ? (
+        {/* Loading state for KV fetch */}
+        {loadingSubs ? (
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
+            {t("loading") || "Loading..."}
+          </div>
+        ) : hasSubscriptions ? (
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
               {t("dashboard_title")}
@@ -135,13 +164,16 @@ export default function Dashboard({ currency }) {
         ) : (
           <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
             <p className="mb-3">{t("dashboard_empty")}</p>
-            <Link to="/add" className="text-blue-600 dark:text-blue-400 hover:underline">
+            <Link
+              to="/add"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
               {t("dashboard_empty_cta")}
             </Link>
           </div>
         )}
 
-        {hasSubscriptions && (
+        {!loadingSubs && hasSubscriptions && (
           <UpcomingPayments
             subscriptions={subscriptions}
             currency={preferredCurrency}
@@ -150,19 +182,15 @@ export default function Dashboard({ currency }) {
           />
         )}
 
-        {hasSubscriptions && (
-          <MonthlyBudget
-            subscriptions={subscriptions}
-            currency={preferredCurrency}
-          />
+        {!loadingSubs && hasSubscriptions && (
+          <MonthlyBudget subscriptions={subscriptions} currency={preferredCurrency} />
         )}
 
-        {premium.isPremium && (
+        {!loadingSubs && premium.isPremium && (
           <ForgottenSubscriptions subscriptions={subscriptions} />
         )}
 
-
-        {hasSubscriptions && (
+        {!loadingSubs && hasSubscriptions && (
           <div className="space-y-3 mt-3">
             {sorted.map((sub) => (
               <SubscriptionItem
@@ -212,6 +240,7 @@ export default function Dashboard({ currency }) {
                       priceAlert: alert || null,
                     };
                   });
+
                   persistSubscriptions(updated);
                 }}
               />

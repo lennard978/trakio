@@ -1,27 +1,31 @@
-// src/pages/SubscriptionForm.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
-
-import CategorySelector from "../components/CategorySelector";
-import FrequencySelector from "../components/FrequencySelector";
+import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
 
 // UI
+import CategorySelector from "../components/CategorySelector";
+import FrequencySelector from "../components/FrequencySelector";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams(); // string ID
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const premium = usePremium();
 
-  /** ------------------------------------------------------------------
-   * Local state
+  const email = user?.email;
+
+  /* ------------------------------------------------------------------
+   * Local form state
    * ------------------------------------------------------------------ */
+  const [subscriptions, setSubscriptions] = useState([]);
+
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [frequency, setFrequency] = useState("monthly");
@@ -35,87 +39,86 @@ export default function SubscriptionForm() {
     []
   );
 
-  /** ------------------------------------------------------------------
-   * Load subscription if editing
+  /* ------------------------------------------------------------------
+   * Load subscriptions from KV
    * ------------------------------------------------------------------ */
   useEffect(() => {
-    let stored = [];
-    try {
-      stored = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-    } catch {
-      stored = [];
-    }
+    if (!email) return;
 
-    if (!id) {
-      const defaultCurrency = localStorage.getItem("selected_currency");
-      if (defaultCurrency) setCurrency(defaultCurrency);
-      return;
-    }
+    const load = async () => {
+      try {
+        const res = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get", email }),
+        });
 
-    const existing = stored.find((s) => s.id === Number(id));
-    if (!existing) return;
+        if (!res.ok) throw new Error("Failed to load subscriptions");
 
-    setName(existing.name);
-    setPrice(existing.price);
-    setFrequency(existing.frequency);
-    setCategory(existing.category || "other");
-    setDatePaid(existing.datePaid || "");
-    setNotify(existing.notify !== false);
-    setCurrency(existing.currency || "EUR");
-  }, [id]);
+        const data = await res.json();
+        const list = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+        setSubscriptions(list);
 
-  /** ------------------------------------------------------------------
-   * Helper: Recurring history generation
-   * ------------------------------------------------------------------ */
-  function generateHistory(startDate, price, frequency) {
-    const history = [];
-    const today = new Date();
-    const start = new Date(startDate);
-    if (Number.isNaN(start.getTime())) return history;
+        // Editing existing subscription
+        if (id) {
+          const existing = list.find((s) => s.id === id);
+          if (!existing) return;
 
-    const date = new Date(start);
-
-    while (date <= today) {
-      history.push({
-        date: date.toISOString().split("T")[0],
-        amount: Number(price),
-      });
-
-      if (frequency === "monthly") {
-        date.setMonth(date.getMonth() + 1);
-      } else if (frequency === "yearly") {
-        date.setFullYear(date.getFullYear() + 1);
-      } else {
-        break;
+          setName(existing.name);
+          setPrice(existing.price);
+          setFrequency(existing.frequency);
+          setCategory(existing.category || "other");
+          setDatePaid(existing.datePaid || "");
+          setNotify(existing.notify !== false);
+          setCurrency(existing.currency || "EUR");
+        } else {
+          // New subscription → default currency
+          const savedCurrency = localStorage.getItem("selected_currency");
+          if (savedCurrency) setCurrency(savedCurrency);
+        }
+      } catch (err) {
+        console.error("SubscriptionForm load error:", err);
+        showToast("Failed to load subscription data", "error");
       }
-    }
+    };
 
-    return history;
-  }
+    load();
+  }, [email, id, showToast]);
 
-  /** ------------------------------------------------------------------
-   * Validation helpers
+  /* ------------------------------------------------------------------
+   * Premium restrictions
    * ------------------------------------------------------------------ */
-  const savedSubscriptions = useMemo(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }, []);
-
   const limitReached =
-    !id && !premium.isPremium && savedSubscriptions.length >= 5;
+    !id && !premium.isPremium && subscriptions.length >= 5;
 
   const requiresPremiumInterval =
     !premium.isPremium && advancedFrequencies.includes(frequency);
 
-  /** ------------------------------------------------------------------
-   * Core submit handler
+  /* ------------------------------------------------------------------
+   * Save to KV helper
    * ------------------------------------------------------------------ */
-  const handleSubmit = (e) => {
+  const saveToKV = async (updated) => {
+    await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save",
+        email,
+        subscriptions: updated,
+      }),
+    });
+  };
+
+  /* ------------------------------------------------------------------
+   * Submit handler
+   * ------------------------------------------------------------------ */
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!email) {
+      showToast("Not authenticated", "error");
+      return;
+    }
 
     if (limitReached) {
       navigate("/premium?reason=limit");
@@ -142,42 +145,32 @@ export default function SubscriptionForm() {
       return;
     }
 
-    let newSubscriptions;
+    let updated;
 
     if (id) {
-      // Editing
-      newSubscriptions = savedSubscriptions.map((s) => {
-        if (s.id !== Number(id)) return s;
-
-        const history = Array.isArray(s.history) ? [...s.history] : [];
-
-        if (s.datePaid !== datePaid || s.price !== Number(price)) {
-          history.push({
-            date: datePaid,
-            amount: Number(price),
-          });
-        }
-
-        return {
-          ...s,
-          name,
-          price: Number(price),
-          frequency,
-          category,
-          datePaid,
-          notify,
-          currency,
-          history,
-        };
-      });
+      // ✏️ Edit existing
+      updated = subscriptions.map((s) =>
+        s.id !== id
+          ? s
+          : {
+            ...s,
+            name,
+            price: Number(price),
+            frequency,
+            category,
+            datePaid,
+            notify,
+            currency,
+          }
+      );
 
       showToast(t("toast_updated"), "success");
     } else {
-      // New subscription
-      newSubscriptions = [
-        ...savedSubscriptions,
+      // ➕ New subscription
+      updated = [
+        ...subscriptions,
         {
-          id: Date.now(),
+          id: crypto.randomUUID(),
           name,
           price: Number(price),
           frequency,
@@ -185,18 +178,23 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
-          history: generateHistory(datePaid, price, frequency),
+          history: [],
         },
       ];
 
       showToast(t("toast_added"), "success");
     }
 
-    localStorage.setItem("subscriptions", JSON.stringify(newSubscriptions));
-    navigate("/dashboard");
+    try {
+      await saveToKV(updated);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Save failed:", err);
+      showToast("Failed to save subscription", "error");
+    }
   };
 
-  /** ------------------------------------------------------------------
+  /* ------------------------------------------------------------------
    * UI
    * ------------------------------------------------------------------ */
   return (
@@ -209,27 +207,19 @@ export default function SubscriptionForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* NAME */}
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block mb-1 text-sm font-medium">
               {t("form_name")}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t("placeholder_examples")}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
+              className="w-full px-3 py-2 rounded-xl border"
             />
           </div>
 
           {/* PRICE */}
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block mb-1 text-sm font-medium">
               {t("form_price")} ({currency})
             </label>
             <input
@@ -237,80 +227,47 @@ export default function SubscriptionForm() {
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
+              className="w-full px-3 py-2 rounded-xl border"
             />
           </div>
 
           {/* FREQUENCY */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_frequency")}
-            </label>
-            <FrequencySelector
-              value={frequency}
-              onChange={setFrequency}
-              isPremium={premium.isPremium}
-              onRequirePremium={() => navigate("/premium?reason=intervals")}
-            />
-          </div>
+          <FrequencySelector
+            value={frequency}
+            onChange={setFrequency}
+            isPremium={premium.isPremium}
+            onRequirePremium={() => navigate("/premium?reason=intervals")}
+          />
 
           {/* CATEGORY */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_category")}
-            </label>
-            <CategorySelector value={category} onChange={setCategory} />
-          </div>
+          <CategorySelector value={category} onChange={setCategory} />
 
-          {/* DATE PAID */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("label_select_paid_date")}
-            </label>
-            <input
-              type="date"
-              value={datePaid}
-              onChange={(e) => setDatePaid(e.target.value)}
-              className="
-                w-full px-3 py-2 rounded-xl
-                bg-white/80 dark:bg-gray-900/60
-                border border-gray-300/70 dark:border-gray-600
-                shadow-sm
-                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                transition
-              "
-            />
-          </div>
+          {/* DATE */}
+          <input
+            type="date"
+            value={datePaid}
+            onChange={(e) => setDatePaid(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border"
+          />
 
-          {/* NOTIFICATIONS */}
-          <div className="flex items-center gap-2">
+          {/* NOTIFY */}
+          <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={notify}
               onChange={(e) => setNotify(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label className="text-sm text-gray-700 dark:text-gray-300">
-              {t("settings_notifications_info")}
-            </label>
-          </div>
+            {t("settings_notifications_info")}
+          </label>
 
-          {/* ACTION BUTTONS */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <SettingButton type="submit" variant="primary" className="sm:w-auto">
+          {/* ACTIONS */}
+          <div className="flex gap-2 pt-2">
+            <SettingButton type="submit" variant="primary">
               {id ? t("form_save") : t("add_subscription")}
             </SettingButton>
 
             <SettingButton
               variant="neutral"
-              className="sm:w-auto"
               onClick={() => navigate("/dashboard")}
             >
               {t("button_cancel")}
