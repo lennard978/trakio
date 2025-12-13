@@ -55,6 +55,10 @@ export default defineConfig({
           background_color: "#111827"
         }
       }
-    })
+    }), {
+      "rewrites": [
+        { "source": "/(.*)", "destination": "/" }
+      ]
+    }
   ]
 });
