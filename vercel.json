@@ -24,14 +24,12 @@
 					"value": "geolocation=(), microphone=(), camera=()"
 				}
 			]
-		},
+		}
+	],
+	"rewrites": [
 		{
-			"rewrites": [
-				{
-					"source": "/(.*)",
-					"destination": "/"
-				}
-			]
+			"source": "/(.*)",
+			"destination": "/"
 		}
 	]
 }
