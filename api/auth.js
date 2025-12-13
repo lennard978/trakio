@@ -1,6 +1,6 @@
 import { kv } from "@vercel/kv";
 import bcrypt from "bcryptjs";
-import { signToken } from "./utils/jwt.js";
+import { signToken } from "../src/server/jwt";
 
 export default async function handler(req, res) {
   try {

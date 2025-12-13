@@ -1,3 +1,4 @@
+// src/pages/InsightsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,8 +21,6 @@ import { fetchRates, convert } from "../utils/fx";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 
 /* ------------------------------------------------------------------ */
-/* Frequency normalization                                            */
-/* ------------------------------------------------------------------ */
 const FREQ = {
   weekly: { monthlyFactor: 4.345 },
   biweekly: { monthlyFactor: 2.1725 },
@@ -33,43 +32,36 @@ const FREQ = {
   biennial: { monthlyFactor: 1 / 24 },
   triennial: { monthlyFactor: 1 / 36 },
 };
+/* ------------------------------------------------------------------ */
 
 export default function InsightsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
   const { user } = useAuth();
   const email = user?.email;
-
   const premium = usePremium();
 
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
 
-  /* ------------------------------------------------------------------ */
-  /* Premium gate                                                       */
-  /* ------------------------------------------------------------------ */
+  /* Premium gate */
   useEffect(() => {
     if (premium.loaded && !premium.isPremium) {
       navigate("/dashboard");
     }
   }, [premium.loaded, premium.isPremium, navigate]);
 
-  /* ------------------------------------------------------------------ */
-  /* Load subscriptions from KV                                         */
-  /* ------------------------------------------------------------------ */
+  /* Load from KV */
   useEffect(() => {
     if (!email) return;
 
-    const load = async () => {
+    (async () => {
       try {
         const res = await fetch("/api/subscriptions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "get", email }),
         });
-
-        if (!res.ok) throw new Error("Failed to load subscriptions");
 
         const data = await res.json();
         setSubscriptions(
@@ -78,49 +70,38 @@ export default function InsightsPage() {
       } catch (err) {
         console.error("Insights load error:", err);
       }
-    };
-
-    load();
+    })();
   }, [email]);
 
-  /* ------------------------------------------------------------------ */
-  /* FX rates                                                           */
-  /* ------------------------------------------------------------------ */
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
-  /* ------------------------------------------------------------------ */
-  /* Preferred currency                                                 */
-  /* ------------------------------------------------------------------ */
-  const preferredCurrency = useMemo(() => {
-    return premium.isPremium
-      ? localStorage.getItem("selected_currency") || "EUR"
-      : "EUR";
-  }, [premium.isPremium]);
+  const preferredCurrency = useMemo(
+    () =>
+      premium.isPremium
+        ? localStorage.getItem("selected_currency") || "EUR"
+        : "EUR",
+    [premium.isPremium]
+  );
 
-  /* ------------------------------------------------------------------ */
-  /* Calculations                                                       */
-  /* ------------------------------------------------------------------ */
   const monthlyCost = (item) => {
     const cfg = FREQ[item.frequency] || FREQ.monthly;
     const base = item.currency || "EUR";
-
     const converted =
       rates && preferredCurrency
         ? convert(item.price, base, preferredCurrency, rates)
         : item.price;
-
     return converted * cfg.monthlyFactor;
   };
 
   const totalMonthly = subscriptions.reduce(
-    (sum, item) => sum + monthlyCost(item),
+    (sum, s) => sum + monthlyCost(s),
     0
   );
 
-  const categoryTotals = subscriptions.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + monthlyCost(item);
+  const categoryTotals = subscriptions.reduce((acc, s) => {
+    acc[s.category] = (acc[s.category] || 0) + monthlyCost(s);
     return acc;
   }, {});
 
@@ -134,43 +115,26 @@ export default function InsightsPage() {
       : subscriptions.reduce((p, c) => (p.price > c.price ? p : c));
 
   const highestSubConverted =
-    rates && highestSub
+    highestSub && rates
       ? convert(
         highestSub.price,
         highestSub.currency || "EUR",
         preferredCurrency,
         rates
       )
-      : highestSub?.price || 0;
+      : 0;
 
-  const freqCount = subscriptions.reduce((acc, item) => {
-    acc[item.frequency] = (acc[item.frequency] || 0) + 1;
+  const freqCount = subscriptions.reduce((acc, s) => {
+    acc[s.frequency] = (acc[s.frequency] || 0) + 1;
     return acc;
   }, {});
 
   const mostCommonFreq =
-    subscriptions.length === 0
-      ? "-"
-      : Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0][0];
+    Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
 
-  /* ------------------------------------------------------------------ */
-  /* Total payments (history + datePaid)                                */
-  /* ------------------------------------------------------------------ */
-  const totalPayments = subscriptions.reduce((sum, sub) => {
-    const payments = [
-      ...(Array.isArray(sub.history) ? sub.history : []),
-      ...(sub.datePaid ? [sub.datePaid] : []),
-    ].filter((d) => !isNaN(new Date(d).getTime()));
-
-    return sum + payments.length;
-  }, 0);
-
-  /* ------------------------------------------------------------------ */
-  /* UI                                                                 */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
-      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
+      <h1 className="text-2xl font-bold text-center mb-6">
         {t("insights_title")}
       </h1>
 
@@ -180,13 +144,11 @@ export default function InsightsPage() {
           value={`${preferredCurrency} ${totalMonthly.toFixed(2)}`}
           Icon={CurrencyEuroIcon}
         />
-
         <InsightsCard
           title={t("dashboard_top_category")}
           value={topCategory}
           Icon={TagIcon}
         />
-
         <InsightsCard
           title={t("dashboard_highest_sub")}
           value={
@@ -198,67 +160,53 @@ export default function InsightsPage() {
           }
           Icon={ArrowTrendingUpIcon}
         />
-
         <InsightsCard
           title={t("dashboard_common_frequency")}
-          value={
-            mostCommonFreq === "-" ? "-" : t(`frequency_${mostCommonFreq}`)
-          }
+          value={t(`frequency_${mostCommonFreq}`)}
           Icon={ArrowPathIcon}
         />
       </div>
 
-      {/* PAYMENT HISTORY TABLE */}
       <Card className="mt-6 p-5">
         <h2 className="text-lg font-semibold mb-4 text-center">
           {t("insights_payment_history")}
         </h2>
 
-        {subscriptions.length === 0 ? (
-          <p className="text-center text-gray-500">
-            {t("insights_no_subscriptions")}
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-auto">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2">Subscription</th>
-                  <th className="py-2">Frequency</th>
-                  <th className="py-2">Payments</th>
-                  <th className="py-2">Dates</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map((sub) => {
-                  const payments = [
-                    ...(Array.isArray(sub.history) ? sub.history : []),
-                    ...(sub.datePaid ? [sub.datePaid] : []),
-                  ]
-                    .filter((d) => !isNaN(new Date(d)))
-                    .sort((a, b) => new Date(b) - new Date(a));
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm table-auto">
+            <thead>
+              <tr className="border-b">
+                <th>Subscription</th>
+                <th>Frequency</th>
+                <th>Payments</th>
+                <th>Dates</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscriptions.map((s) => {
+                const payments = [
+                  ...(Array.isArray(s.history) ? s.history : []),
+                  ...(s.datePaid ? [s.datePaid] : []),
+                ].sort((a, b) => new Date(b) - new Date(a));
 
-                  return (
-                    <tr key={sub.id} className="border-b text-center">
-                      <td className="py-2 font-medium">{sub.name}</td>
-                      <td className="py-2 capitalize">
-                        {t(`frequency_${sub.frequency}`)}
-                      </td>
-                      <td className="py-2">{payments.length}</td>
-                      <td className="py-2">
-                        {payments
-                          .map((d) =>
-                            new Date(d).toLocaleDateString()
-                          )
-                          .join(", ") || "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                return (
+                  <tr key={s.id} className="border-b text-center">
+                    <td className="font-medium">{s.name}</td>
+                    <td>{t(`frequency_${s.frequency}`)}</td>
+                    <td>{payments.length}</td>
+                    <td>
+                      {payments
+                        .map((d) =>
+                          new Date(d).toLocaleDateString()
+                        )
+                        .join(", ")}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
         <div className="flex justify-center mt-4">
           <SettingButton
@@ -283,11 +231,10 @@ export default function InsightsPage() {
   );
 }
 
-/* ------------------------------------------------------------------ */
 function InsightsCard({ title, value, Icon }) {
   return (
     <Card className="flex items-center gap-3 py-5">
-      <Icon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+      <Icon className="w-7 h-7 text-blue-600" />
       <div>
         <div className="text-sm text-gray-500">{title}</div>
         <div className="text-lg font-semibold">{value}</div>
