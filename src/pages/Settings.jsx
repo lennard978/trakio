@@ -29,6 +29,11 @@ export default function Settings() {
    *  Stripe Customer Portal
    * ------------------------------------------------------------------ */
   const handleManageSubscription = async () => {
+    if (!email) {
+      alert("Please log in again.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/stripe", {
         method: "POST",
@@ -51,6 +56,7 @@ export default function Settings() {
       alert("Unable to open customer portal.");
     }
   };
+
 
 
   /** ------------------------------------------------------------------
