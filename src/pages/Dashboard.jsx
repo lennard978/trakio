@@ -13,6 +13,7 @@ import MonthlyBudget from "../components/MonthlyBudget";
 import { detectPriceIncrease } from "../utils/priceAlert";
 import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import { computeNextRenewal } from "../utils/renewal";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -27,16 +28,69 @@ export default function Dashboard({ currency }) {
     id: sub.id || crypto.randomUUID(),
   });
 
-  useEffect(() => {
+  const { user } = useAuth();
+  const email = user?.email;
+
+  const loadFromLocal = () => {
     try {
       const saved = JSON.parse(localStorage.getItem("subscriptions") || "[]");
-      const fixed = Array.isArray(saved) ? saved.map(ensureId) : [];
-      setSubscriptions(fixed);
-      localStorage.setItem("subscriptions", JSON.stringify(fixed));
+      return Array.isArray(saved) ? saved.map(ensureId) : [];
     } catch {
-      setSubscriptions([]);
+      return [];
     }
-  }, []);
+  };
+
+  const saveToKV = async (subs) => {
+    if (!email) return;
+    await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save",
+        email,
+        subscriptions: subs,
+      }),
+    });
+  };
+
+  useEffect(() => {
+    if (!email) return;
+
+    const load = async () => {
+      try {
+        // 1️⃣ Try KV
+        const res = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "get", email }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
+            const fixed = data.subscriptions.map(ensureId);
+            setSubscriptions(fixed);
+            return;
+          }
+        }
+
+        // 2️⃣ Fallback to localStorage
+        const local = loadFromLocal();
+        setSubscriptions(local);
+
+        // 3️⃣ One-time migration to KV
+        if (local.length > 0) {
+          await saveToKV(local);
+        }
+      } catch (err) {
+        console.error("Subscription load failed:", err);
+        setSubscriptions(loadFromLocal());
+      }
+    };
+
+    load();
+  }, [email]);
+
 
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
