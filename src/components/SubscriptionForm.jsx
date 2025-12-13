@@ -13,7 +13,7 @@ import SettingButton from "../components/ui/SettingButton";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
-  const { id } = useParams(); // string
+  const { id } = useParams(); // string UUID
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { user } = useAuth();
@@ -21,6 +21,9 @@ export default function SubscriptionForm() {
 
   const email = user?.email;
 
+  /* ------------------------------------------------------------------
+   * Local state
+   * ------------------------------------------------------------------ */
   const [subscriptions, setSubscriptions] = useState([]);
 
   const [name, setName] = useState("");
@@ -60,12 +63,14 @@ export default function SubscriptionForm() {
         setSubscriptions(list);
 
         if (id) {
-          const existing = list.find((s) => String(s.id) === String(id));
+          const existing = list.find(
+            (s) => String(s.id) === String(id)
+          );
           if (!existing) return;
 
-          setName(existing.name);
-          setPrice(existing.price);
-          setFrequency(existing.frequency);
+          setName(existing.name || "");
+          setPrice(existing.price ?? "");
+          setFrequency(existing.frequency || "monthly");
           setCategory(existing.category || "other");
           setDatePaid(existing.datePaid || "");
           setNotify(existing.notify !== false);
@@ -93,7 +98,7 @@ export default function SubscriptionForm() {
     !premium.isPremium && advancedFrequencies.includes(frequency);
 
   /* ------------------------------------------------------------------
-   * Save helper
+   * Save helper (KV)
    * ------------------------------------------------------------------ */
   const saveToKV = async (updated) => {
     await fetch("/api/subscriptions", {
@@ -146,14 +151,18 @@ export default function SubscriptionForm() {
     let updated;
 
     if (id) {
-      // ✏️ Edit
+      /* -------------------- EDIT -------------------- */
       updated = subscriptions.map((s) => {
         if (String(s.id) !== String(id)) return s;
 
         const history = Array.isArray(s.history) ? [...s.history] : [];
 
         if (s.datePaid && s.datePaid !== datePaid) {
-          history.push(s.datePaid);
+          history.push({
+            date: s.datePaid,
+            amount: Number(s.price),
+            currency: s.currency || "EUR",
+          });
         }
 
         return {
@@ -171,7 +180,7 @@ export default function SubscriptionForm() {
 
       showToast(t("toast_updated"), "success");
     } else {
-      // ➕ New
+      /* -------------------- ADD -------------------- */
       updated = [
         ...subscriptions,
         {
@@ -183,7 +192,13 @@ export default function SubscriptionForm() {
           datePaid,
           notify,
           currency,
-          history: [],
+          history: [
+            {
+              date: datePaid,
+              amount: Number(price),
+              currency,
+            },
+          ],
         },
       ];
 
@@ -199,8 +214,9 @@ export default function SubscriptionForm() {
     }
   };
 
-  /* ------------------------------------------------------------------ */
-
+  /* ------------------------------------------------------------------
+   * UI
+   * ------------------------------------------------------------------ */
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
       <Card>
@@ -209,6 +225,7 @@ export default function SubscriptionForm() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* NAME */}
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -216,6 +233,7 @@ export default function SubscriptionForm() {
             className="w-full px-3 py-2 rounded-xl border"
           />
 
+          {/* PRICE */}
           <input
             type="number"
             step="0.01"
@@ -224,15 +242,20 @@ export default function SubscriptionForm() {
             className="w-full px-3 py-2 rounded-xl border"
           />
 
+          {/* FREQUENCY */}
           <FrequencySelector
             value={frequency}
             onChange={setFrequency}
             isPremium={premium.isPremium}
-            onRequirePremium={() => navigate("/premium?reason=intervals")}
+            onRequirePremium={() =>
+              navigate("/premium?reason=intervals")
+            }
           />
 
+          {/* CATEGORY */}
           <CategorySelector value={category} onChange={setCategory} />
 
+          {/* DATE */}
           <input
             type="date"
             value={datePaid}
@@ -240,6 +263,7 @@ export default function SubscriptionForm() {
             className="w-full px-3 py-2 rounded-xl border"
           />
 
+          {/* NOTIFY */}
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -249,6 +273,7 @@ export default function SubscriptionForm() {
             {t("settings_notifications_info")}
           </label>
 
+          {/* ACTIONS */}
           <div className="flex gap-2">
             <SettingButton type="submit" variant="primary">
               {id ? t("form_save") : t("add_subscription")}

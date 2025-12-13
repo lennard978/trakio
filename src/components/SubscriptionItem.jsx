@@ -32,10 +32,7 @@ export default function SubscriptionItem({
   const dateInputRef = useRef(null);
 
   /* ----------------------- HEALTH STATUS ----------------------- */
-  const health = useMemo(
-    () => getSubscriptionHealth(item),
-    [item]
-  );
+  const health = useMemo(() => getSubscriptionHealth(item), [item]);
 
   /* ----------------------- RENEWAL LOGIC ----------------------- */
   const nextRenewal = computeNextRenewal(item.datePaid, item.frequency);
@@ -60,7 +57,6 @@ export default function SubscriptionItem({
     const start = new Date(item.datePaid);
     const now = new Date();
     const end = computeNextRenewal(item.datePaid, item.frequency);
-
     if (!end) return 0;
 
     const total = end - start;
@@ -76,11 +72,10 @@ export default function SubscriptionItem({
   const nextPaymentText = useMemo(() => {
     if (!item.datePaid) return t("no_paid_date");
 
-    const now = new Date();
     const next = computeNextRenewal(item.datePaid, item.frequency);
     if (!next) return t("no_paid_date");
 
-    const diff = diffInDays(next, now);
+    const diff = diffInDays(next, new Date());
 
     if (diff > 1) return t("payment_in_days", { d: diff });
     if (diff === 1) return t("payment_in_1_day");
@@ -91,61 +86,51 @@ export default function SubscriptionItem({
 
   const openCalendar = () => {
     const input = dateInputRef.current;
-    if (!input) return;
-    input.showPicker?.();
-    input.click?.();
+    input?.showPicker?.();
+    input?.click?.();
   };
 
+  /* ----------------------- HISTORY NORMALIZATION ----------------------- */
+  const recentPayments = useMemo(() => {
+    if (!Array.isArray(item.history)) return [];
+
+    return item.history
+      .map((h) => (typeof h === "string" ? h : h?.date))
+      .filter((d) => d && !isNaN(new Date(d).getTime()))
+      .sort((a, b) => new Date(b) - new Date(a))
+      .slice(0, 3);
+  }, [item.history]);
+
   return (
-    <SwipeToDeleteWrapper
-      onDelete={() => onDelete(item.id)}
-      deleteLabel={t("delete")}
-    >
-      <div
-        className="
-          p-5 rounded-3xl
-          bg-white/90 dark:bg-black/35
-          border dark:border-white/10
-          backdrop-blur-xl shadow-lg capitalize
-          dark:shadow-[0_18px_45px_rgba(0,0,0,0.55)]
-        "
-      >
+    <SwipeToDeleteWrapper onDelete={() => onDelete(item.id)} deleteLabel={t("delete")}>
+      <div className="p-5 rounded-3xl bg-white/90 dark:bg-black/35 border dark:border-white/10 backdrop-blur-xl shadow-lg">
         {/* HEADER */}
         <div className="flex justify-between items-start mb-3 gap-3">
           <div>
             <HealthBadge label={health.label} color={health.color} />
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
-              {item.name}
-            </div>
+            <div className="text-lg font-semibold">{item.name}</div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              {currency} {displayPrice.toFixed(2)} /{" "}
-              {t(`frequency_${item.frequency}`)}
+              {currency} {displayPrice.toFixed(2)} / {t(`frequency_${item.frequency}`)}
             </div>
 
             {item.datePaid && (
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-1 text-xs text-gray-500">
                 {t("label_last_paid")}:{" "}
                 {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}
 
-            {item.history?.length > 0 && (
-              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            {recentPayments.length > 0 && (
+              <div className="mt-1 text-xs text-gray-400">
                 {t("previous_payments")}:{" "}
-                {item.history
-                  .filter((d) => !isNaN(new Date(d)))
-                  .slice()
-                  .reverse()
-                  .slice(0, 3)
+                {recentPayments
                   .map((d) => new Date(d).toLocaleDateString())
                   .join(", ")}
               </div>
             )}
-
           </div>
 
-          {/* CATEGORY + HEALTH + PRICE ALERT */}
           <div className="flex flex-col items-end gap-1">
             <CategoryChip category={item.category} />
             {premium.isPremium && item.priceAlert && (
@@ -154,20 +139,9 @@ export default function SubscriptionItem({
           </div>
         </div>
 
-        {/* ACTION ROW */}
+        {/* ACTIONS */}
         <div className="flex items-center gap-4 flex-wrap">
-          <button
-            onClick={openCalendar}
-            title={nextPaymentText}
-            className={`
-              px-4 py-1.5 rounded-xl text-xs font-medium active:scale-95
-              backdrop-blur-md border
-              ${item.datePaid
-                ? "bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/40"
-                : "bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/40"
-              }
-            `}
-          >
+          <button onClick={openCalendar} title={nextPaymentText} className="px-4 py-1.5 rounded-xl text-xs">
             {t("paid")}
           </button>
 
@@ -179,43 +153,17 @@ export default function SubscriptionItem({
             frequency={item.frequency}
           />
 
-          <button
-            onClick={() => navigate(`/edit/${item.id}`)}
-            className="
-              px-4 py-1.5 rounded-xl text-xs font-semibold
-              text-white bg-blue-500/85 capitalize
-              backdrop-blur-md border border-blue-300/40
-              shadow-[0_4px_14px_rgba(0,0,0,0.15)]
-              active:scale-95
-            "
-          >
+          <button onClick={() => navigate(`/edit/${item.id}`)} className="px-4 py-1.5 rounded-xl text-xs bg-blue-500 text-white">
             {t("edit")}
-          </button>
-
-          <button
-            onClick={() => onDelete(item.id)}
-            title={t("button_delete")}
-            className="
-              hidden md:inline-block px-3 py-1.5 rounded-xl text-sm
-              text-white bg-red-500/90
-              backdrop-blur-md border border-red-300/40
-              shadow-[0_4px_14px_rgba(0,0,0,0.15)]
-              hover:bg-red-600 active:scale-95
-            "
-          >
-            🗑️
           </button>
         </div>
 
-        {/* HIDDEN DATE PICKER */}
         <input
           ref={dateInputRef}
           type="date"
           className="hidden"
           value={item.datePaid || ""}
-          onChange={(e) =>
-            onUpdatePaidDate(item.id, e.target.value)
-          }
+          onChange={(e) => onUpdatePaidDate(item.id, e.target.value)}
         />
       </div>
     </SwipeToDeleteWrapper>

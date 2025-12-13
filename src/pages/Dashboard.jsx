@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -15,139 +15,116 @@ import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
 
+function normalizeSubscription(sub) {
+  const currency = sub.currency || "EUR";
+  const price = Number(sub.price || 0);
+
+  const history = Array.isArray(sub.history) ? sub.history : [];
+  const normalizedHistory = history
+    .map((h) => {
+      // Support legacy string history
+      if (typeof h === "string") return { date: h, amount: price, currency };
+      // Support object history
+      if (h && typeof h === "object" && h.date) {
+        return {
+          date: h.date,
+          amount: Number(h.amount ?? price),
+          currency: h.currency || currency,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+  return {
+    ...sub,
+    id: sub.id || crypto.randomUUID(),
+    price,
+    currency,
+    history: normalizedHistory,
+  };
+}
+
+async function kvGet(email) {
+  const res = await fetch("/api/subscriptions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "get", email }),
+  });
+  if (!res.ok) throw new Error(`KV get failed: ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data.subscriptions) ? data.subscriptions : [];
+}
+
+async function kvSave(email, subscriptions) {
+  const res = await fetch("/api/subscriptions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "save", email, subscriptions }),
+  });
+  if (!res.ok) throw new Error(`KV save failed: ${res.status}`);
+  return res.json();
+}
+
 export default function Dashboard({ currency }) {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
-  const [loadingSubs, setLoadingSubs] = useState(true);
 
   const { t } = useTranslation();
   const premium = usePremium();
-
   const { user } = useAuth();
   const email = user?.email;
 
-  // Ensure subscription has a unique ID
-  const ensureId = (sub) => ({
-    ...sub,
-    id: sub.id || crypto.randomUUID(),
-  });
-
-  // --- KV helpers ------------------------------------------------------
-  const saveToKV = async (subs) => {
+  // Load from KV only
+  useEffect(() => {
     if (!email) return;
 
-    const res = await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save",
-        email,
-        subscriptions: subs,
-      }),
-    });
-
-    if (!res.ok) {
-      // Do not break UI, but log for diagnosis
-      const text = await res.text().catch(() => "");
-      throw new Error(`KV save failed (${res.status}): ${text}`);
-    }
-  };
-
-  const persistSubscriptions = async (subs) => {
-    setSubscriptions(subs);
-
-    // KV is the only source of truth
-    await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save",
-        email,
-        subscriptions: subs,
-      }),
-    });
-  };
-
-
-  // --- KV-only load ----------------------------------------------------
-  useEffect(() => {
-    if (!email) {
-      setSubscriptions([]);
-      setLoadingSubs(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const load = async () => {
-      setLoadingSubs(true);
-
+    (async () => {
       try {
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "get", email }),
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`KV get failed (${res.status}): ${text}`);
-        }
-
-        const data = await res.json();
-        const list = Array.isArray(data.subscriptions) ? data.subscriptions : [];
-        const fixed = list.map(ensureId);
-
-        if (!cancelled) {
-          setSubscriptions(fixed);
-        }
+        const list = await kvGet(email);
+        setSubscriptions(list.map(normalizeSubscription));
       } catch (err) {
-        console.error("Subscription KV load failed:", err);
-        if (!cancelled) setSubscriptions([]);
-      } finally {
-        if (!cancelled) setLoadingSubs(false);
+        console.error("Subscription load failed:", err);
+        setSubscriptions([]);
       }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    })();
   }, [email]);
 
-  // --- FX rates --------------------------------------------------------
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
   useNotifications(subscriptions);
 
-  const preferredCurrency = premium.isPremium ? currency : "EUR";
   const hasSubscriptions = subscriptions.length > 0;
+  const preferredCurrency = premium.isPremium ? currency : "EUR";
 
-  const sorted = useMemo(() => {
-    return subscriptions.slice().sort((a, b) => {
-      const nextA = computeNextRenewal(a.datePaid, a.frequency);
-      const nextB = computeNextRenewal(b.datePaid, b.frequency);
-      if (!nextA && !nextB) return 0;
-      if (!nextA) return 1;
-      if (!nextB) return -1;
-      return nextA - nextB;
-    });
-  }, [subscriptions]);
+  const sorted = subscriptions.slice().sort((a, b) => {
+    const nextA = computeNextRenewal(a.datePaid, a.frequency);
+    const nextB = computeNextRenewal(b.datePaid, b.frequency);
+    if (!nextA && !nextB) return 0;
+    if (!nextA) return 1;
+    if (!nextB) return -1;
+    return nextA - nextB;
+  });
+
+  const persist = async (nextSubs) => {
+    setSubscriptions(nextSubs);
+    if (!email) return;
+    try {
+      await kvSave(email, nextSubs);
+    } catch (e) {
+      console.error("KV save failed:", e);
+      // Optional: show toast here if you want
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
 
       <div>
-        {/* Loading state for KV fetch */}
-        {loadingSubs ? (
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
-            {t("loading") || "Loading..."}
-          </div>
-        ) : hasSubscriptions ? (
+        {hasSubscriptions ? (
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white">
               {t("dashboard_title")}
@@ -156,16 +133,13 @@ export default function Dashboard({ currency }) {
         ) : (
           <div className="text-center text-gray-500 dark:text-gray-400 mt-6 mb-2">
             <p className="mb-3">{t("dashboard_empty")}</p>
-            <Link
-              to="/add"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <Link to="/add" className="text-blue-600 dark:text-blue-400 hover:underline">
               {t("dashboard_empty_cta")}
             </Link>
           </div>
         )}
 
-        {!loadingSubs && hasSubscriptions && (
+        {hasSubscriptions && (
           <UpcomingPayments
             subscriptions={subscriptions}
             currency={preferredCurrency}
@@ -174,15 +148,13 @@ export default function Dashboard({ currency }) {
           />
         )}
 
-        {!loadingSubs && hasSubscriptions && (
+        {hasSubscriptions && (
           <MonthlyBudget subscriptions={subscriptions} currency={preferredCurrency} />
         )}
 
-        {!loadingSubs && premium.isPremium && (
-          <ForgottenSubscriptions subscriptions={subscriptions} />
-        )}
+        {premium.isPremium && <ForgottenSubscriptions subscriptions={subscriptions} />}
 
-        {!loadingSubs && hasSubscriptions && (
+        {hasSubscriptions && (
           <div className="space-y-3 mt-3">
             {sorted.map((sub) => (
               <SubscriptionItem
@@ -193,7 +165,7 @@ export default function Dashboard({ currency }) {
                 convert={convert}
                 onDelete={(id) => {
                   const updated = subscriptions.filter((s) => s.id !== id);
-                  persistSubscriptions(updated);
+                  persist(updated);
                 }}
                 onUpdatePaidDate={(id, newDate) => {
                   const updated = subscriptions.map((s) => {
@@ -218,22 +190,24 @@ export default function Dashboard({ currency }) {
                       },
                     ];
 
-                    const newHistory = s.datePaid
-                      ? [...(Array.isArray(s.history) ? s.history : []), s.datePaid]
-                      : Array.isArray(s.history)
-                        ? s.history
-                        : [];
+                    const history = Array.isArray(s.history) ? [...s.history] : [];
+                    // Store as object (standard)
+                    history.push({
+                      date: newDate,
+                      amount: Number(s.price),
+                      currency: s.currency || "EUR",
+                    });
 
                     return {
                       ...s,
                       datePaid: newDate,
-                      history: newHistory,
+                      history,
                       priceHistory,
                       priceAlert: alert || null,
                     };
                   });
 
-                  persistSubscriptions(updated);
+                  persist(updated);
                 }}
               />
             ))}
