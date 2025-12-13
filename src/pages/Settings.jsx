@@ -10,6 +10,7 @@ import SettingButton from "../components/ui/SettingButton";
 
 export default function Settings() {
   const { user, logout } = useAuth();
+  const email = user?.email;
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -38,8 +39,6 @@ export default function Settings() {
         }),
       });
 
-
-
       const data = await res.json();
 
       if (data?.url) {
@@ -52,6 +51,7 @@ export default function Settings() {
       alert("Unable to open customer portal.");
     }
   };
+
 
   /** ------------------------------------------------------------------
    *  Trial logic and UI
