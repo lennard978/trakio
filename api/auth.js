@@ -5,6 +5,12 @@ import { signToken } from "./utils/jwt";
 export default async function handler(req, res) {
   console.log("KV URL:", process.env.KV_REST_API_URL);
 
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({
+      error: "Server misconfiguration",
+    });
+  }
+
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" });
