@@ -1,18 +1,18 @@
 import jwt from "jsonwebtoken";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined");
-}
-
-const SECRET = process.env.JWT_SECRET;
-
 export function signToken(payload) {
-  return jwt.sign(payload, SECRET, { expiresIn: "7d" });
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET missing");
+  }
+
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, SECRET);
+    return jwt.verify(token, process.env.JWT_SECRET);
   } catch {
     return null;
   }
