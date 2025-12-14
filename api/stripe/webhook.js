@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { setPremiumRecord } from "../utils/premiumStore";
+import { setPremiumRecord } from "../utils/premiumStore.js";
 
 export const config = {
   api: {
