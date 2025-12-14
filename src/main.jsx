@@ -22,7 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ToastProvider>
       <AuthProvider>
         <PremiumProvider>
-          <Router>
+          <Router >
             <App />
           </Router>
         </PremiumProvider>
