@@ -15,6 +15,7 @@ import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
 import DashboardFilterUI from "../components/DashboardFilterUI";
+import { useCurrency } from "../context/CurrencyContext";
 
 /* ------------------------------------------------------------------ */
 async function kvGet(email) {
@@ -37,9 +38,10 @@ async function kvSave(subscriptions) {
 }
 
 /* ------------------------------------------------------------------ */
-export default function Dashboard({ currency }) {
+export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
+  const { currency } = useCurrency();
 
   const { t } = useTranslation();
   const premium = usePremium();

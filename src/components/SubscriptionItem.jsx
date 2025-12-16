@@ -1,4 +1,6 @@
 
+// SubscriptionItem.jsx (updated)
+
 import React, { useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -92,14 +94,17 @@ export default function SubscriptionItem({
         <div className="flex justify-between items-start mb-3 gap-3">
           <div>
             <HealthBadge label={health.label} color={health.color} />
-            <div className="text-lg font-semibold">{item.name}</div>
+            <div className="text-lg font-semibold mt-1">{item.name}</div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
               {currency} {displayPrice?.toFixed(2)} / {t(`frequency_${item.frequency}`)}
+              <div className="text-xs text-gray-500">
+                ({item.currency} {item.price?.toFixed(2)})
+              </div>
             </div>
 
             {item.datePaid && (
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-0 text-xs text-gray-500">
                 {t("label_last_paid")}: {new Date(item.datePaid).toLocaleDateString()}
               </div>
             )}

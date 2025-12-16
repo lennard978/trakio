@@ -1,3 +1,6 @@
+
+// BudgetOverviewChart.jsx (updated with tooltip showing original + converted)
+
 import React, { useMemo, useState } from "react";
 import {
   PieChart,
@@ -222,24 +225,21 @@ export default function BudgetOverviewChart({ subscriptions, currency, rates, co
                 ))}
               </Pie>
               <Tooltip
-                formatter={(val, name, props) => {
-                  const originalSub = subscriptions.find(
+                formatter={(val, name) => {
+                  const sub = subscriptions.find(
                     (s) =>
                       s.category === name ||
                       s.frequency === name ||
                       s.method === name ||
                       name === "Paid" || name === "Due"
                   );
-
-                  const original = originalSub?.price || val;
-                  const originalCurrency = originalSub?.currency || currency;
-
+                  const original = sub?.price || val;
+                  const originalCurrency = sub?.currency || currency;
                   const formatted = `${currency} ${val.toFixed(2)}`;
                   const originalText =
-                    convert && rates && originalSub
+                    convert && rates && sub
                       ? ` (original: ${originalCurrency} ${original.toFixed(2)})`
                       : "";
-
                   return formatted + originalText;
                 }}
               />

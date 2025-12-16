@@ -36,6 +36,7 @@ const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Premium = lazy(() => import("./pages/Premium"));
+import { useCurrency } from "./context/CurrencyContext";
 
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
@@ -74,18 +75,7 @@ export default function App() {
   const navigate = useNavigate();
 
   /* Currency */
-  const [currency, setCurrency] = useState(
-    () => localStorage.getItem("selected_currency") || "EUR"
-  );
-
-  const handleCurrency = (value) => {
-    if (!premium.isPremium) {
-      navigate("/premium?reason=currency");
-      return;
-    }
-    setCurrency(value);
-    localStorage.setItem("selected_currency", value);
-  };
+  const { currency, setCurrency } = useCurrency();
 
   return (
     <div
@@ -125,15 +115,11 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             {premium.isPremium ? (
-              <CurrencySelector value={currency} onChange={handleCurrency} />
+              <CurrencySelector value={currency} onChange={setCurrency} />
             ) : (
               <button
                 onClick={() => navigate("/premium?reason=currency")}
-                className="
-                  px-3 py-2 text-xs rounded-md
-                  bg-gray-100 dark:bg-gray-800
-                  border border-gray-300 dark:border-gray-700
-                "
+                className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
               >
                 EUR - · {t("premium_locked_currency")}
               </button>

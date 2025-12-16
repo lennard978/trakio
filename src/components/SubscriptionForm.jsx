@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
+import { useCurrency } from "../context/CurrencyContext";
 
 // UI
 import CategorySelector from "../components/CategorySelector";
@@ -13,7 +13,9 @@ import CurrencySelector from "../components/CurrencySelector";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import PaymentMethodIcon from "./icons/PaymentMethodIcons";
+import { fetchRates, convert } from "../utils/fx";
 
+/* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
   if (!d) return null;
   const dt = new Date(d);
@@ -38,14 +40,14 @@ function uniqDates(list) {
   const seen = new Set();
   for (const d of list) {
     const nd = normalizeDateString(d);
-    if (!nd) continue;
-    if (seen.has(nd)) continue;
+    if (!nd || seen.has(nd)) continue;
     seen.add(nd);
     out.push(nd);
   }
   return out;
 }
 
+/* -------------------- Component -------------------- */
 export default function SubscriptionForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -53,6 +55,7 @@ export default function SubscriptionForm() {
   const { showToast } = useToast();
   const { user } = useAuth();
   const premium = usePremium();
+  const { currency: mainCurrency } = useCurrency();
 
   const email = user?.email;
   const [subscriptions, setSubscriptions] = useState([]);
@@ -67,6 +70,10 @@ export default function SubscriptionForm() {
   const [currency, setCurrency] = useState("EUR");
   const [method, setMethod] = useState("");
 
+  const [rates, setRates] = useState(null);
+  const [convertedInput, setConvertedInput] = useState(null);
+  const [convertedMonthly, setConvertedMonthly] = useState(null);
+
   const advancedFrequencies = useMemo(
     () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
     []
@@ -76,6 +83,7 @@ export default function SubscriptionForm() {
   const requiresPremiumInterval = !premium.isPremium && advancedFrequencies.includes(frequency);
   const token = localStorage.getItem("token");
 
+  /* ------------------ Load Subscriptions ------------------ */
   const kvGet = async () => {
     const res = await fetch("/api/subscriptions", {
       method: "POST",
@@ -85,7 +93,6 @@ export default function SubscriptionForm() {
       },
       body: JSON.stringify({ action: "get", email }),
     });
-    if (!res.ok) throw new Error("Failed to load subscriptions");
     const data = await res.json();
     return Array.isArray(data.subscriptions) ? data.subscriptions : [];
   };
@@ -97,11 +104,7 @@ export default function SubscriptionForm() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        action: "save",
-        email,
-        subscriptions: updated,
-      }),
+      body: JSON.stringify({ action: "save", email, subscriptions: updated }),
     });
 
     if (!res.ok) {
@@ -114,14 +117,7 @@ export default function SubscriptionForm() {
     }
   };
 
-  const monthlyPreview = useMemo(() => {
-    const p = Number(price);
-    if (!p || p <= 0) return null;
-    const factor = MONTHLY_FACTOR[frequency] ?? 1;
-    const value = p * factor;
-    return Number.isFinite(value) && value > 0 ? value : null;
-  }, [price, frequency]);
-
+  /* ------------------ Load Data ------------------ */
   useEffect(() => {
     if (!email) return;
     let cancelled = false;
@@ -150,9 +146,6 @@ export default function SubscriptionForm() {
           setNotify(existing.notify !== false);
           setCurrency(existing.currency || "EUR");
           setMethod(existing.method || "");
-        } else {
-          const savedCurrency = localStorage.getItem("selected_currency");
-          if (savedCurrency) setCurrency(savedCurrency);
         }
       } catch (err) {
         console.error("SubscriptionForm load error:", err);
@@ -163,9 +156,42 @@ export default function SubscriptionForm() {
     };
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [email, id, navigate, showToast]);
 
+  useEffect(() => {
+    fetchRates("EUR").then((res) => res && setRates(res));
+  }, []);
+
+  /* ------------------ Currency Conversion ------------------ */
+  useEffect(() => {
+    if (convert && rates && price && currency && mainCurrency) {
+      const priceNum = Number(price);
+      if (priceNum > 0) {
+        const inputConverted = convert(priceNum, currency, mainCurrency, rates);
+        setConvertedInput(inputConverted.toFixed(2));
+
+        const monthlyVal = priceNum * (MONTHLY_FACTOR[frequency] ?? 1);
+        const monthlyConverted = convert(monthlyVal, currency, mainCurrency, rates);
+        setConvertedMonthly(monthlyConverted.toFixed(2));
+      } else {
+        setConvertedInput(null);
+        setConvertedMonthly(null);
+      }
+    }
+  }, [price, currency, mainCurrency, rates, frequency]);
+
+  const monthlyPreview = useMemo(() => {
+    const p = Number(price);
+    if (!p || p <= 0) return null;
+    const factor = MONTHLY_FACTOR[frequency] ?? 1;
+    const value = p * factor;
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }, [price, frequency]);
+
+  /* ------------------ Submit ------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -242,11 +268,16 @@ export default function SubscriptionForm() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
-        <Card><div className="py-8 text-center text-sm text-gray-600 dark:text-gray-300">Loading…</div></Card>
+        <Card>
+          <div className="py-8 text-center text-sm text-gray-600 dark:text-gray-300">
+            Loading…
+          </div>
+        </Card>
       </div>
     );
   }
 
+  /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
       <Card>
@@ -255,13 +286,19 @@ export default function SubscriptionForm() {
         </h1>
 
         {monthlyPreview !== null && (
-          <div className="text-center text-sm text-gray-500 mb-4">
+          <div className="text-center text-sm text-gray-500 mb-1">
             ≈ {currency} {monthlyPreview.toFixed(2)} / {t("monthly")}
           </div>
         )}
 
+        {convertedMonthly && (
+          <div className="text-center text-sm text-gray-500 mb-1">
+            ≈ {mainCurrency} {convertedMonthly} / {t("monthly")}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* NAME */}
+          {/* Name */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_name")}
@@ -274,21 +311,28 @@ export default function SubscriptionForm() {
             />
           </div>
 
-          {/* PRICE */}
+          {/* Price */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_price")} ({currency})
             </label>
-            <input
-              type="number"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full px-3 py-2 pr-28 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+              />
+              {convertedInput && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                  ≈ {mainCurrency} {convertedInput}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* CURRENCY SELECTOR */}
+          {/* Currency */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               Currency
@@ -296,7 +340,7 @@ export default function SubscriptionForm() {
             <CurrencySelector value={currency} onChange={setCurrency} />
           </div>
 
-          {/* FREQUENCY */}
+          {/* Frequency */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_frequency")}
@@ -309,7 +353,7 @@ export default function SubscriptionForm() {
             />
           </div>
 
-          {/* CATEGORY */}
+          {/* Category */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_category")}
@@ -317,8 +361,7 @@ export default function SubscriptionForm() {
             <CategorySelector value={category} onChange={setCategory} />
           </div>
 
-          {/* PAYMENT METHOD */}
-          {/* PAYMENT METHOD */}
+          {/* Payment Method */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               Payment Method
@@ -335,8 +378,7 @@ export default function SubscriptionForm() {
             />
           </div>
 
-
-          {/* DATE PAID */}
+          {/* Date Paid */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("label_select_paid_date")}
@@ -350,7 +392,7 @@ export default function SubscriptionForm() {
             />
           </div>
 
-          {/* NOTIFY */}
+          {/* Notify */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -363,12 +405,16 @@ export default function SubscriptionForm() {
             </label>
           </div>
 
-          {/* ACTIONS */}
+          {/* Submit / Cancel */}
           <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <SettingButton type="submit" variant="primary">
               {id ? t("form_save") : t("add_subscription")}
             </SettingButton>
-            <SettingButton type="button" variant="neutral" onClick={() => navigate("/dashboard")}>
+            <SettingButton
+              type="button"
+              variant="neutral"
+              onClick={() => navigate("/dashboard")}
+            >
               {t("button_cancel")}
             </SettingButton>
           </div>

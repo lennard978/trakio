@@ -16,6 +16,7 @@ import "./i18n.js";
 // Use BrowserRouter ALWAYS on Vercel.
 // HashRouter was only needed for GitHub Pages (you no longer need it).
 const Router = BrowserRouter;
+import { CurrencyProvider } from "./context/CurrencyContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -23,7 +24,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <PremiumProvider>
           <Router >
-            <App />
+            <CurrencyProvider>
+              <App />
+            </CurrencyProvider>
           </Router>
         </PremiumProvider>
       </AuthProvider>
