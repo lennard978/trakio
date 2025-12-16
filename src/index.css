@@ -1,0 +1,304 @@
+@import "./styles/scrollbar.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Layout */
+html,
+body,
+#root {
+	height: 100%;
+}
+
+/* Smooth theme transition */
+* {
+	transition: background-color 0.35s ease, color 0.35s ease,
+		border-color 0.35s ease;
+}
+
+/* Fade-in on initial load */
+html {
+	opacity: 0;
+	transition: opacity 0.5s ease-in-out;
+}
+html.ready {
+	opacity: 1;
+}
+
+/* =========================================================
+   CLEAN ANIMATION SYSTEM (NO DUPLICATES, NO CONFLICTS)
+   ========================================================= */
+
+/* ---------- PAGE TRANSITIONS ---------- */
+@keyframes pageFadeEnter {
+	from {
+		opacity: 0;
+		filter: blur(6px);
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		filter: blur(0px);
+		transform: translateY(0);
+	}
+}
+
+.page-fade-enter {
+	animation: pageFadeEnter 0.45s ease forwards;
+}
+
+/* ---------- BLUR FADE (CROSSFADE SWITCHING) ---------- */
+@keyframes blurFadeIn {
+	from {
+		opacity: 0;
+		filter: blur(6px);
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		filter: blur(0px);
+		transform: translateY(0px);
+	}
+}
+
+@keyframes blurFadeOut {
+	from {
+		opacity: 1;
+		filter: blur(0px);
+		transform: translateY(0px);
+	}
+	to {
+		opacity: 0;
+		filter: blur(6px);
+		transform: translateY(8px);
+	}
+}
+
+.blur-fade-in {
+	animation: blurFadeIn 0.35s ease forwards;
+}
+
+.blur-fade-out {
+	animation: blurFadeOut 0.25s ease forwards;
+}
+
+/* ---------- INSIGHTS SLIDE-UP ---------- */
+@keyframes fadeSlideUp {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0px);
+	}
+}
+
+.fade-slide-up {
+	animation: fadeSlideUp 0.3s ease-out forwards;
+}
+
+/* ---------- ROUTE TRANSITION (LTR/RTL) ---------- */
+@keyframes routeLTR {
+	from {
+		opacity: 0;
+		transform: translateX(18px);
+		filter: blur(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+		filter: blur(0);
+	}
+}
+
+@keyframes routeRTL {
+	from {
+		opacity: 0;
+		transform: translateX(-18px);
+		filter: blur(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+		filter: blur(0);
+	}
+}
+
+.route-transition-ltr {
+	animation: routeLTR 0.35s ease-out forwards;
+}
+
+.route-transition-rtl {
+	animation: routeRTL 0.35s ease-out forwards;
+}
+
+/* ---------- PAID GLOW (CORRECT, NOT DUPLICATE) ---------- */
+@keyframes paidGlowLight {
+	0% {
+		box-shadow: 0 0 0px rgba(110, 231, 183, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 12px rgba(52, 211, 153, 0.6);
+	}
+	100% {
+		box-shadow: 0 0 0px rgba(110, 231, 183, 0.3);
+	}
+}
+@keyframes paidGlowDark {
+	0% {
+		box-shadow: 0 0 0px rgba(16, 185, 129, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+	}
+	100% {
+		box-shadow: 0 0 0px rgba(16, 185, 129, 0.3);
+	}
+}
+
+.animate-paidGlow {
+	animation: paidGlowLight 2s ease-in-out infinite;
+	border-radius: 4px;
+	pointer-events: none;
+}
+
+.dark .animate-paidGlow {
+	animation: paidGlowDark 2s ease-in-out infinite;
+}
+/* Unified form field style */
+.form-field {
+	@apply w-full
+    px-3 
+    py-2 
+    rounded-lg 
+    border 
+    border-gray-300 
+    dark:border-gray-700
+    bg-white 
+    dark:bg-gray-800
+    shadow-sm
+    focus:outline-none
+    focus:ring-2
+    focus:ring-blue-500
+    transition-all;
+}
+.select-arrow {
+	@apply relative appearance-none bg-no-repeat bg-right pr-10;
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23A0A0A0' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+/* UNIFIED FORM INPUT BOX */
+/* --- UNIFIED FORM FIELD (inputs + selectors) --- */
+.form-field {
+	width: 100%;
+	padding: 10px 14px;
+	border-radius: 12px;
+	border: 1px solid rgb(209 213 219); /* gray-300 */
+	background: white;
+	color: rgb(17 24 39); /* gray-900 */
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	font-size: 0.95rem;
+	transition: all 0.2s ease;
+}
+
+.dark .form-field {
+	background: rgb(31 41 55); /* gray-800 */
+	border-color: rgb(55 65 81); /* gray-700 */
+	color: white;
+}
+
+.form-field:hover {
+	border-color: rgb(148 163 184); /* gray-400 */
+}
+
+.form-field:focus,
+.form-field:focus-within {
+	border-color: rgb(59 130 246); /* blue-500 */
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+	outline: none;
+}
+
+/* Remove native arrows */
+.form-field select {
+	appearance: none;
+	background: transparent;
+	border: none;
+	width: 100%;
+	padding: 0;
+}
+
+.form-field input {
+	background: transparent;
+	border: none;
+	width: 100%;
+	outline: none;
+	padding: 0;
+}
+
+/* Dropdown arrows */
+.form-arrow {
+	font-size: 14px;
+	color: rgb(100 116 139); /* gray-500 */
+}
+
+.dark .form-arrow {
+	color: rgb(156 163 175); /* gray-400 */
+}
+
+/* Page enter animation */
+.page-fade-enter {
+	opacity: 0;
+	transform: translateY(8px);
+	animation: pageFadeIn 220ms ease-out forwards;
+}
+
+@keyframes pageFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Header subtle drop-in */
+.app-header {
+	transform: translateY(-4px);
+	opacity: 0;
+	animation: headerDrop 200ms ease-out forwards;
+}
+
+@keyframes headerDrop {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Mobile tab micro-animation */
+.mobile-tab {
+	transition: transform 180ms ease-out, color 180ms ease-out,
+		background-color 180ms ease-out;
+}
+
+.tab-pill {
+	transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+/* Auto-adjust logo for dark mode */
+.logo-img {
+	transition: filter 0.3s ease;
+}
+
+.dark .logo-img {
+	filter: brightness(1.2) saturate(1.2) invert(1);
+}

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Do not index private pages
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /add
+Disallow: /edit
+Disallow: /trial-expired
+
+Sitemap: https://trakio.de/sitemap.xml
