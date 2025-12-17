@@ -16,7 +16,6 @@ import { usePremium } from "../hooks/usePremium";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
-import { fetchRates, convert } from "../utils/fx";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 
 /* ------------------------------------------------------------------ */
@@ -79,18 +78,6 @@ export default function InsightsPage() {
     })();
   }, [email]);
 
-  /* ---------------- FX ---------------- */
-  useEffect(() => {
-    fetchRates("EUR").then((r) => r && setRates(r));
-  }, []);
-
-  const preferredCurrency = useMemo(
-    () =>
-      premium.isPremium
-        ? localStorage.getItem("selected_currency") || "EUR"
-        : "EUR",
-    [premium.isPremium]
-  );
 
   /* ---------------- Monthly normalized cost ---------------- */
   const monthlyCost = (s) => {
@@ -98,8 +85,8 @@ export default function InsightsPage() {
     const base = s.currency || "EUR";
 
     const converted =
-      rates && preferredCurrency
-        ? convert(s.price, base, preferredCurrency, rates)
+      rates
+        ? convert(s.price, base, rates)
         : s.price;
 
     return converted * cfg.monthlyFactor;
@@ -123,15 +110,13 @@ export default function InsightsPage() {
       subscriptions,
       fromDate: now,
       toDate: new Date(now.getTime() + 30 * 86400000),
-      currency: preferredCurrency,
       rates,
       convert,
     });
-  }, [subscriptions, rates, preferredCurrency, now]);
+  }, [subscriptions, rates, now]);
 
   useBudgetAlerts({
     forecast30,
-    currency: preferredCurrency,
     isPremium: premium.isPremium,
   });
 
@@ -151,7 +136,7 @@ export default function InsightsPage() {
     return subscriptions.reduce((a, b) =>
       monthlyCost(b) > monthlyCost(a) ? b : a
     );
-  }, [subscriptions, rates, preferredCurrency]);
+  }, [subscriptions, rates]);
 
   const highestSubMonthly = highestSub ? monthlyCost(highestSub) : 0;
 
@@ -178,7 +163,6 @@ export default function InsightsPage() {
             {t("budget_exceeded", {
               spend: forecast30.total.toFixed(2),
               budget: monthlyBudget.toFixed(2),
-              currency: preferredCurrency,
             })}
           </div>
         )}
@@ -186,7 +170,7 @@ export default function InsightsPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <InsightsCard
           title={t("dashboard_total_monthly")}
-          value={`${preferredCurrency} ${totalMonthly.toFixed(2)}`}
+          value={`${totalMonthly.toFixed(2)}`}
           Icon={CurrencyEuroIcon}
         />
 
@@ -200,7 +184,7 @@ export default function InsightsPage() {
           title={t("dashboard_highest_sub")}
           value={
             highestSub
-              ? `${highestSub.name} (${preferredCurrency} ${highestSubMonthly.toFixed(
+              ? `${highestSub.name} ( ${highestSubMonthly.toFixed(
                 2
               )} / ${t("monthly")})`
               : t("none")
@@ -262,8 +246,8 @@ export default function InsightsPage() {
 
                 const totalPaid = payments.reduce((sum, p) => {
                   const converted =
-                    rates && preferredCurrency
-                      ? convert(p.amount, p.currency, preferredCurrency, rates)
+                    rates
+                      ? convert(p.amount, p.currency, rates)
                       : p.amount;
                   return sum + converted;
                 }, 0);
@@ -279,7 +263,7 @@ export default function InsightsPage() {
                         .join(", ")}
                     </td>
                     <td>
-                      {totalPaid.toFixed(2)} {preferredCurrency}
+                      {totalPaid.toFixed(2)}
                     </td>
                   </tr>
                 );
@@ -301,9 +285,7 @@ export default function InsightsPage() {
 
       <BudgetOverviewChart
         subscriptions={subscriptions}
-        currency={preferredCurrency}
         rates={rates}
-        convert={convert}
       />
 
       <button

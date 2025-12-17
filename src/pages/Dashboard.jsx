@@ -6,14 +6,12 @@ import { apiFetch } from "../utils/api";
 import SubscriptionItem from "../components/SubscriptionItem";
 import TrialBanner from "../components/TrialBanner";
 import useNotifications from "../hooks/useNotifications";
-import { fetchRates, convert } from "../utils/fx";
 import { usePremium } from "../hooks/usePremium";
 import UpcomingPayments from "../components/UpcomingPayments";
 import MonthlyBudget from "../components/MonthlyBudget";
 import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
-import DashboardFilterUI from "../components/DashboardFilterUI";
 import { useCurrency } from "../context/CurrencyContext";
 
 /* ------------------------------------------------------------------ */
@@ -45,9 +43,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const premium = usePremium();
   const { currency } = useCurrency();
-
   const [subscriptions, setSubscriptions] = useState([]);
-  const [rates, setRates] = useState(null);
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -59,17 +55,6 @@ export default function Dashboard() {
 
   /* ---------------- Sorting (MUST be before useMemo) ---------------- */
   const [sortBy, setSortBy] = useState("next"); // next | price | name | progress
-
-  const handleFilterChange = (field, value) => {
-
-    console.log("FILTER CHANGE:", field, value);
-
-    if (field === "sortBy") {
-      setSortBy(value);
-    } else {
-      setFilters((prev) => ({ ...prev, [field]: value }));
-    }
-  };
 
   /* ---------------- Load & migrate ---------------- */
   useEffect(() => {
@@ -120,11 +105,6 @@ export default function Dashboard() {
     })();
   }, [user?.email]);
 
-  /* ---------------- FX ---------------- */
-  useEffect(() => {
-    fetchRates("EUR").then((r) => r && setRates(r));
-  }, []);
-
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
 
@@ -156,20 +136,6 @@ export default function Dashboard() {
   const sorted = useMemo(() => {
     return filtered.slice().sort((a, b) => {
       switch (sortBy) {
-        case "price": {
-          const pa =
-            rates && convert
-              ? convert(a.price, a.currency || "EUR", preferredCurrency, rates)
-              : a.price ?? 0;
-
-          const pb =
-            rates && convert
-              ? convert(b.price, b.currency || "EUR", preferredCurrency, rates)
-              : b.price ?? 0;
-
-          return pa - pb;
-        }
-
 
         case "name":
           return (a.name || "").localeCompare(b.name || "");
@@ -225,12 +191,6 @@ export default function Dashboard() {
   return (
     <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
-
-      <div className="text-xs text-gray-400 text-center mb-2">
-        Sorting by: {sortBy}
-      </div>
-
-
       {hasSubscriptions ? (
         <h1 className="text-2xl font-bold text-center mb-6">
           {t("dashboard_title")}
@@ -244,36 +204,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      <select
-        value={sortBy}
-        onChange={(e) => {
-          console.log("DIRECT SELECT:", e.target.value);
-          setSortBy(e.target.value);
-        }}
-        className="border p-2 text-xs"
-      >
-        <option value="next">Next</option>
-        <option value="price">Price</option>
-        <option value="name">Name</option>
-        <option value="progress">Progress</option>
-      </select>
-
-
-      <DashboardFilterUI
-        year={filters.year}
-        category={filters.category}
-        paymentMethod={filters.paymentMethod}
-        currency={filters.currency}
-        sortBy={sortBy}
-        onChange={handleFilterChange}
-      />
-
       {hasSubscriptions && (
         <UpcomingPayments
           subscriptions={filtered}
           currency={preferredCurrency}
-          rates={rates}
-          convert={convert}
         />
       )}
 
@@ -281,8 +215,6 @@ export default function Dashboard() {
         <MonthlyBudget
           subscriptions={filtered}
           currency={preferredCurrency}
-          rates={rates}
-          convert={convert}
         />
       )}
 
@@ -297,8 +229,6 @@ export default function Dashboard() {
               key={sub.id}
               item={sub}
               currency={preferredCurrency}
-              rates={rates}
-              convert={convert}
               onDelete={(id) =>
                 persist(subscriptions.filter((s) => s.id !== id))
               }
