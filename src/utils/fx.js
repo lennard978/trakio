@@ -1,38 +1,28 @@
 // src/utils/fx.js
 
-// Simple free API for mock rates (frontend-only)
 export async function fetchRates(base = "EUR") {
   try {
     const res = await fetch(
       `https://api.exchangerate.host/latest?base=${base}`
     );
-
     const data = await res.json();
-
-    if (data && data.rates) {
-      return data.rates;
-    }
-
-    return null;
+    return data?.rates || null;
   } catch (err) {
     console.error("FX fetch error:", err);
     return null;
   }
 }
 
-// Convert between currencies
+// Convert amount FROM → TO using EUR as normalization base
 export function convert(amount, fromCurrency, toCurrency, rates) {
-  if (!rates) return amount;
-  if (fromCurrency === toCurrency) return amount;
+  if (!rates || fromCurrency === toCurrency) return amount;
 
-  const rateFrom = rates[fromCurrency];
-  const rateTo = rates[toCurrency];
+  const eurValue =
+    fromCurrency === "EUR"
+      ? amount
+      : amount / rates[fromCurrency];
 
-  if (!rateFrom || !rateTo) return amount;
-
-  // Convert using direct rate:
-  // amount (FROM) → EUR → TO
-  const eurValue = amount / rateFrom;
-  return eurValue * rateTo;
+  return toCurrency === "EUR"
+    ? eurValue
+    : eurValue * rates[toCurrency];
 }
-

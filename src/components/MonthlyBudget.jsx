@@ -30,7 +30,7 @@ export default function MonthlyBudget({ subscriptions, currency }) {
       : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-900 border rounded-xl p-4 mb-4">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-4">
       <h3 className="text-sm font-medium text-center mb-2">
         Monthly budget
       </h3>

@@ -8,12 +8,15 @@ export default function DashboardFilterUI({
   onChange,
 }) {
   return (
-    <div className="flex flex-wrap gap-3 items-center mb-4">
+    <div className="flex flex-wrap gap-2 items-center mb-4">
       <select
         value={year}
         onChange={(e) => onChange("year", e.target.value)}
-        className="px-3 py-2 border rounded-md"
-      >
+        className="
+             mt-2 px-2 py-1 rounded-xl shadow-xl z-40
+            bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800
+            max-h-64 overflow-y-auto text-xs
+          "      >
         <option value="">All Years</option>
         {[2025, 2024, 2023, 2022].map((y) => (
           <option key={y} value={y}>{y}</option>
@@ -23,8 +26,11 @@ export default function DashboardFilterUI({
       <select
         value={category}
         onChange={(e) => onChange("category", e.target.value)}
-        className="px-3 py-2 border rounded-md"
-      >
+        className="
+            mt-2 px-2 py-1 rounded-xl shadow-xl z-40
+            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+            max-h-64 overflow-y-auto text-xs
+          "      >
         <option value="">All Categories</option>
         <option value="entertainment">Entertainment</option>
         <option value="productivity">Productivity</option>
@@ -35,8 +41,11 @@ export default function DashboardFilterUI({
       <select
         value={paymentMethod}
         onChange={(e) => onChange("paymentMethod", e.target.value)}
-        className="px-3 py-2 border rounded-md"
-      >
+        className="
+            mt-2 px-2 py-1  rounded-xl shadow-xl z-40
+            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800
+            max-h-64 overflow-y-auto text-xs
+          "      >
         <option value="">All Payment Methods</option>
         <option value="visa">Visa</option>
         <option value="mastercard">Mastercard</option>
@@ -45,17 +54,20 @@ export default function DashboardFilterUI({
         <option value="apple pay">Apple Pay</option>
       </select>
 
-      <select
+      {/* <select
         value={currency}
         onChange={(e) => onChange("currency", e.target.value)}
-        className="px-3 py-2 border rounded-md"
-      >
+        className="
+            mt-2 px-2 py-1  rounded-xl shadow-xl z-40
+            bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700
+            max-h-64 overflow-y-auto
+          "      >
         <option value="">All Currencies</option>
         <option value="EUR">EUR</option>
         <option value="USD">USD</option>
         <option value="GBP">GBP</option>
         <option value="JPY">JPY</option>
-      </select>
+      </select> */}
     </div>
   );
 }

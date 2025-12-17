@@ -43,10 +43,7 @@ export default function InsightsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
 
-  const monthlyBudget = Number(
-    localStorage.getItem("monthly_budget")
-  );
-
+  const monthlyBudget = Number(localStorage.getItem("monthly_budget"));
 
   /* ---------------- Premium gate ---------------- */
   useEffect(() => {
@@ -82,7 +79,7 @@ export default function InsightsPage() {
     })();
   }, [email]);
 
-
+  /* ---------------- FX ---------------- */
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
@@ -96,14 +93,14 @@ export default function InsightsPage() {
   );
 
   /* ---------------- Monthly normalized cost ---------------- */
-  const monthlyCost = (item) => {
-    const cfg = FREQ[item.frequency] || FREQ.monthly;
-    const base = item.currency || "EUR";
+  const monthlyCost = (s) => {
+    const cfg = FREQ[s.frequency] || FREQ.monthly;
+    const base = s.currency || "EUR";
 
     const converted =
       rates && preferredCurrency
-        ? convert(item.price, base, preferredCurrency, rates)
-        : item.price;
+        ? convert(s.price, base, preferredCurrency, rates)
+        : s.price;
 
     return converted * cfg.monthlyFactor;
   };
@@ -113,12 +110,12 @@ export default function InsightsPage() {
     0
   );
 
+  /* ---------------- Forecast ---------------- */
   const now = useMemo(() => {
     const d = new Date();
-    d.setHours(0, 0, 0, 0); // normalize to start of day
+    d.setHours(0, 0, 0, 0);
     return d;
   }, []);
-
 
   const forecast30 = useMemo(() => {
     if (!rates) return null;
@@ -130,7 +127,7 @@ export default function InsightsPage() {
       rates,
       convert,
     });
-  }, [subscriptions, rates, preferredCurrency]);
+  }, [subscriptions, rates, preferredCurrency, now]);
 
   useBudgetAlerts({
     forecast30,
@@ -148,12 +145,11 @@ export default function InsightsPage() {
     Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ||
     t("none");
 
-  /* ---------------- FIXED: Most expensive subscription ---------------- */
+  /* ---------------- Most expensive ---------------- */
   const highestSub = useMemo(() => {
     if (!subscriptions.length) return null;
-
-    return subscriptions.reduce((prev, curr) =>
-      monthlyCost(curr) > monthlyCost(prev) ? curr : prev
+    return subscriptions.reduce((a, b) =>
+      monthlyCost(b) > monthlyCost(a) ? b : a
     );
   }, [subscriptions, rates, preferredCurrency]);
 
@@ -219,6 +215,7 @@ export default function InsightsPage() {
         />
       </div>
 
+      {/* ---------------- Payment history ---------------- */}
       <Card className="mt-6 p-5">
         <h2 className="text-lg font-semibold mb-4 text-center">
           {t("insights_payment_history")}
@@ -232,14 +229,44 @@ export default function InsightsPage() {
                 <th>Frequency</th>
                 <th>Payments</th>
                 <th>Dates</th>
+                <th>Amount Paid</th>
               </tr>
             </thead>
             <tbody>
               {subscriptions.map((s) => {
-                const payments = [
-                  ...(Array.isArray(s.history) ? s.history : []),
-                  ...(s.datePaid ? [s.datePaid] : []),
-                ].sort((a, b) => new Date(b) - new Date(a));
+                const payments = (() => {
+                  if (Array.isArray(s.payments)) return s.payments;
+
+                  const list = [];
+
+                  if (Array.isArray(s.history)) {
+                    s.history.forEach((d) => {
+                      list.push({
+                        date: d,
+                        amount: s.price,
+                        currency: s.currency || "EUR",
+                      });
+                    });
+                  }
+
+                  if (s.datePaid) {
+                    list.push({
+                      date: s.datePaid,
+                      amount: s.price,
+                      currency: s.currency || "EUR",
+                    });
+                  }
+
+                  return list;
+                })();
+
+                const totalPaid = payments.reduce((sum, p) => {
+                  const converted =
+                    rates && preferredCurrency
+                      ? convert(p.amount, p.currency, preferredCurrency, rates)
+                      : p.amount;
+                  return sum + converted;
+                }, 0);
 
                 return (
                   <tr key={s.id} className="border-b text-center">
@@ -248,19 +275,21 @@ export default function InsightsPage() {
                     <td>{payments.length}</td>
                     <td>
                       {payments
-                        .map((d) =>
-                          new Date(d).toLocaleDateString()
-                        )
+                        .map((p) => new Date(p.date).toLocaleDateString())
                         .join(", ")}
+                    </td>
+                    <td>
+                      {totalPaid.toFixed(2)} {preferredCurrency}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
+
           </table>
         </div>
 
-        <div className="flex justify-center mt-4">
+        <div className="mt-4">
           <SettingButton
             variant="primary"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}

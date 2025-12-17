@@ -178,7 +178,7 @@ export default function BudgetOverviewChart({ subscriptions, currency, rates, co
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1 rounded-full text-sm font-medium ${activeTab === tab
+            className={`px-3 py-1 mb-2 rounded-full text-sm font-medium ${activeTab === tab
               ? "bg-blue-600 text-white"
               : "bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
               }`}

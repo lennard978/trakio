@@ -285,7 +285,7 @@ export default function SubscriptionForm() {
           {id ? t("edit_title") : t("add_title")}
         </h1>
 
-        {monthlyPreview !== null && (
+        {/* {monthlyPreview !== null && (
           <div className="text-center text-sm text-gray-500 mb-1">
             ≈ {currency} {monthlyPreview.toFixed(2)} / {t("monthly")}
           </div>
@@ -295,7 +295,7 @@ export default function SubscriptionForm() {
           <div className="text-center text-sm text-gray-500 mb-1">
             ≈ {mainCurrency} {convertedMonthly} / {t("monthly")}
           </div>
-        )}
+        )} */}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
@@ -324,21 +324,21 @@ export default function SubscriptionForm() {
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full px-3 py-2 pr-28 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
               />
-              {convertedInput && (
+              {/* {convertedInput && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                   ≈ {mainCurrency} {convertedInput}
                 </span>
-              )}
+              )} */}
             </div>
           </div>
 
           {/* Currency */}
-          <div>
+          {/* <div>
             <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               Currency
             </label>
             <CurrencySelector value={currency} onChange={setCurrency} />
-          </div>
+          </div> */}
 
           {/* Frequency */}
           <div>

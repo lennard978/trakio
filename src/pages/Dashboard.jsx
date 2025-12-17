@@ -36,8 +36,8 @@ async function kvSave(subscriptions) {
     }),
   });
 }
-
 /* ------------------------------------------------------------------ */
+
 export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
@@ -58,20 +58,49 @@ export default function Dashboard() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  /* ---------------- Load subscriptions ---------------- */
+  /* ---------------- Load & migrate subscriptions ---------------- */
   useEffect(() => {
     (async () => {
       try {
         if (!user?.email) return;
 
         const list = await kvGet(user.email);
-        setSubscriptions(
-          list.map((s) => ({
+
+        const migrated = list.map((s) => {
+          let payments = Array.isArray(s.payments) ? [...s.payments] : [];
+
+          // migrate legacy history
+          if (Array.isArray(s.history)) {
+            s.history.forEach((d) => {
+              payments.push({
+                id: crypto.randomUUID(),
+                date: d,
+                amount: s.price,
+                currency: s.currency || "EUR",
+              });
+            });
+          }
+
+          // migrate legacy datePaid
+          if (s.datePaid) {
+            payments.push({
+              id: crypto.randomUUID(),
+              date: s.datePaid,
+              amount: s.price,
+              currency: s.currency || "EUR",
+            });
+          }
+
+          return {
             ...s,
             id: s.id || crypto.randomUUID(),
-            history: Array.isArray(s.history) ? s.history : [],
-          }))
-        );
+            payments,
+            history: undefined,
+            datePaid: undefined,
+          };
+        });
+
+        setSubscriptions(migrated);
       } catch (err) {
         console.error("Subscription load failed:", err);
         setSubscriptions([]);
@@ -79,7 +108,7 @@ export default function Dashboard() {
     })();
   }, [user?.email]);
 
-  /* ---------------- FX rates ---------------- */
+  /* ---------------- FX ---------------- */
   useEffect(() => {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
@@ -92,7 +121,13 @@ export default function Dashboard() {
   /* ---------------- FILTER LOGIC ---------------- */
   const filtered = useMemo(() => {
     return subscriptions.filter((s) => {
-      const paidYear = s.datePaid ? new Date(s.datePaid).getFullYear().toString() : "";
+      const lastPayment = s.payments?.length
+        ? new Date(Math.max(...s.payments.map((p) => new Date(p.date))))
+        : null;
+
+      const paidYear = lastPayment
+        ? lastPayment.getFullYear().toString()
+        : "";
 
       return (
         (!filters.year || paidYear === filters.year) &&
@@ -103,9 +138,10 @@ export default function Dashboard() {
     });
   }, [subscriptions, filters]);
 
+  /* ---------------- SORT BY NEXT RENEWAL ---------------- */
   const sorted = filtered.slice().sort((a, b) => {
-    const nextA = computeNextRenewal(a.datePaid, a.frequency);
-    const nextB = computeNextRenewal(b.datePaid, b.frequency);
+    const nextA = computeNextRenewal(a.payments, a.frequency);
+    const nextB = computeNextRenewal(b.payments, b.frequency);
 
     if (!nextA && !nextB) return 0;
     if (!nextA) return 1;
@@ -179,22 +215,21 @@ export default function Dashboard() {
               onDelete={(id) => {
                 persist(subscriptions.filter((s) => s.id !== id));
               }}
-              onUpdatePaidDate={(id, newDate) => {
+              onMarkPaid={(id, date) => {
                 const updated = subscriptions.map((s) => {
                   if (s.id !== id) return s;
 
-                  const history = Array.isArray(s.history)
-                    ? [...s.history]
-                    : [];
-
-                  if (s.datePaid && s.datePaid !== newDate) {
-                    history.push(s.datePaid);
-                  }
-
                   return {
                     ...s,
-                    datePaid: newDate,
-                    history,
+                    payments: [
+                      ...(Array.isArray(s.payments) ? s.payments : []),
+                      {
+                        id: crypto.randomUUID(),
+                        date,
+                        amount: s.price,
+                        currency: s.currency || "EUR",
+                      },
+                    ],
                   };
                 });
 
