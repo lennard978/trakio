@@ -1,11 +1,14 @@
+// src/components/UpcomingPayments.jsx
 import React, { useMemo } from "react";
 import { computeNextRenewal } from "../utils/renewal";
 
 function daysUntil(date) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
+
   return Math.ceil((d - today) / 86400000);
 }
 
@@ -17,11 +20,13 @@ export default function UpcomingPayments({
   daysAhead = 7,
 }) {
   const upcoming = useMemo(() => {
-    const now = new Date();
-
     return subscriptions
       .map((s) => {
-        const next = computeNextRenewal(s.datePaid, s.frequency);
+        if (!Array.isArray(s.payments) || s.payments.length === 0) {
+          return null;
+        }
+
+        const next = computeNextRenewal(s.payments, s.frequency);
         if (!next) return null;
 
         const diff = daysUntil(next);
@@ -40,12 +45,14 @@ export default function UpcomingPayments({
   if (upcoming.length === 0) return null;
 
   return (
-    <div className="
-      bg-white dark:bg-gray-900
-      border border-gray-200 dark:border-gray-800
-      rounded-xl shadow-sm
-      p-4 mb-4
-    ">
+    <div
+      className="
+        bg-white dark:bg-gray-900
+        border border-gray-200 dark:border-gray-800
+        rounded-xl shadow-sm
+        p-4 mb-4
+      "
+    >
       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">
         Upcoming payments
       </h3>

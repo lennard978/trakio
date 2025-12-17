@@ -1,8 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { getCurrentMonthSpending } from "../utils/budget";
+// src/components/MonthlyBudget.jsx
+import React, { useEffect, useState, useMemo } from "react";
 import { usePremium } from "../hooks/usePremium";
 
-export default function MonthlyBudget({ subscriptions, currency }) {
+/* ---------------- Monthly factor ---------------- */
+const MONTHLY_FACTOR = {
+  weekly: 4.345,
+  biweekly: 2.1725,
+  monthly: 1,
+  quarterly: 1 / 3,
+  semiannual: 1 / 6,
+  yearly: 1 / 12,
+};
+
+export default function MonthlyBudget({
+  subscriptions,
+  currency,
+  rates,
+  convert,
+}) {
   const premium = usePremium();
 
   const [budget, setBudget] = useState(() => {
@@ -10,10 +25,27 @@ export default function MonthlyBudget({ subscriptions, currency }) {
     return v ? Number(v) : null;
   });
 
-  const spent = getCurrentMonthSpending(subscriptions);
+  /* ---------------- Recalculate monthly spend ---------------- */
+  const spent = useMemo(() => {
+    if (!Array.isArray(subscriptions)) return 0;
+
+    return subscriptions.reduce((sum, s) => {
+      if (!s.price || !s.frequency) return sum;
+
+      const factor = MONTHLY_FACTOR[s.frequency] ?? 1;
+
+      const priceInCurrency =
+        s.currency && rates
+          ? convert(s.price, s.currency, currency, rates)
+          : s.price;
+
+      return sum + priceInCurrency * factor;
+    }, 0);
+  }, [subscriptions, currency, rates, convert]);
+
   const remaining = budget != null ? budget - spent : null;
 
-  // Keep in sync if Settings changes it
+  /* ---------------- Sync with Settings ---------------- */
   useEffect(() => {
     const sync = () => {
       const v = localStorage.getItem("monthly_budget");
@@ -32,7 +64,7 @@ export default function MonthlyBudget({ subscriptions, currency }) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-4">
       <h3 className="text-sm font-medium text-center mb-2">
-        Monthly budget
+        Monthly Budget
       </h3>
 
       <div className="text-sm space-y-1">

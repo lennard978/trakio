@@ -233,20 +233,22 @@ export default function Settings() {
         <h3 className="font-semibold mb-2">
           {t("budget_title")}
         </h3>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={monthlyBudget ?? ""}
+            onChange={(e) =>
+              setMonthlyBudget(
+                e.target.value ? Number(e.target.value) : null
+              )
+            }
+            placeholder={t("budget_placeholder")}
+            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+          />
 
-        <input
-          type="number"
-          min="0"
-          step="1"
-          value={monthlyBudget ?? ""}
-          onChange={(e) =>
-            setMonthlyBudget(
-              e.target.value ? Number(e.target.value) : null
-            )
-          }
-          placeholder={t("budget_placeholder")}
-          className="w-full px-3 py-2 rounded-lg border"
-        />
+        </div>
 
         <label className="flex items-center gap-2 mt-2 text-sm">
           <input

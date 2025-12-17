@@ -54,7 +54,13 @@ export default function CurrencySelector({ value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex gap-2 items-center px-3 py-2 rounded-md border"
+        className="flex gap-1 items-center px-3 py-2 justify-center
+        rounded-2xl
+        bg-white/20 dark:bg-black/20
+        backdrop-blur-xl
+        border border-white/30 dark:border-white/10
+        shadow-[0_8px_20px_rgba(0,0,0,0.25)]
+        transition-all active:scale-95"
       >
         <span>{getFlagEmoji(selected)}</span>
         <span>{selected}</span>

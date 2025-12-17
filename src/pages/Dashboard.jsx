@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -18,6 +17,8 @@ import DashboardFilterUI from "../components/DashboardFilterUI";
 import { useCurrency } from "../context/CurrencyContext";
 
 /* ------------------------------------------------------------------ */
+/* KV helpers */
+/* ------------------------------------------------------------------ */
 async function kvGet(email) {
   const data = await apiFetch("/api/subscriptions", {
     method: "POST",
@@ -36,17 +37,19 @@ async function kvSave(subscriptions) {
     }),
   });
 }
+
 /* ------------------------------------------------------------------ */
 
 export default function Dashboard() {
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [rates, setRates] = useState(null);
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const premium = usePremium();
   const { currency } = useCurrency();
 
-  const { t } = useTranslation();
-  const premium = usePremium();
-  const { user } = useAuth();
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [rates, setRates] = useState(null);
 
+  /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
     year: "",
     category: "",
@@ -54,22 +57,32 @@ export default function Dashboard() {
     currency: "",
   });
 
+  /* ---------------- Sorting (MUST be before useMemo) ---------------- */
+  const [sortBy, setSortBy] = useState("next"); // next | price | name | progress
+
   const handleFilterChange = (field, value) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
+
+    console.log("FILTER CHANGE:", field, value);
+
+    if (field === "sortBy") {
+      setSortBy(value);
+    } else {
+      setFilters((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
-  /* ---------------- Load & migrate subscriptions ---------------- */
+  /* ---------------- Load & migrate ---------------- */
   useEffect(() => {
+    if (!user?.email) return;
+
     (async () => {
       try {
-        if (!user?.email) return;
-
         const list = await kvGet(user.email);
 
         const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-          // migrate legacy history
+          // Legacy migration (one-time)
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
@@ -81,7 +94,6 @@ export default function Dashboard() {
             });
           }
 
-          // migrate legacy datePaid
           if (s.datePaid) {
             payments.push({
               id: crypto.randomUUID(),
@@ -113,12 +125,13 @@ export default function Dashboard() {
     fetchRates("EUR").then((r) => r && setRates(r));
   }, []);
 
+  /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
 
   const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
 
-  /* ---------------- FILTER LOGIC ---------------- */
+  /* ---------------- Filtering ---------------- */
   const filtered = useMemo(() => {
     return subscriptions.filter((s) => {
       const lastPayment = s.payments?.length
@@ -132,23 +145,73 @@ export default function Dashboard() {
       return (
         (!filters.year || paidYear === filters.year) &&
         (!filters.category || s.category === filters.category) &&
-        (!filters.paymentMethod || s.paymentMethod === filters.paymentMethod) &&
+        (!filters.paymentMethod ||
+          s.paymentMethod === filters.paymentMethod) &&
         (!filters.currency || s.currency === filters.currency)
       );
     });
   }, [subscriptions, filters]);
 
-  /* ---------------- SORT BY NEXT RENEWAL ---------------- */
-  const sorted = filtered.slice().sort((a, b) => {
-    const nextA = computeNextRenewal(a.payments, a.frequency);
-    const nextB = computeNextRenewal(b.payments, b.frequency);
+  /* ---------------- Sorting ---------------- */
+  const sorted = useMemo(() => {
+    return filtered.slice().sort((a, b) => {
+      switch (sortBy) {
+        case "price": {
+          const pa =
+            rates && convert
+              ? convert(a.price, a.currency || "EUR", preferredCurrency, rates)
+              : a.price ?? 0;
 
-    if (!nextA && !nextB) return 0;
-    if (!nextA) return 1;
-    if (!nextB) return -1;
-    return nextA - nextB;
-  });
+          const pb =
+            rates && convert
+              ? convert(b.price, b.currency || "EUR", preferredCurrency, rates)
+              : b.price ?? 0;
 
+          return pa - pb;
+        }
+
+
+        case "name":
+          return (a.name || "").localeCompare(b.name || "");
+
+        case "progress": {
+          const nextA = computeNextRenewal(a.payments, a.frequency);
+          const nextB = computeNextRenewal(b.payments, b.frequency);
+
+          if (!nextA && !nextB) return 0;
+          if (!nextA) return 1;
+          if (!nextB) return -1;
+
+          const lastA = Math.max(...a.payments.map((p) => new Date(p.date).getTime()));
+          const lastB = Math.max(...b.payments.map((p) => new Date(p.date).getTime()));
+
+          const totalA = nextA.getTime() - lastA;
+          const totalB = nextB.getTime() - lastB;
+
+          if (totalA <= 0 || totalB <= 0) return 0;
+
+          const progA = (Date.now() - lastA) / totalA;
+          const progB = (Date.now() - lastB) / totalB;
+
+          return progB - progA;
+        }
+
+
+        case "next":
+        default: {
+          const nextA = computeNextRenewal(a.payments, a.frequency);
+          const nextB = computeNextRenewal(b.payments, b.frequency);
+
+          if (!nextA && !nextB) return 0;
+          if (!nextA) return 1;
+          if (!nextB) return -1;
+          return nextA - nextB;
+        }
+      }
+    });
+  }, [filtered, sortBy]);
+
+  /* ---------------- Persist helper ---------------- */
   const persist = async (nextSubs) => {
     setSubscriptions(nextSubs);
     try {
@@ -158,9 +221,15 @@ export default function Dashboard() {
     }
   };
 
+  /* ---------------- Render ---------------- */
   return (
     <div className="max-w-2xl mx-auto mt-2 pb-6">
       <TrialBanner />
+
+      <div className="text-xs text-gray-400 text-center mb-2">
+        Sorting by: {sortBy}
+      </div>
+
 
       {hasSubscriptions ? (
         <h1 className="text-2xl font-bold text-center mb-6">
@@ -175,11 +244,27 @@ export default function Dashboard() {
         </div>
       )}
 
+      <select
+        value={sortBy}
+        onChange={(e) => {
+          console.log("DIRECT SELECT:", e.target.value);
+          setSortBy(e.target.value);
+        }}
+        className="border p-2 text-xs"
+      >
+        <option value="next">Next</option>
+        <option value="price">Price</option>
+        <option value="name">Name</option>
+        <option value="progress">Progress</option>
+      </select>
+
+
       <DashboardFilterUI
         year={filters.year}
         category={filters.category}
         paymentMethod={filters.paymentMethod}
         currency={filters.currency}
+        sortBy={sortBy}
         onChange={handleFilterChange}
       />
 
@@ -196,6 +281,8 @@ export default function Dashboard() {
         <MonthlyBudget
           subscriptions={filtered}
           currency={preferredCurrency}
+          rates={rates}
+          convert={convert}
         />
       )}
 
@@ -203,7 +290,7 @@ export default function Dashboard() {
         <ForgottenSubscriptions subscriptions={filtered} />
       )}
 
-      {filtered.length > 0 && (
+      {sorted.length > 0 && (
         <div className="space-y-3 mt-4">
           {sorted.map((sub) => (
             <SubscriptionItem
@@ -212,26 +299,28 @@ export default function Dashboard() {
               currency={preferredCurrency}
               rates={rates}
               convert={convert}
-              onDelete={(id) => {
-                persist(subscriptions.filter((s) => s.id !== id));
-              }}
+              onDelete={(id) =>
+                persist(subscriptions.filter((s) => s.id !== id))
+              }
               onMarkPaid={(id, date) => {
-                const updated = subscriptions.map((s) => {
-                  if (s.id !== id) return s;
-
-                  return {
-                    ...s,
-                    payments: [
-                      ...(Array.isArray(s.payments) ? s.payments : []),
-                      {
-                        id: crypto.randomUUID(),
-                        date,
-                        amount: s.price,
-                        currency: s.currency || "EUR",
-                      },
-                    ],
-                  };
-                });
+                const updated = subscriptions.map((s) =>
+                  s.id !== id
+                    ? s
+                    : {
+                      ...s,
+                      payments: [
+                        ...(Array.isArray(s.payments)
+                          ? s.payments
+                          : []),
+                        {
+                          id: crypto.randomUUID(),
+                          date,
+                          amount: s.price,
+                          currency: s.currency || "EUR",
+                        },
+                      ],
+                    }
+                );
 
                 persist(updated);
               }}

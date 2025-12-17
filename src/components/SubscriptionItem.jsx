@@ -11,7 +11,7 @@ import HealthBadge from "./HealthBadge";
 import PriceAlertBadge from "./PriceAlertBadge";
 
 import { computeNextRenewal } from "../utils/renewal";
-import { getSubscriptionHealth } from "../utils/subscriptionHealth";
+import { subscriptionHealth } from "../utils/subscriptionHealth";
 import { usePremium } from "../hooks/usePremium";
 
 function diffInDays(dateA, dateB) {
@@ -33,6 +33,7 @@ export default function SubscriptionItem({
 
   const payments = Array.isArray(item.payments) ? item.payments : [];
 
+  /* ---------------- Last payment ---------------- */
   const lastPaymentDate = useMemo(() => {
     if (!payments.length) return null;
     return new Date(
@@ -40,41 +41,49 @@ export default function SubscriptionItem({
     );
   }, [payments]);
 
+  /* ---------------- Next renewal (FIXED) ---------------- */
   const nextRenewal = useMemo(() => {
-    if (!lastPaymentDate) return null;
-    return computeNextRenewal(lastPaymentDate, item.frequency);
-  }, [lastPaymentDate, item.frequency]);
+    if (!payments.length) return null;
+    return computeNextRenewal(payments, item.frequency);
+  }, [payments, item.frequency]);
 
-  const daysLeft = nextRenewal
-    ? Math.max(diffInDays(nextRenewal, new Date()), 0)
-    : null;
+  /* ---------------- Days left (DO NOT CLAMP) ---------------- */
+  const daysLeft = useMemo(() => {
+    if (!nextRenewal) return null;
+    return diffInDays(nextRenewal, new Date());
+  }, [nextRenewal]);
 
+  /* ---------------- Display price ---------------- */
   const displayPrice = useMemo(() => {
     if (!rates || !convert || !item.price || !item.currency) return item.price;
     return convert(item.price, item.currency, currency, rates);
   }, [item.price, item.currency, currency, rates, convert]);
 
+  /* ---------------- Progress calculation (FIXED) ---------------- */
+  const progress = useMemo(() => {
+    if (!lastPaymentDate || !nextRenewal) return 0;
+
+    const totalMs = nextRenewal.getTime() - lastPaymentDate.getTime();
+    const elapsedMs = Date.now() - lastPaymentDate.getTime();
+
+    if (totalMs <= 0) return 0;
+    if (elapsedMs <= 0) return 0;
+
+    return Math.min(100, Math.round((elapsedMs / totalMs) * 100));
+  }, [lastPaymentDate, nextRenewal]);
+
+  /* ---------------- UI helpers ---------------- */
   const categoryKey = (item.category || "other").toLowerCase();
   const color = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
-  const progress = useMemo(() => {
-    if (!lastPaymentDate || !nextRenewal) return 0;
-    const total = nextRenewal - lastPaymentDate;
-    const used = Date.now() - lastPaymentDate;
-    if (used <= 0) return 0;
-    if (used >= total) return 100;
-    return Math.round((used / total) * 100);
-  }, [lastPaymentDate, nextRenewal]);
-
   const nextPaymentText = useMemo(() => {
     if (!nextRenewal) return t("no_paid_date");
-    const diff = diffInDays(nextRenewal, new Date());
-    if (diff > 1) return t("payment_in_days", { d: diff });
-    if (diff === 1) return t("payment_in_1_day");
-    if (diff === 0) return t("due_today");
-    if (diff === -1) return t("overdue_1_day");
-    return t("overdue_days", { d: Math.abs(diff) });
-  }, [nextRenewal, t]);
+    if (daysLeft > 1) return t("payment_in_days", { d: daysLeft });
+    if (daysLeft === 1) return t("payment_in_1_day");
+    if (daysLeft === 0) return t("due_today");
+    if (daysLeft === -1) return t("overdue_1_day");
+    return t("overdue_days", { d: Math.abs(daysLeft) });
+  }, [nextRenewal, daysLeft, t]);
 
   const recentPayments = payments
     .slice()
@@ -92,7 +101,7 @@ export default function SubscriptionItem({
       <div className="p-5 rounded-3xl bg-white/90 dark:bg-black/35 border dark:border-white/10 backdrop-blur-xl shadow-lg">
         <div className="flex justify-between items-start mb-3 gap-3">
           <div>
-            <HealthBadge {...getSubscriptionHealth(item)} />
+            <HealthBadge {...subscriptionHealth(item)} />
             <div className="text-lg font-semibold mt-1">{item.name}</div>
 
             <div className="text-sm text-gray-700 dark:text-gray-300">
@@ -136,7 +145,6 @@ export default function SubscriptionItem({
             progress={progress}
             color={color}
             daysLeft={daysLeft}
-            frequency={item.frequency}
           />
 
           <button

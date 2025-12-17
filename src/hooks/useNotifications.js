@@ -1,10 +1,11 @@
+// src/hooks/useNotifications.js
 import { useEffect } from "react";
 import { computeNextRenewal } from "../utils/renewal";
 
 /**
  * Browser notification hook
  * - Fires at most once per subscription per day
- * - Safe with KV refreshes and reloads
+ * - Uses payments[] as the single source of truth
  */
 export default function useNotifications(subscriptions) {
   useEffect(() => {
@@ -20,16 +21,16 @@ export default function useNotifications(subscriptions) {
     const todayKey = now.toISOString().split("T")[0];
 
     subscriptions.forEach((s) => {
-      if (!s?.id || !s?.datePaid) return;
+      if (!s?.id) return;
+      if (!Array.isArray(s.payments) || s.payments.length === 0) return;
 
-      const next = computeNextRenewal(s.datePaid, s.frequency);
+      const next = computeNextRenewal(s.payments, s.frequency);
       if (!next) return;
 
       const diff = Math.ceil((next - now) / 86400000);
 
-      // Notification key prevents duplicates
+      // Prevent duplicate notifications per day
       const notifyKey = `notify:${s.id}:${todayKey}`;
-
       if (localStorage.getItem(notifyKey)) return;
 
       if (diff === 0) {

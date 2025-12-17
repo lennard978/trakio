@@ -313,7 +313,7 @@ export default function SubscriptionForm() {
 
           {/* Price */}
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className=" mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("form_price")} ({currency})
             </label>
             <div className="relative">
@@ -322,7 +322,7 @@ export default function SubscriptionForm() {
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full px-3 py-2 pr-28 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
               />
               {/* {convertedInput && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">

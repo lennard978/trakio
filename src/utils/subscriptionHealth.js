@@ -1,16 +1,12 @@
+// src/utils/subscriptionHealth.js
 import { computeNextRenewal } from "./renewal";
 
-export function getSubscriptionHealth(subscription) {
-  const payments = [
-    ...(subscription.history || []),
-    subscription.datePaid,
-  ].filter(Boolean);
+export function subscriptionHealth(subscription) {
+  const payments = Array.isArray(subscription.payments)
+    ? subscription.payments
+    : [];
 
-  const validPayments = payments
-    .map((d) => new Date(d))
-    .filter((d) => !isNaN(d.getTime()));
-
-  if (validPayments.length === 0) {
+  if (payments.length === 0) {
     return {
       status: "never_paid",
       label: "Never paid",
@@ -18,8 +14,19 @@ export function getSubscriptionHealth(subscription) {
     };
   }
 
-  const lastPaid = validPayments.sort((a, b) => b - a)[0];
-  const next = computeNextRenewal(lastPaid, subscription.frequency);
+  const lastPaid = new Date(
+    Math.max(...payments.map((p) => new Date(p.date)))
+  );
+
+  if (isNaN(lastPaid.getTime())) {
+    return {
+      status: "never_paid",
+      label: "Never paid",
+      color: "gray",
+    };
+  }
+
+  const next = computeNextRenewal(payments, subscription.frequency);
 
   if (!next) {
     return {
@@ -30,9 +37,10 @@ export function getSubscriptionHealth(subscription) {
   }
 
   const now = new Date();
-  const diffDays = Math.ceil((now - next) / 86400000);
+  const diffDays = Math.ceil((next - now) / 86400000);
 
-  if (diffDays <= 0) {
+  // ✅ Still active
+  if (diffDays >= 0) {
     return {
       status: "active",
       label: "Active",
@@ -40,7 +48,8 @@ export function getSubscriptionHealth(subscription) {
     };
   }
 
-  if (diffDays <= 30) {
+  // ⚠️ Recently overdue (grace window)
+  if (diffDays >= -30) {
     return {
       status: "at_risk",
       label: "At risk",
@@ -48,6 +57,7 @@ export function getSubscriptionHealth(subscription) {
     };
   }
 
+  // ❌ Long overdue
   return {
     status: "inactive",
     label: "Inactive",
