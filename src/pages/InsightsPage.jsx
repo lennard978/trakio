@@ -13,6 +13,9 @@ import useBudgetAlerts from "../hooks/useBudgetAlerts";
 
 import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
+import { useCurrency } from "../context/CurrencyContext"; // ✅ Currency context
+import { convert } from "../utils/currency"; // ✅ Currency converter
+
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
@@ -38,6 +41,7 @@ export default function InsightsPage() {
   const { user } = useAuth();
   const email = user?.email;
   const premium = usePremium();
+  const { currency } = useCurrency(); // ✅ Access target currency
 
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
@@ -78,16 +82,14 @@ export default function InsightsPage() {
     })();
   }, [email]);
 
-
   /* ---------------- Monthly normalized cost ---------------- */
   const monthlyCost = (s) => {
     const cfg = FREQ[s.frequency] || FREQ.monthly;
     const base = s.currency || "EUR";
 
-    const converted =
-      rates
-        ? convert(s.price, base, rates)
-        : s.price;
+    const converted = rates
+      ? convert(s.price, base, currency, rates) // ✅ CORRECT USAGE
+      : s.price;
 
     return converted * cfg.monthlyFactor;
   };
@@ -111,9 +113,9 @@ export default function InsightsPage() {
       fromDate: now,
       toDate: new Date(now.getTime() + 30 * 86400000),
       rates,
-      convert,
+      convert: (amount, from) => convert(amount, from, currency, rates), // ✅ inline convert using selected currency
     });
-  }, [subscriptions, rates, now]);
+  }, [subscriptions, rates, now, currency]); // ✅ include currency
 
   useBudgetAlerts({
     forecast30,
@@ -136,7 +138,7 @@ export default function InsightsPage() {
     return subscriptions.reduce((a, b) =>
       monthlyCost(b) > monthlyCost(a) ? b : a
     );
-  }, [subscriptions, rates]);
+  }, [subscriptions, rates, currency]); // ✅ include currency
 
   const highestSubMonthly = highestSub ? monthlyCost(highestSub) : 0;
 
@@ -170,7 +172,7 @@ export default function InsightsPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <InsightsCard
           title={t("dashboard_total_monthly")}
-          value={`${totalMonthly.toFixed(2)}`}
+          value={`${currency} ${totalMonthly.toFixed(2)}`} // ✅ show currency
           Icon={CurrencyEuroIcon}
         />
 
@@ -184,7 +186,7 @@ export default function InsightsPage() {
           title={t("dashboard_highest_sub")}
           value={
             highestSub
-              ? `${highestSub.name} ( ${highestSubMonthly.toFixed(
+              ? `${highestSub.name} (${currency} ${highestSubMonthly.toFixed(
                 2
               )} / ${t("monthly")})`
               : t("none")
@@ -245,10 +247,9 @@ export default function InsightsPage() {
                 })();
 
                 const totalPaid = payments.reduce((sum, p) => {
-                  const converted =
-                    rates
-                      ? convert(p.amount, p.currency, rates)
-                      : p.amount;
+                  const converted = rates
+                    ? convert(p.amount, p.currency, currency, rates) // ✅ CORRECT
+                    : p.amount;
                   return sum + converted;
                 }, 0);
 
@@ -262,14 +263,11 @@ export default function InsightsPage() {
                         .map((p) => new Date(p.date).toLocaleDateString())
                         .join(", ")}
                     </td>
-                    <td>
-                      {totalPaid.toFixed(2)}
-                    </td>
+                    <td>{currency} {totalPaid.toFixed(2)}</td> {/* ✅ show currency */}
                   </tr>
                 );
               })}
             </tbody>
-
           </table>
         </div>
 

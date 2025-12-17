@@ -14,6 +14,11 @@ import {
   Cell,
 } from "recharts";
 
+import { useCurrency } from "../../context/CurrencyContext"; // adjust path
+import { convert as convertUtil } from "../../utils/currency";
+
+
+
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
@@ -58,9 +63,10 @@ const exportToCSV = (rows, filename = "subscriptions.csv") => {
   document.body.removeChild(link);
 };
 
-export default function BudgetOverviewChart({ subscriptions, currency, rates, convert }) {
+export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
-
+  const { currency } = useCurrency();
+  const convert = convertUtil;
   const data = useMemo(() => {
     const now = new Date();
     const month = now.getMonth();
@@ -226,23 +232,29 @@ export default function BudgetOverviewChart({ subscriptions, currency, rates, co
               </Pie>
               <Tooltip
                 formatter={(val, name) => {
-                  const sub = subscriptions.find(
+                  const matchingSubs = subscriptions.filter(
                     (s) =>
                       s.category === name ||
                       s.frequency === name ||
                       s.method === name ||
-                      name === "Paid" || name === "Due"
+                      name === "Paid" ||
+                      name === "Due"
                   );
-                  const original = sub?.price || val;
-                  const originalCurrency = sub?.currency || currency;
-                  const formatted = `${currency} ${val.toFixed(2)}`;
-                  const originalText =
-                    convert && rates && sub
-                      ? ` (original: ${originalCurrency} ${original.toFixed(2)})`
+
+                  // Aggregate original amounts (if multiple subs match)
+                  const originalTotal = matchingSubs.reduce((sum, s) => sum + (s.price || 0), 0);
+                  const originalCurrency = matchingSubs[0]?.currency || currency;
+
+                  const formattedConverted = `${currency} ${val.toFixed(2)}`;
+                  const formattedOriginal =
+                    convert && rates && matchingSubs.length > 0
+                      ? ` (original: ${originalCurrency} ${originalTotal.toFixed(2)})`
                       : "";
-                  return formatted + originalText;
+
+                  return formattedConverted + formattedOriginal;
                 }}
               />
+
             </PieChart>
           )}
         </ResponsiveContainer>

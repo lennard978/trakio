@@ -240,5 +240,7 @@
 	"budget_placeholder": "Set your monthly limit",
 	"budget_alerts_enabled": "Notify me when I exceed my budget",
 	"budget_exceeded": "You will spend {{currency}} {{spend}} in the next 30 days (budget {{currency}} {{budget}}).",
+	"label_color": "Color",
+
 	"export_csv": "Export CSV"
 }

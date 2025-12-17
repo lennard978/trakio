@@ -45,6 +45,34 @@ function uniqDates(list) {
   return out;
 }
 
+/* 🔹 ADD: category default gradient intensity */
+const CATEGORY_INTENSITY_DEFAULT = {
+  bills: 0.18,
+  utilities: 0.18,
+  streaming: 0.32,
+  entertainment: 0.34,
+  fitness: 0.28,
+  software: 0.26,
+  gaming: 0.34,
+  other: 0.25,
+};
+
+function hexToRgba(hex, alpha = 0.85) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function toRgba(color, alpha) {
+  if (!color) return `rgba(255,255,255,${alpha})`;
+  if (color.startsWith("rgba")) {
+    return color.replace(/rgba\(([^)]+),[^)]+\)/, `rgba($1, ${alpha})`);
+  }
+  if (color.startsWith("#")) return hexToRgba(color, alpha);
+  return color;
+}
+
 /* -------------------- Component -------------------- */
 export default function SubscriptionForm() {
   const navigate = useNavigate();
@@ -54,6 +82,23 @@ export default function SubscriptionForm() {
   const { user } = useAuth();
   const premium = usePremium();
   const { currency: mainCurrency } = useCurrency();
+
+
+
+  const PRESET_COLORS = [
+    "rgba(248, 113, 113, 0.65)", // red
+    "rgba(250, 204, 21, 0.65)",  // yellow
+    "rgba(74, 222, 128, 0.65)",  // green
+    "rgba(96, 165, 250, 0.65)",  // blue
+    "rgba(167, 139, 250, 0.65)", // purple
+    "rgba(244, 114, 182, 0.65)", // pink
+    "rgba(52, 211, 153, 0.65)",  // teal
+    "rgba(249, 115, 22, 0.65)",  // orange
+  ];
+
+
+  const getRandomColor = () =>
+    PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
 
   const email = user?.email;
   const [subscriptions, setSubscriptions] = useState([]);
@@ -67,10 +112,21 @@ export default function SubscriptionForm() {
   const [notify, setNotify] = useState(true);
   const [currency, setCurrency] = useState("EUR");
   const [method, setMethod] = useState("");
+  const [color, setColor] = useState(getRandomColor());
 
-  const [rates, setRates] = useState(null);
-  const [convertedInput, setConvertedInput] = useState(null);
-  const [convertedMonthly, setConvertedMonthly] = useState(null);
+  /* 🔹 ADD: gradient intensity */
+  const [gradientIntensity, setGradientIntensity] = useState(
+    CATEGORY_INTENSITY_DEFAULT.other
+  );
+
+  /* 🔹 ADD: low-power detection */
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
+      navigator.connection?.saveData === true
+    );
+  }, []);
 
   const advancedFrequencies = useMemo(
     () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
@@ -159,6 +215,61 @@ export default function SubscriptionForm() {
     };
   }, [email, id, navigate, showToast]);
 
+
+  /* ------------------ Load + MIGRATION ------------------ */
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const list = await kvGet();
+        if (cancelled) return;
+        /* 🔹 ADD: migrate old subscriptions */
+        const migrated = list.map((s) => ({
+          ...s,
+          gradientIntensity:
+            typeof s.gradientIntensity === "number"
+              ? s.gradientIntensity
+              : CATEGORY_INTENSITY_DEFAULT[s.category] ??
+              CATEGORY_INTENSITY_DEFAULT.other,
+        }));
+
+        setSubscriptions(migrated);
+
+        if (id) {
+          const existing = migrated.find((s) => String(s.id) === String(id));
+          if (!existing) {
+            showToast("Subscription not found", "error");
+            navigate("/dashboard");
+            return;
+          }
+
+          setName(existing.name || "");
+          setPrice(String(existing.price || ""));
+          setFrequency(existing.frequency || "monthly");
+          setCategory(existing.category || "other");
+          setDatePaid(existing.datePaid || "");
+          setNotify(existing.notify !== false);
+          setCurrency(existing.currency || "EUR");
+          setMethod(existing.method || "");
+          setColor(existing.color || getRandomColor());
+          setGradientIntensity(existing.gradientIntensity);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load subscription data", "error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [email, id, navigate, showToast]);
   /* ------------------ Submit ------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -202,6 +313,7 @@ export default function SubscriptionForm() {
             notify,
             currency,
             method: method.trim(),
+            color,
             history: nextHistory,
           };
         });
@@ -219,6 +331,7 @@ export default function SubscriptionForm() {
             notify,
             currency,
             method: method.trim(),
+            color,
             history: [],
           },
         ];
@@ -233,10 +346,40 @@ export default function SubscriptionForm() {
     }
   };
 
+  /* 🔹 ADD: gradient style */
+  const gradientStyle =
+    premium.isPremium && !prefersReducedMotion
+      ? {
+        background: `linear-gradient(
+            120deg,
+            ${toRgba(color, gradientIntensity + 0.15)},
+            ${toRgba(color, gradientIntensity)},
+            transparent
+          )`,
+        backgroundSize: "200% 200%",
+        animation: "trakioGradient 6s ease infinite",
+      }
+      : {
+        background: `linear-gradient(
+            135deg,
+            ${toRgba(color, gradientIntensity)},
+            transparent
+          )`,
+      };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
         <Card>
+          <div className="py-8 text-center text-sm">Loading…</div>
+        </Card>
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
+        <Card className="relative overflow-hidden">
           <div className="py-8 text-center text-sm text-gray-600 dark:text-gray-300">
             Loading…
           </div>
@@ -245,124 +388,193 @@ export default function SubscriptionForm() {
     );
   }
 
+  function hexToRgba(hex, alpha = 0.85) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+
   /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
-      <Card>
-        <h1 className="text-2xl font-bold mb-2 py-4 text-gray-900 dark:text-white">
-          {id ? t("edit_title") : t("add_title")}
-        </h1>
+      <Card className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={gradientStyle}
+        />
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold mb-2 py-4 text-gray-900 dark:text-white">
+            {id ? t("edit_title") : t("add_title")}
+          </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Name */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_name")}
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("placeholder_examples")}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className=" mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_price")} ({currency})
-            </label>
-            <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("form_name")}
+              </label>
               <input
-                type="number"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("placeholder_examples")}
                 className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
               />
             </div>
-          </div>
 
-          {/* Frequency */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_frequency")}
-            </label>
-            <FrequencySelector
-              value={frequency}
-              onChange={setFrequency}
-              isPremium={premium.isPremium}
-              onRequirePremium={() => navigate("/premium?reason=intervals")}
-            />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("form_category")}
-            </label>
-            <CategorySelector value={category} onChange={setCategory} />
-          </div>
-
-          {/* Payment Method */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Payment Method
-            </label>
-            <div className="mb-2">
-              <PaymentMethodIcon method={method} />
+            {/* Price */}
+            <div>
+              <label className=" mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("form_price")} ({currency})
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+                />
+              </div>
             </div>
-            <input
-              type="text"
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              placeholder="e.g. Visa, PayPal, Bank Transfer"
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-            />
-          </div>
 
-          {/* Date Paid */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("label_select_paid_date")}
-            </label>
-            <input
-              type="date"
-              value={datePaid}
-              max={new Date().toISOString().split("T")[0]}
-              onChange={(e) => setDatePaid(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-            />
-          </div>
+            {/* Frequency */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("form_frequency")}
+              </label>
+              <FrequencySelector
+                value={frequency}
+                onChange={setFrequency}
+                isPremium={premium.isPremium}
+                onRequirePremium={() => navigate("/premium?reason=intervals")}
+              />
+            </div>
 
-          {/* Notify */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={notify}
-              onChange={(e) => setNotify(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label className="text-sm text-gray-700 dark:text-gray-300">
-              {t("settings_notifications_info")}
-            </label>
-          </div>
+            {/* Category */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("form_category")}
+              </label>
+              <CategorySelector value={category} onChange={setCategory} />
+            </div>
 
-          {/* Submit / Cancel */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <SettingButton type="submit" variant="primary">
-              {id ? t("form_save") : t("add_subscription")}
-            </SettingButton>
-            <SettingButton
-              type="button"
-              variant="neutral"
-              onClick={() => navigate("/dashboard")}
-            >
-              {t("button_cancel")}
-            </SettingButton>
-          </div>
-        </form>
+            {/* Payment Method */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Payment Method
+              </label>
+              <div className="mb-2">
+                <PaymentMethodIcon method={method} />
+              </div>
+              <input
+                type="text"
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                placeholder="e.g. Visa, PayPal, Bank Transfer"
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+              />
+            </div>
+
+            {/* Color Picker */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("label_color")} (optional)
+              </label>
+
+              <div className="flex gap-2 flex-wrap mb-2">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`w-8 h-8 rounded-full border-2 ${color === c ? "border-black dark:border-white" : "border-transparent"}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setColor(c)}
+                  />
+                ))}
+
+                {/* Show current non-preset color if user manually typed or loaded one */}
+                {!PRESET_COLORS.includes(color) && (
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400"
+                    style={{ backgroundColor: color }}
+                    title="Current saved color"
+                  />
+                )}
+
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(hexToRgba(e.target.value))}
+                  className="w-10 h-8 p-0 border rounded"
+                  title="Custom color"
+                />
+              </div>
+
+            </div>
+
+
+            {/* Date Paid */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("label_select_paid_date")}
+              </label>
+              <input
+                type="date"
+                value={datePaid}
+                max={new Date().toISOString().split("T")[0]}
+                onChange={(e) => setDatePaid(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+              />
+            </div>
+
+            {/* Notify */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={notify}
+                onChange={(e) => setNotify(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="text-sm text-gray-700 dark:text-gray-300">
+                {t("settings_notifications_info")}
+              </label>
+            </div>
+
+            {/* Submit / Cancel */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <SettingButton type="submit" variant="primary">
+                {id ? t("form_save") : t("add_subscription")}
+              </SettingButton>
+              <SettingButton
+                type="button"
+                variant="neutral"
+                onClick={() => navigate("/dashboard")}
+              >
+                {t("button_cancel")}
+              </SettingButton>
+            </div>
+          </form>
+        </div>
       </Card>
     </div>
   );
+}
+
+/* 🔹 ADD: global keyframes once */
+if (typeof document !== "undefined") {
+  const styleId = "trakio-gradient-keyframes";
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.innerHTML = `
+      @keyframes trakioGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }

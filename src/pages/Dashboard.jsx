@@ -92,6 +92,7 @@ export default function Dashboard() {
             ...s,
             id: s.id || crypto.randomUUID(),
             payments,
+            color: s.color || "#ffffff", // ✅ ensure it's carried forward
             history: undefined,
             datePaid: undefined,
           };
