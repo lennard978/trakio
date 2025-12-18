@@ -1,11 +1,11 @@
 // src/components/LanguageSwitcher.jsx
 import React, { useState, useRef, useEffect } from "react";
 import i18n from "../i18n";
-import languages from "../utils/languages";
+import regions from "../utils/languages";
 
 export default function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef();
 
   const currentLang = i18n.language || "en";
 
@@ -27,10 +27,6 @@ export default function LanguageSwitcher() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const current = languages
-    .flatMap((g) => g.items)
-    .find((l) => l.code === currentLang);
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Button */}
@@ -42,10 +38,10 @@ export default function LanguageSwitcher() {
           backdrop-blur-xl border border-white/30 dark:border-white/10
           shadow-[0_8px_20px_rgba(0,0,0,0.25)]
           transition-all active:scale-95
-          text-lg
+          text-sm font-semibold
         "
       >
-        <span>{current?.flag || "🌐"}</span>
+        {currentLang.toUpperCase()}
       </button>
 
       {/* Dropdown */}
@@ -59,33 +55,31 @@ export default function LanguageSwitcher() {
             border border-white/20 dark:border-white/10
             shadow-[0_12px_35px_rgba(0,0,0,0.35)]
             animate-fadeIn
-            z-50
           "
         >
           <div className="grid grid-cols-2 gap-2">
-            {languages
+            {regions
               .flatMap((g) => g.items)
-              .filter((l) => l.code !== "cimode")
+              .filter((item) => item.code !== "cimode")
               .map((lng) => (
                 <button
                   key={lng.code}
                   onClick={() => changeLang(lng.code)}
                   className={`
-                    w-full px-2 py-2 rounded-xl
-                    flex flex-col items-center gap-1
+                    w-full px-2 py-2 rounded-xl flex flex-col items-center gap-1
                     text-xs font-medium transition-all
                     bg-white/40 dark:bg-white/10
                     border border-white/20 dark:border-white/5
                     hover:bg-white/60 dark:hover:bg-white/20
-                    ${lng.code === currentLang
-                      ? "ring-2 ring-blue-500/50"
-                      : ""
-                    }
+                    ${lng.code === currentLang ? "ring-2 ring-blue-500/50" : ""}
                   `}
                 >
-                  <span className="text-xl leading-none">
-                    {lng.flag}
-                  </span>
+                  <img
+                    src={lng.flag}
+                    alt={lng.label}
+                    className="w-6 h-4 rounded shadow"
+                    onError={(e) => (e.target.src = "https://flagcdn.com/unknown.svg")}
+                  />
                   <span className="text-[10px] text-gray-900 dark:text-gray-300 truncate">
                     {lng.label}
                   </span>
