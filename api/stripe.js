@@ -1,3 +1,5 @@
+// /api/stripe.js
+
 import Stripe from "stripe";
 import { getPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
@@ -42,7 +44,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 🛒 CREATE CHECKOUT
     if (action === "checkout") {
       if (!["monthly", "yearly"].includes(plan)) {
         return res.status(400).json({ error: "Invalid plan" });
@@ -66,18 +67,17 @@ export default async function handler(req, res) {
         metadata: {
           userId: authUser.userId,
         },
-        // 🔴 REQUIRED FOR WEBHOOK RELIABILITY
         subscription_data: {
           metadata: {
             userId: authUser.userId,
           },
         },
+
       });
 
       return res.status(200).json({ url: session.url });
     }
 
-    // 🔁 BILLING PORTAL
     if (action === "portal") {
       const record = await getPremiumRecord(authUser.userId);
       if (!record?.stripeCustomerId) {

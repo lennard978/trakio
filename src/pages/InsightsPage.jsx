@@ -20,6 +20,7 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
+import PremiumGuard from "../components/premium/PremiumGuard";
 
 /* ------------------------------------------------------------------ */
 const FREQ = {
@@ -281,10 +282,12 @@ export default function InsightsPage() {
         </div>
       </Card>
 
-      <BudgetOverviewChart
-        subscriptions={subscriptions}
-        rates={rates}
-      />
+      <PremiumGuard>
+        <BudgetOverviewChart
+          subscriptions={subscriptions}
+          rates={rates}
+        />
+      </PremiumGuard>
 
       <button
         onClick={() => navigate("/dashboard")}

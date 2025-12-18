@@ -194,7 +194,7 @@ export default function Dashboard() {
       <TrialBanner />
       {hasSubscriptions ? (
         <h1 className="text-2xl font-bold text-center mb-6">
-          {t("dashboard_title")}
+          {t("dashboard_title")} gtfr
         </h1>
       ) : (
         <div className="text-center text-gray-500 mt-6 mb-4">

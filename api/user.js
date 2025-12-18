@@ -1,5 +1,11 @@
+import { kv } from "@vercel/kv";
 import { getPremiumRecord, setPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
+// <== Add this line
+
+/* ------------------------------------------------------------------ */
+/* Auth helper                                                         */
+/* ------------------------------------------------------------------ */
 
 function getAuthUser(req) {
   const auth = req.headers.authorization || "";
@@ -7,6 +13,10 @@ function getAuthUser(req) {
   if (!match) return null;
   return verifyToken(match[1]);
 }
+
+/* ------------------------------------------------------------------ */
+/* API handler                                                         */
+/* ------------------------------------------------------------------ */
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -26,73 +36,88 @@ export default async function handler(req, res) {
   const userId = authUser.userId;
 
   try {
-    // ✅ GET STATUS
+    /* -------------------------------------------------------------- */
+    /* GET PREMIUM STATUS (Stripe truth passthrough)                  */
+    /* -------------------------------------------------------------- */
+
     if (action === "get-status") {
-      const record = (await getPremiumRecord(userId)) || {};
-      const trialEnds = record.trialEnds || null;
+      const record = await getPremiumRecord(userId);
 
-      let status = record.status || (record.isPremium ? "active" : "free");
-
-      if (trialEnds && !record.isPremium) {
-        if (new Date() > new Date(trialEnds)) {
-          status = "trial_expired";
-        }
+      // 🔑 ALWAYS RETURN A STATUS
+      if (!record) {
+        return res.status(200).json({
+          status: "canceled",
+          currentPeriodEnd: null,
+          trialEnds: null,
+          cancelAtPeriodEnd: false,
+        });
       }
 
       return res.status(200).json({
-        isPremium: !!record.isPremium,
-        trialEnds,
-        status,
+        status: record.status || "canceled",
         currentPeriodEnd: record.currentPeriodEnd || null,
+        trialEnds: record.trialEnds || null,
+        cancelAtPeriodEnd: !!record.cancelAtPeriodEnd,
       });
     }
 
-    // ⏳ START TRIAL (7 DAYS)
+
+    /* -------------------------------------------------------------- */
+    /* START LOCAL TRIAL (NO STRIPE YET)                               */
+    /* -------------------------------------------------------------- */
+
     if (action === "start-trial") {
       const existing = (await getPremiumRecord(userId)) || {};
 
-      if (existing.isPremium) {
-        return res.status(400).json({ error: "Already premium" });
+      if (
+        existing.status === "active" ||
+        existing.status === "trialing"
+      ) {
+        return res.status(400).json({ error: "Already premium or trialing" });
       }
 
       if (existing.trialEnds) {
-        return res.status(400).json({ error: "Trial already started" });
+        return res.status(400).json({ error: "Trial already used" });
       }
 
-      const trialEnds = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      // 7-day trial (unix seconds)
+      const trialEnds =
+        Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
 
       await setPremiumRecord(userId, {
-        isPremium: false,
-        status: "trial",
+        status: "trialing",
         trialEnds,
+        currentPeriodEnd: trialEnds,
       });
 
       return res.status(200).json({
-        isPremium: false,
+        status: "trialing",
         trialEnds,
-        status: "trial",
+        currentPeriodEnd: trialEnds,
       });
     }
 
-    // ❌ CANCEL TRIAL
+    /* -------------------------------------------------------------- */
+    /* CANCEL LOCAL TRIAL                                              */
+    /* -------------------------------------------------------------- */
+
     if (action === "cancel-trial") {
       const existing = (await getPremiumRecord(userId)) || {};
 
-      if (!existing.trialEnds) {
+      if (existing.status !== "trialing") {
         return res.status(400).json({ error: "No active trial" });
       }
 
       await setPremiumRecord(userId, {
-        trialEnds: null,
         status: "canceled",
+        trialEnds: null,
+        currentPeriodEnd: null,
       });
 
       return res.status(200).json({
-        isPremium: false,
-        trialEnds: null,
         status: "canceled",
+        trialEnds: null,
+        currentPeriodEnd: null,
       });
     }
 

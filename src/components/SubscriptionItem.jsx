@@ -80,6 +80,8 @@ export default function SubscriptionItem({
   const subTextColor = isDarkBg ? "text-gray-200" : "text-gray-600";
   const labelColor = isDarkBg ? "text-gray-300" : "text-gray-500";
 
+  const readableText = getReadableTextStyles(baseColor);
+
   const intensity =
     typeof item.gradientIntensity === "number" ? item.gradientIntensity : 0.25;
 
@@ -152,6 +154,36 @@ export default function SubscriptionItem({
     input?.click?.();
   };
 
+  // 🔹 ADD: normalize text contrast against translucent gradients
+  function getReadableTextStyles(bgColor) {
+    if (!bgColor) {
+      return {
+        text: "text-gray-800",
+        subText: "text-gray-600",
+        label: "text-gray-500",
+        shadow: "",
+      };
+    }
+
+    const dark = isDarkColor(bgColor);
+
+    // Detect very transparent backgrounds (common with rgba gradients)
+    const alphaMatch = bgColor.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/);
+    const alpha = alphaMatch ? Number(alphaMatch[1]) : 1;
+
+    const needsBoost = alpha < 0.35;
+
+    return {
+      text: dark || needsBoost ? "text-white" : "text-gray-800",
+      subText: dark || needsBoost ? "text-gray-200" : "text-gray-600",
+      label: dark || needsBoost ? "text-gray-300" : "text-gray-500",
+      shadow: needsBoost
+        ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
+        : "",
+    };
+  }
+
+
   return (
     <SwipeToDeleteWrapper onDelete={() => onDelete(item.id)} deleteLabel={t("delete")}>
       <div className="relative overflow-hidden rounded-3xl border dark:border-white/10 shadow-lg">
@@ -166,11 +198,12 @@ export default function SubscriptionItem({
           <div className="flex justify-between items-start mb-3 gap-3">
             <div>
               <HealthBadge {...subscriptionHealth(item)} />
-              <div className={`text-lg font-semibold mt-1 ${textColor}`}>
-                {item.name}
+              <div className={`text-lg font-semibold mt-1 ${readableText.text} ${readableText.shadow}`}
+              >                {item.name}
               </div>
-              <div className={`text-sm ${subTextColor}`}>
-                {currency} {displayPrice?.toFixed(2)} /{" "}
+              <div
+                className={`text-sm ${readableText.subText} ${readableText.shadow}`}
+              >                {currency} {displayPrice?.toFixed(2)} /{" "}
                 {t(`frequency_${item.frequency}`)}
               </div>
             </div>

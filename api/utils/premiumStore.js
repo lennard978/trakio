@@ -1,27 +1,38 @@
 import { kv } from "@vercel/kv";
 
-function key(userId) {
+function premiumKey(userId) {
   return `premium:${userId}`;
 }
 
-/**
- * record:
- * {
- *   isPremium: boolean,
- *   status: "active" | "trial" | "trial_expired" | "canceled" | "past_due",
- *   stripeCustomerId,
- *   subscriptionId,
- *   currentPeriodEnd,
- *   trialEnds
- * }
- */
+function eventKey(eventId) {
+  return `stripe:event:${eventId}`;
+}
+
+// ✅ Add this missing function
+export async function getPremiumRecord(userId) {
+  return kv.get(premiumKey(userId));
+}
+
 export async function setPremiumRecord(userId, record) {
-  const existing = (await kv.get(key(userId))) || {};
-  const merged = { ...existing, ...record };
-  await kv.set(key(userId), merged);
+  const existing = await kv.get(premiumKey(userId)) || {};
+
+  const merged = {
+    ...existing,
+    ...record,
+    lastUpdated: Date.now(),
+  };
+
+  console.log("📦 Saving premium record for", userId, JSON.stringify(merged, null, 2));
+
+  await kv.set(premiumKey(userId), merged);
   return merged;
 }
 
-export async function getPremiumRecord(userId) {
-  return kv.get(key(userId)); // may be null
+// Optional: also export these if you're using them elsewhere
+export async function wasStripeEventProcessed(eventId) {
+  return kv.get(eventKey(eventId));
+}
+
+export async function markStripeEventProcessed(eventId) {
+  await kv.set(eventKey(eventId), true, { ex: 60 * 60 * 24 * 7 });
 }

@@ -1,38 +1,78 @@
-// src/hooks/usePremium.js
+import { useMemo } from "react";
 import { usePremiumContext } from "../context/PremiumContext";
 
 /**
- * Wrapper around PremiumContext with helpful derived flags.
+ * Authoritative premium resolver.
+ * Frontend MUST NOT trust raw flags alone.
  */
 export function usePremium() {
   const ctx = usePremiumContext();
-  const { isPremium, trialEnds } = ctx;
 
-  const now = new Date();
-  const trialEndDate = trialEnds ? new Date(trialEnds) : null;
+  const {
+    status,
+    currentPeriodEnd,
+    trialEnds,
+    loading,
+  } = ctx;
 
-  // Derived trial state
-  const hasActiveTrial =
-    !!trialEndDate && now <= trialEndDate;
+  const premiumState = useMemo(() => {
+    const now = Date.now();
 
-  const trialExpired =
-    !!trialEndDate && now > trialEndDate && !isPremium;
+    const periodEndMs =
+      typeof currentPeriodEnd === "number"
+        ? currentPeriodEnd * 1000
+        : null;
 
-  const noTrial = !trialEndDate && !isPremium;
+    const trialEndMs =
+      typeof trialEnds === "number"
+        ? trialEnds * 1000
+        : null;
 
-  // Trial days left
-  let trialDaysLeft = null;
-  if (trialEndDate && now <= trialEndDate) {
-    const diffMs = trialEndDate - now;
-    trialDaysLeft = Math.max(0, Math.ceil(diffMs / 86400000));
-  }
+    const isPremium =
+      (status === "active" || status === "trialing") &&
+      periodEndMs &&
+      periodEndMs > now;
+
+    const hasActiveTrial =
+      status === "trialing" &&
+      trialEndMs &&
+      trialEndMs > now;
+
+    const trialExpired =
+      trialEndMs &&
+      trialEndMs <= now &&
+      status !== "active";
+
+    const noTrial =
+      !trialEndMs && status !== "active";
+
+    let trialDaysLeft = null;
+    if (hasActiveTrial) {
+      const diffMs = trialEndMs - now;
+      trialDaysLeft = Math.max(
+        0,
+        Math.ceil(diffMs / 86400000)
+      );
+    }
+
+    return {
+      isPremium: !!isPremium,
+      hasActiveTrial,
+      trialExpired,
+      noTrial,
+      trialDaysLeft,
+      premiumEndsAt: periodEndMs
+        ? new Date(periodEndMs).toISOString()
+        : null,
+      trialEndsAt: trialEndMs
+        ? new Date(trialEndMs).toISOString()
+        : null,
+    };
+  }, [status, currentPeriodEnd, trialEnds]);
 
   return {
-    ...ctx, // isPremium, trialEnds, loading, etc.
-    trialEndDate,
-    hasActiveTrial,
-    trialExpired,
-    noTrial,
-    trialDaysLeft,
+    ...ctx,
+    ...premiumState,
+    loading,
   };
 }

@@ -33,7 +33,7 @@ const server = createServer(async (req, res) => {
         const subscriptionId = session.subscription;
         const sub = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
 
-        await setPremiumRecord(email, {
+        await setPremiumRecord(userId, {
           isPremium: true,
           status: 'active',
           stripeCustomerId: sub?.customer || session.customer,

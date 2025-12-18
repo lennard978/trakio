@@ -1,3 +1,5 @@
+// /api/webhook.js
+
 import Stripe from "stripe";
 import { buffer } from "micro";
 import { setPremiumRecord } from "../utils/premiumStore.js";
@@ -13,6 +15,9 @@ export const runtime = "nodejs";
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");
 }
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  throw new Error("STRIPE_WEBHOOK_SECRET is not set");
+}
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
@@ -24,24 +29,19 @@ export default async function handler(req, res) {
   }
 
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!sig) {
-    return res.status(400).send("Missing Stripe signature");
-  }
-
-  if (!webhookSecret) {
-    console.error("❌ STRIPE_WEBHOOK_SECRET is missing");
-    return res.status(500).send("Webhook not configured");
-  }
+  if (!sig) return res.status(400).send("Missing Stripe signature");
 
   let event;
-
   try {
     const rawBody = await buffer(req);
-    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    console.log("📨 Webhook received:", event.type);
   } catch (err) {
-    console.error("❌ Stripe signature verification failed:", err.message);
+    console.error("❌ Invalid Stripe signature:", err.message);
     return res.status(400).send("Invalid signature");
   }
 
@@ -49,15 +49,23 @@ export default async function handler(req, res) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        const userId = session.metadata?.userId;
+        console.log("✅ Checkout Session:", JSON.stringify(session, null, 2));
 
-        if (!userId) break;
+        let userId = session.metadata?.userId;
 
+        // ⚠️ fallback: get it from the subscription if not found in session
         let subscription = null;
         if (session.subscription) {
-          subscription = await stripe.subscriptions.retrieve(
-            session.subscription
-          );
+          subscription = await stripe.subscriptions.retrieve(session.subscription);
+          if (!userId && subscription?.metadata?.userId) {
+            userId = subscription.metadata.userId;
+            console.log("✅ Retrieved userId from subscription metadata:", userId);
+          }
+        }
+
+        if (!userId) {
+          console.warn("⚠️ Still missing userId after fallback");
+          break;
         }
 
         await setPremiumRecord(userId, {
@@ -70,13 +78,18 @@ export default async function handler(req, res) {
           trialEnds: null,
         });
 
+        console.log("📝 Premium record updated via checkout.session.completed");
         break;
       }
 
       case "customer.subscription.updated": {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
-        if (!userId) break;
+
+        if (!userId) {
+          console.warn("⚠️ No userId on subscription.updated");
+          break;
+        }
 
         await setPremiumRecord(userId, {
           isPremium: sub.status === "active" || sub.status === "trialing",
@@ -86,23 +99,30 @@ export default async function handler(req, res) {
           currentPeriodEnd: sub.current_period_end,
         });
 
+        console.log("🔄 Premium record updated via subscription.updated");
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
-        if (!userId) break;
+
+        if (!userId) {
+          console.warn("⚠️ No userId on subscription.deleted");
+          break;
+        }
 
         await setPremiumRecord(userId, {
           isPremium: false,
           status: "canceled",
         });
 
+        console.log("❌ Premium canceled via subscription.deleted");
         break;
       }
 
       default:
+        console.log("ℹ️ Unhandled event:", event.type);
         break;
     }
 

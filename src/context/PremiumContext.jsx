@@ -13,17 +13,35 @@ export function PremiumProvider({ children }) {
   const { user, token } = useAuth();
   const isLoggedIn = !!user && !!token;
 
-  const [isPremium, setIsPremium] = useState(false);
-  const [trialEnds, setTrialEnds] = useState(null);
+  /* ------------------------------------------------------------------ */
+  /* Raw Stripe-backed state (DO NOT DERIVE LOGIC HERE)                  */
+  /* ------------------------------------------------------------------ */
+
+  const [status, setStatus] = useState(null); // active | trialing | past_due | canceled
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null); // unix seconds
+  const [trialEnds, setTrialEnds] = useState(null); // unix seconds
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Clear state on logout
+  /* ------------------------------------------------------------------ */
+  /* Reset on logout                                                     */
+  /* ------------------------------------------------------------------ */
+
   useEffect(() => {
     if (!isLoggedIn) {
-      setIsPremium(false);
+      setStatus(null);
+      setCurrentPeriodEnd(null);
       setTrialEnds(null);
+      setCancelAtPeriodEnd(false);
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (status === "incomplete") {
+      refreshPremiumStatus();
+    }
+  }, [status]);
+
 
   const authHeaders = useCallback(
     () => ({
@@ -33,11 +51,13 @@ export function PremiumProvider({ children }) {
     [token]
   );
 
-  // 🔄 Refresh premium from backend
+  /* ------------------------------------------------------------------ */
+  /* Refresh premium from backend (Stripe truth)                         */
+  /* ------------------------------------------------------------------ */
   const refreshPremiumStatus = useCallback(async () => {
-    if (!isLoggedIn) {
-      return { isPremium: false, trialEnds: null };
-    }
+    if (!isLoggedIn) return null;
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/user", {
@@ -46,32 +66,49 @@ export function PremiumProvider({ children }) {
         body: JSON.stringify({ action: "get-status" }),
       });
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        setLoading(false);
+        return null;
+      }
 
       const data = await res.json();
 
-      if (typeof data.isPremium === "boolean") {
-        setIsPremium(data.isPremium);
-      }
+      setStatus(data.status ?? null);
+      setCurrentPeriodEnd(
+        typeof data.currentPeriodEnd === "number"
+          ? data.currentPeriodEnd
+          : null
+      );
+      setTrialEnds(
+        typeof data.trialEnds === "number"
+          ? data.trialEnds
+          : null
+      );
+      setCancelAtPeriodEnd(!!data.cancelAtPeriodEnd);
 
-      if ("trialEnds" in data) {
-        setTrialEnds(data.trialEnds);
-      }
-
+      setLoading(false);
       return data;
-    } catch {
+    } catch (err) {
+      console.error("Premium refresh failed:", err);
+      setLoading(false);
       return null;
     }
   }, [isLoggedIn, authHeaders]);
 
-  // Auto refresh
+  /* ------------------------------------------------------------------ */
+  /* Auto refresh every 5 minutes                                        */
+  /* ------------------------------------------------------------------ */
+
   useEffect(() => {
     refreshPremiumStatus();
     const id = setInterval(refreshPremiumStatus, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, [refreshPremiumStatus]);
 
-  // ⏳ START TRIAL
+  /* ------------------------------------------------------------------ */
+  /* Trial handling (still backend-authoritative)                        */
+  /* ------------------------------------------------------------------ */
+
   const startTrial = async () => {
     if (!isLoggedIn) return false;
 
@@ -83,18 +120,18 @@ export function PremiumProvider({ children }) {
         body: JSON.stringify({ action: "start-trial" }),
       });
 
-      const data = await res.json();
       if (!res.ok) return false;
 
+      const data = await res.json();
       setTrialEnds(data.trialEnds || null);
-      setIsPremium(false);
+      setStatus("trialing");
+
       return true;
     } finally {
       setLoading(false);
     }
   };
 
-  // ❌ CANCEL TRIAL
   const cancelTrial = async () => {
     if (!isLoggedIn) return false;
 
@@ -109,14 +146,17 @@ export function PremiumProvider({ children }) {
       if (!res.ok) return false;
 
       setTrialEnds(null);
-      setIsPremium(false);
+      setStatus("canceled");
       return true;
     } finally {
       setLoading(false);
     }
   };
 
-  // 💳 STRIPE CHECKOUT
+  /* ------------------------------------------------------------------ */
+  /* Stripe checkout                                                     */
+  /* ------------------------------------------------------------------ */
+
   const startCheckout = async (plan) => {
     if (!isLoggedIn) return;
 
@@ -137,11 +177,18 @@ export function PremiumProvider({ children }) {
     }
   };
 
+  /* ------------------------------------------------------------------ */
+
   return (
     <PremiumContext.Provider
       value={{
-        isPremium,
+        // RAW STRIPE STATE
+        status,
+        currentPeriodEnd,
         trialEnds,
+        cancelAtPeriodEnd,
+
+        // ACTIONS
         loading,
         startTrial,
         cancelTrial,

@@ -37,6 +37,7 @@ const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Premium = lazy(() => import("./pages/Premium"));
 import { useCurrency } from "./context/CurrencyContext";
+import AGB from "./pages/AGB";
 
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
@@ -141,7 +142,7 @@ export default function App() {
             <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
             <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
             <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
-            <Route path="/agb" element={<AnimatedPage><Terms /></AnimatedPage>} />
+            <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
 
             <Route
               path="/login"

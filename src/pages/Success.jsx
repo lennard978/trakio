@@ -15,8 +15,9 @@ export default function Success() {
       attempts++;
 
       const data = await premium.refreshPremiumStatus();
+      console.log("Stripe refresh data:", data); // ✅ safe here
 
-      if (data?.isPremium === true) {
+      if (data?.status === "active" || data?.status === "trialing") {
         clearInterval(interval);
         setStatus("ready");
         setTimeout(() => navigate("/dashboard"), 1200);
@@ -30,6 +31,8 @@ export default function Success() {
 
     return () => clearInterval(interval);
   }, [premium, navigate]);
+
+
 
   return (
     <div className="flex justify-center mt-20 px-4">
@@ -61,10 +64,13 @@ export default function Success() {
             <h1 className="text-xl font-semibold mb-3">
               Payment received
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Your payment was successful, but Premium is still syncing.
-              This usually resolves within a minute.
+            <p className="text-sm text-red-500 font-medium">
+              Still waiting for confirmation from Stripe. If this doesn’t resolve in 1 minute,
+              <button onClick={() => window.location.reload()} className="underline ml-1">
+                refresh this page
+              </button>.
             </p>
+
             <button
               onClick={() => navigate("/dashboard")}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl"

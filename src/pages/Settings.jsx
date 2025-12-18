@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { usePremium } from "../hooks/usePremium";
+import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
+import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 
 // UI
 import Card from "../components/ui/Card";
@@ -221,12 +223,16 @@ export default function Settings() {
       </Card>
 
       {/* PREMIUM STATUS */}
-      <Card>
+      {/* <Card>
         <h2 className="text-lg font-semibold mb-2">
           {t("premium_subscription")}
         </h2>
         {renderPremiumContent()}
-      </Card>
+      </Card> */}
+
+      <SubscriptionStatusCard />
+
+      <PremiumStatusBanner />
 
       {/* BUDGET SETTINGS */}
       <Card className="p-4">
