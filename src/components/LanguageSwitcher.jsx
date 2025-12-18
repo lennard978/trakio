@@ -1,22 +1,21 @@
-// src/components/LanguageSwitcher.jsx
 import React, { useState, useRef, useEffect } from "react";
 import i18n from "../i18n";
 import regions from "../utils/languages";
 
 export default function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef();
+  const dropdownRef = useRef(null);
 
   const currentLang = i18n.language || "en";
 
-  const toggle = () => setOpen((v) => !v);
+  const toggle = () => setOpen(v => !v);
 
   const changeLang = (lng) => {
     i18n.changeLanguage(lng);
     setOpen(false);
   };
 
-  // Close dropdown on outside click
+  // close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -38,7 +37,7 @@ export default function LanguageSwitcher() {
           backdrop-blur-xl border border-white/30 dark:border-white/10
           shadow-[0_8px_20px_rgba(0,0,0,0.25)]
           transition-all active:scale-95
-          text-sm font-semibold
+          text-xs font-semibold
         "
       >
         {currentLang.toUpperCase()}
@@ -54,14 +53,13 @@ export default function LanguageSwitcher() {
             backdrop-blur-2xl
             border border-white/20 dark:border-white/10
             shadow-[0_12px_35px_rgba(0,0,0,0.35)]
-            animate-fadeIn
           "
         >
           <div className="grid grid-cols-2 gap-2">
             {regions
-              .flatMap((g) => g.items)
-              .filter((item) => item.code !== "cimode")
-              .map((lng) => (
+              .flatMap(r => r.items)
+              .filter(l => l.code !== "cimode")
+              .map(lng => (
                 <button
                   key={lng.code}
                   onClick={() => changeLang(lng.code)}
@@ -78,9 +76,9 @@ export default function LanguageSwitcher() {
                     src={lng.flag}
                     alt={lng.label}
                     className="w-6 h-4 rounded shadow"
-                    onError={(e) => (e.target.src = "https://flagcdn.com/unknown.svg")}
+                    loading="lazy"
                   />
-                  <span className="text-[10px] text-gray-900 dark:text-gray-300 truncate">
+                  <span className="text-[10px] truncate">
                     {lng.label}
                   </span>
                 </button>
