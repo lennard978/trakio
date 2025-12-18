@@ -15,7 +15,7 @@
 			"headers": [
 				{
 					"key": "Content-Security-Policy",
-					"value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://m.stripe.network https://m.stripe.com; style-src 'self' 'unsafe-inline' https://js.stripe.com; connect-src 'self' https://api.stripe.com https://m.stripe.com https://m.stripe.network https://checkout.stripe.com https://stripe.com; frame-src https://js.stripe.com https://checkout.stripe.com;"
+					"value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com https://m.stripe.com https://m.stripe.network https://stripe.com; frame-src https://js.stripe.com https://stripe.com; img-src 'self' data: https://stripe.com; font-src 'self';"
 				}
 			]
 		}
