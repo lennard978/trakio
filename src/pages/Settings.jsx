@@ -232,7 +232,7 @@ export default function Settings() {
 
       <SubscriptionStatusCard />
 
-      <PremiumStatusBanner />
+      {/* <PremiumStatusBanner /> */}
 
       {/* BUDGET SETTINGS */}
       <Card className="p-4">
