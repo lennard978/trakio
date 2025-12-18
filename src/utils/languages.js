@@ -1,61 +1,53 @@
+// src/utils/languages.js
 const languages = [
   {
     region: "Europe",
     items: [
-      { code: "en", label: "English", flag: "https://flagcdn.com/gb.svg" },
-      { code: "de", label: "Deutsch", flag: "https://flagcdn.com/de.svg" },
-      { code: "da", label: "Dansk", flag: "https://flagcdn.com/dk.svg" },
-      { code: "fr", label: "Français", flag: "https://flagcdn.com/fr.svg" },
-      { code: "es", label: "Español", flag: "https://flagcdn.com/es.svg" },
-      { code: "nl", label: "Nederlands", flag: "https://flagcdn.com/nl.svg" },
-      { code: "it", label: "Italiano", flag: "https://flagcdn.com/it.svg" },
-      { code: "sv", label: "Svenska", flag: "https://flagcdn.com/se.svg" },
-      { code: "no", label: "Norsk Bokmål", flag: "https://flagcdn.com/no.svg" },
-      { code: "fi", label: "Suomi", flag: "https://flagcdn.com/fi.svg" },
-      { code: "pl", label: "Polski", flag: "https://flagcdn.com/pl.svg" },
-      { code: "cs", label: "Čeština", flag: "https://flagcdn.com/cz.svg" },
-      { code: "ro", label: "Română", flag: "https://flagcdn.com/ro.svg" },
-      { code: "hu", label: "Magyar", flag: "https://flagcdn.com/hu.svg" },
-      { code: "uk", label: "Українська", flag: "https://flagcdn.com/ua.svg" },
-      { code: "ru", label: "Русский", flag: "https://flagcdn.com/ru.svg" },
-      { code: "sr", label: "Српски", flag: "https://flagcdn.com/rs.svg" }
-
+      { code: "en", label: "English", flag: "🇬🇧" },
+      { code: "de", label: "Deutsch", flag: "🇩🇪" },
+      { code: "da", label: "Dansk", flag: "🇩🇰" },
+      { code: "fr", label: "Français", flag: "🇫🇷" },
+      { code: "es", label: "Español", flag: "🇪🇸" },
+      { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+      { code: "it", label: "Italiano", flag: "🇮🇹" },
+      { code: "sv", label: "Svenska", flag: "🇸🇪" },
+      { code: "no", label: "Norsk", flag: "🇳🇴" },
+      { code: "fi", label: "Suomi", flag: "🇫🇮" },
+      { code: "pl", label: "Polski", flag: "🇵🇱" },
+      { code: "cs", label: "Čeština", flag: "🇨🇿" },
+      { code: "ro", label: "Română", flag: "🇷🇴" },
+      { code: "hu", label: "Magyar", flag: "🇭🇺" },
+      { code: "uk", label: "Українська", flag: "🇺🇦" },
+      { code: "ru", label: "Русский", flag: "🇷🇺" },
+      { code: "sr", label: "Српски", flag: "🇷🇸" }
     ]
   },
-
   {
     region: "Asia",
     items: [
-      { code: "zh", label: "中文（简体）", flag: "https://flagcdn.com/cn.svg" },
-      { code: "zh-TW", label: "中文（繁體）", flag: "https://flagcdn.com/tw.svg" },
-      { code: "ja", label: "日本語", flag: "https://flagcdn.com/jp.svg" },
-      { code: "ko", label: "한국어", flag: "https://flagcdn.com/kr.svg" },
-      { code: "hi", label: "हिन्दी", flag: "https://flagcdn.com/in.svg" },
-      { code: "th", label: "ไทย", flag: "https://flagcdn.com/th.svg" },
-      { code: "vi", label: "Tiếng Việt", flag: "https://flagcdn.com/vn.svg" },
-      { code: "id", label: "Bahasa Indonesia", flag: "https://flagcdn.com/id.svg" },
-      { code: "fil", label: "Filipino", flag: "https://flagcdn.com/ph.svg" }
+      { code: "zh", label: "中文（简体）", flag: "🇨🇳" },
+      { code: "zh-TW", label: "中文（繁體）", flag: "🇹🇼" },
+      { code: "ja", label: "日本語", flag: "🇯🇵" },
+      { code: "ko", label: "한국어", flag: "🇰🇷" },
+      { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
+      { code: "th", label: "ไทย", flag: "🇹🇭" },
+      { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
+      { code: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
+      { code: "fil", label: "Filipino", flag: "🇵🇭" }
     ]
   },
-
   {
     region: "Middle East",
     items: [
-      { code: "ar", label: "العربية", flag: "https://flagcdn.com/sa.svg" },
-      { code: "tr", label: "Türkçe", flag: "https://flagcdn.com/tr.svg" }
+      { code: "ar", label: "العربية", flag: "🇸🇦" },
+      { code: "tr", label: "Türkçe", flag: "🇹🇷" }
     ]
   },
-
   {
     region: "Americas",
     items: [
-      { code: "pt-BR", label: "Português (Brasil)", flag: "https://flagcdn.com/br.svg" }
+      { code: "pt-BR", label: "Português (Brasil)", flag: "🇧🇷" }
     ]
-  },
-
-  {
-    region: "Africa",
-    items: []
   }
 ];
 
