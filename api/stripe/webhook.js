@@ -1,13 +1,14 @@
-// /api/webhook.js
-
 import Stripe from "stripe";
 import { buffer } from "micro";
-import { setPremiumRecord } from "../utils/premiumStore.js";
+import {
+  setPremiumRecord,
+  getPremiumRecord,
+  wasStripeEventProcessed,
+  markStripeEventProcessed,
+} from "../utils/premiumStore.js";
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
 
 export const runtime = "nodejs";
@@ -22,6 +23,16 @@ if (!process.env.STRIPE_WEBHOOK_SECRET) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
+
+/**
+ * Prevent status downgrade caused by out-of-order Stripe events.
+ */
+function resolveStatus(prevStatus, nextStatus) {
+  if (prevStatus === "active" || prevStatus === "trialing") {
+    return prevStatus;
+  }
+  return nextStatus;
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -39,93 +50,126 @@ export default async function handler(req, res) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-    console.log("📨 Webhook received:", event.type);
   } catch (err) {
-    console.error("❌ Invalid Stripe signature:", err.message);
+    console.error("❌ Stripe signature verification failed:", err.message);
     return res.status(400).send("Invalid signature");
+  }
+
+  // 🔁 Idempotency guard
+  if (await wasStripeEventProcessed(event.id)) {
+    return res.status(200).json({ duplicate: true });
   }
 
   try {
     switch (event.type) {
+      /* ---------------------------------------------------------- */
+      /* Checkout completed — resolve subscription immediately       */
+      /* ---------------------------------------------------------- */
       case "checkout.session.completed": {
         const session = event.data.object;
-        console.log("✅ Checkout Session:", JSON.stringify(session, null, 2));
+        const userId = session.metadata?.userId;
+        if (!userId || !session.subscription) break;
 
-        let userId = session.metadata?.userId;
+        const subscription = await stripe.subscriptions.retrieve(
+          session.subscription
+        );
 
-        // ⚠️ fallback: get it from the subscription if not found in session
-        let subscription = null;
-        if (session.subscription) {
-          subscription = await stripe.subscriptions.retrieve(session.subscription);
-          if (!userId && subscription?.metadata?.userId) {
-            userId = subscription.metadata.userId;
-            console.log("✅ Retrieved userId from subscription metadata:", userId);
-          }
-        }
-
-        if (!userId) {
-          console.warn("⚠️ Still missing userId after fallback");
-          break;
-        }
+        const prev = await getPremiumRecord(userId);
+        const finalStatus = resolveStatus(
+          prev?.status,
+          subscription.status
+        );
 
         await setPremiumRecord(userId, {
-          isPremium: true,
-          status: subscription?.status || "active",
-          stripeCustomerId:
-            subscription?.customer || session.customer || null,
-          subscriptionId: subscription?.id || null,
-          currentPeriodEnd: subscription?.current_period_end || null,
-          trialEnds: null,
+          status: finalStatus,
+          stripeCustomerId: subscription.customer,
+          subscriptionId: subscription.id,
+          currentPeriodEnd: subscription.current_period_end || null,
+          trialEnds: subscription.trial_end || null,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
+          lastEventId: event.id,
         });
 
-        console.log("📝 Premium record updated via checkout.session.completed");
         break;
       }
 
+      /* ---------------------------------------------------------- */
+      /* Subscription lifecycle — source of truth                   */
+      /* ---------------------------------------------------------- */
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
+        if (!userId) break;
 
-        if (!userId) {
-          console.warn("⚠️ No userId on subscription.updated");
-          break;
-        }
+        const prev = await getPremiumRecord(userId);
+        const finalStatus = resolveStatus(prev?.status, sub.status);
 
         await setPremiumRecord(userId, {
-          isPremium: sub.status === "active" || sub.status === "trialing",
-          status: sub.status,
+          status: finalStatus,
           stripeCustomerId: sub.customer,
           subscriptionId: sub.id,
-          currentPeriodEnd: sub.current_period_end,
+          currentPeriodEnd: sub.current_period_end || prev?.currentPeriodEnd || null,
+          trialEnds: sub.trial_end || prev?.trialEnds || null,
+          cancelAtPeriodEnd: sub.cancel_at_period_end || false,
+          lastEventId: event.id,
         });
 
-        console.log("🔄 Premium record updated via subscription.updated");
         break;
       }
 
+      /* ---------------------------------------------------------- */
+      /* Payment confirmation — recovery safety net                 */
+      /* ---------------------------------------------------------- */
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        if (!invoice.subscription) break;
+
+        const subscription = await stripe.subscriptions.retrieve(
+          invoice.subscription
+        );
+
+        const userId = subscription.metadata?.userId;
+        if (!userId) break;
+
+        const prev = await getPremiumRecord(userId);
+        const finalStatus = resolveStatus(prev?.status, subscription.status);
+
+        await setPremiumRecord(userId, {
+          status: finalStatus,
+          currentPeriodEnd: subscription.current_period_end || prev?.currentPeriodEnd || null,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
+          lastEventId: event.id,
+        });
+
+        break;
+      }
+
+      /* ---------------------------------------------------------- */
+      /* Subscription canceled                                      */
+      /* ---------------------------------------------------------- */
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
-
-        if (!userId) {
-          console.warn("⚠️ No userId on subscription.deleted");
-          break;
-        }
+        if (!userId) break;
 
         await setPremiumRecord(userId, {
-          isPremium: false,
           status: "canceled",
+          currentPeriodEnd: null,
+          trialEnds: null,
+          cancelAtPeriodEnd: false,
+          lastEventId: event.id,
         });
 
-        console.log("❌ Premium canceled via subscription.deleted");
         break;
       }
 
       default:
-        console.log("ℹ️ Unhandled event:", event.type);
+        // ignore unrelated events
         break;
     }
 
+    await markStripeEventProcessed(event.id);
     return res.status(200).json({ received: true });
   } catch (err) {
     console.error("❌ Webhook handler error:", err);
