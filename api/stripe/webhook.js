@@ -7,8 +7,14 @@ import {
   markStripeEventProcessed,
 } from "../utils/premiumStore.js";
 
+/**
+ * IMPORTANT:
+ * Stripe requires the RAW request body.
+ */
 export const config = {
-  api: { bodyParser: false },
+  api: {
+    bodyParser: false,
+  },
 };
 
 export const runtime = "nodejs";
@@ -25,7 +31,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 /**
- * Prevent status downgrade caused by out-of-order Stripe events.
+ * Prevent downgrade from out-of-order events
  */
 function resolveStatus(prevStatus, nextStatus) {
   if (prevStatus === "active" || prevStatus === "trialing") {
@@ -40,7 +46,9 @@ export default async function handler(req, res) {
   }
 
   const sig = req.headers["stripe-signature"];
-  if (!sig) return res.status(400).send("Missing Stripe signature");
+  if (!sig) {
+    return res.status(400).send("Missing Stripe signature");
+  }
 
   let event;
   try {
@@ -55,16 +63,13 @@ export default async function handler(req, res) {
     return res.status(400).send("Invalid signature");
   }
 
-  // 🔁 Idempotency guard
+  // Idempotency guard
   if (await wasStripeEventProcessed(event.id)) {
     return res.status(200).json({ duplicate: true });
   }
 
   try {
     switch (event.type) {
-      /* ---------------------------------------------------------- */
-      /* Checkout completed — resolve subscription immediately       */
-      /* ---------------------------------------------------------- */
       case "checkout.session.completed": {
         const session = event.data.object;
         const userId = session.metadata?.userId;
@@ -75,10 +80,7 @@ export default async function handler(req, res) {
         );
 
         const prev = await getPremiumRecord(userId);
-        const finalStatus = resolveStatus(
-          prev?.status,
-          subscription.status
-        );
+        const finalStatus = resolveStatus(prev?.status, subscription.status);
 
         await setPremiumRecord(userId, {
           status: finalStatus,
@@ -89,13 +91,9 @@ export default async function handler(req, res) {
           cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
           lastEventId: event.id,
         });
-
         break;
       }
 
-      /* ---------------------------------------------------------- */
-      /* Subscription lifecycle — source of truth                   */
-      /* ---------------------------------------------------------- */
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object;
@@ -114,13 +112,9 @@ export default async function handler(req, res) {
           cancelAtPeriodEnd: sub.cancel_at_period_end || false,
           lastEventId: event.id,
         });
-
         break;
       }
 
-      /* ---------------------------------------------------------- */
-      /* Payment confirmation — recovery safety net                 */
-      /* ---------------------------------------------------------- */
       case "invoice.payment_succeeded": {
         const invoice = event.data.object;
         if (!invoice.subscription) break;
@@ -141,13 +135,9 @@ export default async function handler(req, res) {
           cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
           lastEventId: event.id,
         });
-
         break;
       }
 
-      /* ---------------------------------------------------------- */
-      /* Subscription canceled                                      */
-      /* ---------------------------------------------------------- */
       case "customer.subscription.deleted": {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
@@ -160,12 +150,10 @@ export default async function handler(req, res) {
           cancelAtPeriodEnd: false,
           lastEventId: event.id,
         });
-
         break;
       }
 
       default:
-        // ignore unrelated events
         break;
     }
 

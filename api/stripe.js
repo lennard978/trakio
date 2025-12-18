@@ -1,5 +1,3 @@
-// /api/stripe.js
-
 import Stripe from "stripe";
 import { getPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
@@ -72,7 +70,6 @@ export default async function handler(req, res) {
             userId: authUser.userId,
           },
         },
-
       });
 
       return res.status(200).json({ url: session.url });
