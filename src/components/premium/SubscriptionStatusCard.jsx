@@ -19,10 +19,33 @@ export default function SubscriptionStatusCard() {
   const formatDate = (d) =>
     d ? new Date(d).toLocaleDateString() : null;
 
-  const goPortal = () => {
-    const token = localStorage.getItem("token");
-    window.location.href = `/api/stripe/portal?token=${token}`;
+  const goPortal = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("/api/stripe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: "portal" }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create portal session");
+      }
+
+      const { url } = await res.json();
+
+      // Redirect to Stripe Billing Portal
+      window.location.href = url;
+    } catch (err) {
+      console.error("Portal error:", err);
+      alert("Could not open billing portal. Please try again.");
+    }
   };
+
 
   return (
     <Card>
