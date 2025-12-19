@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy } from "react";
 import {
   Routes,
   Route,
@@ -34,7 +34,6 @@ const Cancel = lazy(() => import("./pages/Cancel"));
 const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
-const Terms = lazy(() => import("./pages/Terms"));
 const Premium = lazy(() => import("./pages/Premium"));
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
@@ -213,7 +212,7 @@ export default function App() {
       <FloatingTabBar dir={dir} />
 
       {/* FOOTER */}
-      <div className="fixed bottom-0.5 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center mb-1 font-bold">
+      <div className="fixed bottom-0.5 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center pb-1 font-bold">
         <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300">
           <Link to="/impressum" className="hover:underline">Impressum</Link>
           <span>|</span>
