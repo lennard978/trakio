@@ -242,5 +242,9 @@
 	"budget_exceeded": "You will spend {{currency}} {{spend}} in the next 30 days (budget {{currency}} {{budget}}).",
 	"label_color": "Color",
 
-	"export_csv": "Export CSV"
+	"export_csv": "Export CSV",
+
+	"danger_zone": "Danger zone",
+	"delete_account": "Delete account",
+	"delete_account_confirm": "This will permanently delete your account. This action cannot be undone."
 }

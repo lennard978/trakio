@@ -10,14 +10,11 @@ import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import MonthlyBudget from "../components/MonthlyBudget";
-import { useToast } from "../context/ToastContext";
 
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [saved, setSaved] = useState(false);
-  const { showToast } = useToast();
 
   const {
     isPremium,
@@ -239,7 +236,7 @@ export default function Settings() {
       {/* <PremiumStatusBanner /> */}
 
       {/* BUDGET SETTINGS */}
-      <Card className="p-4">
+      {/* <Card className="p-4">
         <h3 className="font-semibold mb-2">
           {t("budget_title")}
         </h3>
@@ -255,17 +252,6 @@ export default function Settings() {
                 e.target.value ? Number(e.target.value) : null
               )
             }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && monthlyBudget != null && monthlyBudget > 0) {
-                localStorage.setItem(
-                  "monthly_budget",
-                  String(monthlyBudget)
-                );
-
-                // ✅ CORRECT toast call
-                showToast(t("budget_saved"), "success");
-              }
-            }}
             placeholder={t("budget_placeholder")}
             className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
           />
@@ -277,15 +263,9 @@ export default function Settings() {
                   "monthly_budget",
                   String(monthlyBudget)
                 );
-
-                // ✅ CORRECT toast call
-                showToast(t("budget_saved"), "success");
               }
             }}
-            disabled={monthlyBudget == null || monthlyBudget <= 0}
-            className="px-4 py-2 rounded-xl text-sm font-medium
-                 bg-blue-600 text-white hover:bg-blue-700
-                 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
           >
             {t("save")}
           </button>
@@ -301,10 +281,7 @@ export default function Settings() {
           />
           {t("budget_alerts_enabled")}
         </label>
-      </Card>
-
-
-
+      </Card> */}
 
 
       {/* LOGOUT + BACK */}
