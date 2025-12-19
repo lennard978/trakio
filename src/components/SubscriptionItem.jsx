@@ -198,13 +198,15 @@ export default function SubscriptionItem({
           <div className="flex justify-between items-start mb-3 gap-3">
             <div>
               <HealthBadge {...subscriptionHealth(item)} />
-              <div className={`text-lg font-semibold mt-1 ${readableText.text} ${readableText.shadow}`}
-              >                {item.name}
-              </div>
-              <div
-                className={`text-sm ${readableText.subText} ${readableText.shadow}`}
-              >                {currency} {displayPrice?.toFixed(2)} /{" "}
-                {t(`frequency_${item.frequency}`)}
+              <div className="flex justify-center items-center gap-4 mt-1">
+                <div className={`text-lg font-semibold ${readableText.text} ${readableText.shadow}`}
+                >                {item.name}
+                </div>
+                <div
+                  className={`text-sm ${readableText.subText} ${readableText.shadow}`}
+                >                {currency} {displayPrice?.toFixed(2)} /{" "}
+                  {t(`frequency_${item.frequency}`)}
+                </div>
               </div>
             </div>
 

@@ -264,8 +264,9 @@ export default function InsightsPage() {
                         .map((p) => new Date(p.date).toLocaleDateString())
                         .join(", ")}
                     </td>
-                    <td>{currency} {totalPaid.toFixed(2)}</td> {/* ✅ show currency */}
+                    <td>{`${currency} ${totalPaid.toFixed(2)}`}</td>
                   </tr>
+
                 );
               })}
             </tbody>

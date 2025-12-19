@@ -134,8 +134,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       paidThisYear,
       dueThisMonth,
       dueThisYear,
-      avgMonthly: totalMonthly,
-      avgYearly: totalMonthly * 12,
+      // Averages MUST be derived from real yearly totals to stay consistent
+      avgYearly: paidThisYear + dueThisYear,
+      avgMonthly: (paidThisYear + dueThisYear) / 12,
+
       totalThisMonth: paidThisMonth + dueThisMonth,
       totalThisYear: paidThisYear + dueThisYear,
       categories: categoryMap,
@@ -263,7 +265,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       {activeTab === "General" && (
         <div className="space-y-1">
           <Stat label="Average monthly payment" value={`${data.avgMonthly.toFixed(2)} ${currency}`} />
-          <Stat label="Average yearly payment" value={`${data.avgYearly.toFixed(2)} ${currency}`} />
+          <Stat label="Expected yearly cost (this year)" value={`${data.avgYearly.toFixed(2)} ${currency}`} />
           <Stat label="Due payments this month" value={`${data.dueThisMonth.toFixed(2)} ${currency}`} />
           <Stat label="Due payments this year" value={`${data.dueThisYear.toFixed(2)} ${currency}`} />
           <Stat label="Paid this month" value={`${data.paidThisMonth.toFixed(2)} ${currency}`} />

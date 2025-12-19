@@ -1,4 +1,3 @@
-// src/components/MonthlyBudget.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { usePremium } from "../hooks/usePremium";
 
@@ -20,10 +19,14 @@ export default function MonthlyBudget({
 }) {
   const premium = usePremium();
 
+  // Stored budget (source of truth)
   const [budget, setBudget] = useState(() => {
     const v = localStorage.getItem("monthly_budget");
     return v ? Number(v) : null;
   });
+
+  // Input field state (editable, not saved yet)
+  const [input, setInput] = useState(budget ?? "");
 
   /* ---------------- Recalculate monthly spend ---------------- */
   const spent = useMemo(() => {
@@ -45,11 +48,21 @@ export default function MonthlyBudget({
 
   const remaining = budget != null ? budget - spent : null;
 
+  /* ---------------- Save handler ---------------- */
+  const saveBudget = () => {
+    const value = Number(input);
+    if (Number.isNaN(value) || value <= 0) return;
+
+    localStorage.setItem("monthly_budget", String(value));
+    setBudget(value);
+  };
+
   /* ---------------- Sync with Settings ---------------- */
   useEffect(() => {
     const sync = () => {
       const v = localStorage.getItem("monthly_budget");
       setBudget(v ? Number(v) : null);
+      setInput(v ? Number(v) : "");
     };
 
     window.addEventListener("storage", sync);
@@ -63,10 +76,33 @@ export default function MonthlyBudget({
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-medium text-center mb-2">
+      <h3 className="text-sm font-medium text-center mb-3">
         Monthly Budget
       </h3>
 
+      {/* ---------------- Budget input + button ---------------- */}
+      <div className="flex gap-2 mb-3">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={!premium.isPremium}
+          placeholder="Set monthly budget"
+          className="flex-1 border rounded px-2 py-1 text-sm disabled:opacity-50"
+        />
+
+        <button
+          onClick={saveBudget}
+          disabled={!premium.isPremium}
+          className="px-3 py-1 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+
+      {/* ---------------- Budget stats ---------------- */}
       <div className="text-sm space-y-1">
         <div>
           Spent: {currency} {spent.toFixed(2)}
@@ -82,6 +118,7 @@ export default function MonthlyBudget({
         )}
       </div>
 
+      {/* ---------------- Progress bar ---------------- */}
       {budget != null && (
         <div className="mt-3">
           <div className="w-full h-2 bg-gray-200 rounded-full">
