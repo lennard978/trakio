@@ -14,6 +14,22 @@ import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 
+
+/* ------------------------------------------------------------------ */
+/* Frequency normalization (shared logic with Insights) */
+/* ------------------------------------------------------------------ */
+const MONTHLY_FACTOR = {
+  weekly: 4.345,
+  biweekly: 2.1725,
+  monthly: 1,
+  quarterly: 1 / 3,
+  semiannual: 1 / 6,
+  nine_months: 1 / 9,
+  yearly: 1 / 12,
+  biennial: 1 / 24,
+  triennial: 1 / 36,
+};
+
 /* ------------------------------------------------------------------ */
 /* KV helpers */
 /* ------------------------------------------------------------------ */
@@ -112,6 +128,21 @@ export default function Dashboard() {
   const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
 
+
+  /* ---------------- Totals (Monthly / Annual) ---------------- */
+
+  const totalMonthly = useMemo(() => {
+    return subscriptions.reduce((sum, s) => {
+      const factor = MONTHLY_FACTOR[s.frequency] || 1;
+      const price = Number(s.price) || 0;
+      return sum + price * factor;
+    }, 0);
+  }, [subscriptions]);
+
+  const totalAnnual = useMemo(() => {
+    return totalMonthly * 12;
+  }, [totalMonthly]);
+
   /* ---------------- Filtering ---------------- */
   const filtered = useMemo(() => {
     return subscriptions.filter((s) => {
@@ -190,10 +221,10 @@ export default function Dashboard() {
 
   /* ---------------- Render ---------------- */
   return (
-    <div className="max-w-2xl mx-auto mt-2 pb-6">
+    <div className="max-w-2xl mx-auto mt-1 pb-6">
       <TrialBanner />
       {hasSubscriptions ? (
-        <h1 className="text-2xl font-bold text-center mb-6">
+        <h1 className="text-2xl font-bold text-center mb-4">
           {t("dashboard_title")}
         </h1>
       ) : (
@@ -204,6 +235,44 @@ export default function Dashboard() {
           </Link>
         </div>
       )}
+
+      {/* ================= SUMMARY CARDS ================= */}
+      <div className="grid grid-cols-2 gap-3 mt-0 mb-3">
+        <div className={`
+        p-5 rounded-2xl
+        bg-white/90 dark:bg-black/30
+        border border-gray-300/60 dark:border-white/10
+        backdrop-blur-xl
+        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+        transition-all
+      `}>
+          <div className="text-sm text-black-900">
+            {t("dashboard_total_monthly")}
+          </div>
+          <div className="text-2xl font-bold text-black-200 mt-1">
+            {preferredCurrency} {totalMonthly.toFixed(2)}
+          </div>
+        </div>
+
+        <div className={`
+        p-5 rounded-2xl
+        bg-white/90 dark:bg-black/30
+        border border-gray-300/60 dark:border-white/10
+        backdrop-blur-xl
+        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+        transition-all
+      `}>          <div className="text-sm">
+            {t("dashboard_total_annual")}
+          </div>
+          <div className="text-2xl font-bold mt-1">
+            {preferredCurrency} {totalAnnual.toFixed(2)}
+          </div>
+        </div>
+      </div>
+      {/* ================= END SUMMARY ================= */}
+
 
       {hasSubscriptions && (
         <UpcomingPayments

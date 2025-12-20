@@ -246,5 +246,15 @@
 
 	"danger_zone": "Danger zone",
 	"delete_account": "Delete account",
-	"delete_account_confirm": "This will permanently delete your account. This action cannot be undone."
+	"delete_account_confirm": "This will permanently delete your account. This action cannot be undone.",
+	"dashboard_total_annual": "Total Annual Cost",
+
+	"monthly_spend": "Monthly Spend",
+	"annual_cost": "Annual Cost",
+	"projected_yearly": "Projected yearly",
+	"active_subs": "Active Subs",
+	"active_subscriptions": "Active subscriptions",
+	"avg_per_sub": "Avg per Sub",
+	"monthly_average": "Monthly average",
+	"of_total": "of {{count}} total"
 }

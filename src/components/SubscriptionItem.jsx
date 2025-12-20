@@ -233,7 +233,7 @@ export default function SubscriptionItem({
 
             <button
               onClick={() => navigate(`/edit/${item.id}`)}
-              className="px-4 py-1.5 rounded-xl text-xs bg-blue-500 text-white"
+              className="px-4 py-1.5 capitalize rounded-xl text-xs bg-blue-500 text-white"
             >
               {t("edit")}
             </button>

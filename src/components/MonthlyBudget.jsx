@@ -75,8 +75,15 @@ export default function MonthlyBudget({
       : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-medium text-center mb-3">
+    <div className={`
+        p-5 rounded-2xl
+        bg-white/90 dark:bg-black/30
+        border border-gray-300/60 dark:border-white/10
+        backdrop-blur-xl
+        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+        transition-all
+      `}>       <h3 className="text-sm font-medium text-center mb-3">
         Monthly Budget
       </h3>
 
@@ -90,7 +97,7 @@ export default function MonthlyBudget({
           onChange={(e) => setInput(e.target.value)}
           disabled={!premium.isPremium}
           placeholder="Set monthly budget"
-          className="flex-1 border rounded px-2 py-1 text-sm disabled:opacity-50"
+          className="w-full px-3 py-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
         />
 
         <button

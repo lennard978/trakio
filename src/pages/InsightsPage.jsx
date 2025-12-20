@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CurrencyEuroIcon,
   TagIcon,
   ArrowTrendingUpIcon,
   ArrowPathIcon,
@@ -10,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { forecastSpend } from "../utils/forecast";
 import useBudgetAlerts from "../hooks/useBudgetAlerts";
+import { getCurrencyFlag } from "../utils/currencyFlags";
 
 import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
@@ -152,6 +152,19 @@ export default function InsightsPage() {
   const mostCommonFreq =
     Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
 
+  /* ---------------- Reports summary metrics ---------------- */
+
+  const totalAnnual = useMemo(() => {
+    return totalMonthly * 12;
+  }, [totalMonthly]);
+
+  const activeSubs = subscriptions.length;
+
+  const avgPerSub = useMemo(() => {
+    if (!activeSubs) return 0;
+    return totalMonthly / activeSubs;
+  }, [totalMonthly, activeSubs]);
+
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
       <h1 className="text-2xl font-bold text-center mb-6">
@@ -171,35 +184,88 @@ export default function InsightsPage() {
         )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <InsightsCard
-          title={t("dashboard_total_monthly")}
-          value={`${currency} ${totalMonthly.toFixed(2)}`} // ✅ show currency
-          Icon={CurrencyEuroIcon}
-        />
+        {/* ================= REPORTS SUMMARY ================= */}
+        <div className="grid grid-cols-2 gap-4 mb-1">
 
-        <InsightsCard
-          title={t("dashboard_top_category")}
-          value={topCategory}
-          Icon={TagIcon}
-        />
+          {/* Monthly Spend */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 text-black rounded-xl bg-purple-100 flex items-center justify-center text-xl">
+                {getCurrencyFlag(currency)} <span className="text-sm">{currency}</span>
+              </div>
 
-        <InsightsCard
-          title={t("dashboard_highest_sub")}
-          value={
-            highestSub
-              ? `${highestSub.name} (${currency} ${highestSubMonthly.toFixed(
-                2
-              )} / ${t("monthly")})`
-              : t("none")
-          }
-          Icon={ArrowTrendingUpIcon}
-        />
 
-        <InsightsCard
-          title={t("dashboard_common_frequency")}
-          value={t(`frequency_${mostCommonFreq}`)}
-          Icon={ArrowPathIcon}
-        />
+
+
+            </div>
+            <div className="text-2xl font-bold">
+              {currency} {totalMonthly.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">
+              {t("monthly_spend")}
+            </div>
+            <div className="text-xs text-gray-400">
+              {t("active_subscriptions")} ({currency})
+            </div>
+          </Card>
+
+          {/* Annual Cost */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">
+                <ArrowPathIcon className="w-5 h-5 text-pink-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold">
+              {currency} {totalAnnual.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">
+              {t("annual_cost")}
+            </div>
+            <div className="text-xs text-gray-400">
+              {t("projected_yearly")} ({currency})
+            </div>
+          </Card>
+
+          {/* Active Subs */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold">
+              {activeSubs}
+            </div>
+            <div className="text-sm text-gray-500">
+              {t("active_subs")}
+            </div>
+            <div className="text-xs text-gray-400">
+              {t("of_total", { count: activeSubs })}
+            </div>
+          </Card>
+
+          {/* Avg per Sub */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+                <TagIcon className="w-5 h-5 text-orange-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold">
+              {currency} {avgPerSub.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">
+              {t("avg_per_sub")}
+            </div>
+            <div className="text-xs text-gray-400">
+              {t("monthly_average")} ({currency})
+            </div>
+          </Card>
+
+        </div>
+        {/* ================= END REPORTS SUMMARY ================= */}
+
       </div>
 
       {/* ---------------- Payment history ---------------- */}
