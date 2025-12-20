@@ -191,12 +191,8 @@ export default function InsightsPage() {
           <Card className="p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 text-black rounded-xl bg-purple-100 flex items-center justify-center text-xl">
-                {getCurrencyFlag(currency)} <span className="text-sm">{currency}</span>
+                {getCurrencyFlag(currency)}
               </div>
-
-
-
-
             </div>
             <div className="text-2xl font-bold">
               {currency} {totalMonthly.toFixed(2)}
