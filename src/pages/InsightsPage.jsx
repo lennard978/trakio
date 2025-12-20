@@ -165,6 +165,146 @@ export default function InsightsPage() {
     return totalMonthly / activeSubs;
   }, [totalMonthly, activeSubs]);
 
+  const [importPreview, setImportPreview] = useState(null);
+  const [importFile, setImportFile] = useState(null);
+  const fileInputRef = React.useRef(null);
+
+  const existingPaymentIndex = useMemo(() => {
+    const set = new Set();
+
+    subscriptions.forEach((s) => {
+      if (!Array.isArray(s.payments)) return;
+
+      s.payments.forEach((p) => {
+        const key = [
+          s.name,
+          new Date(p.date).toISOString().slice(0, 10),
+          Number(p.amount).toFixed(2),
+          p.currency || s.currency || "EUR",
+        ].join("|");
+
+        set.add(key);
+      });
+    });
+
+    return set;
+  }, [subscriptions]);
+
+
+  const handleImportCSV = async (file) => {
+    if (!file) return;
+
+    const text = await file.text();
+    const parsed = parseCSV(text);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      alert("Invalid or empty CSV file");
+      return;
+    }
+
+    let duplicateCount = 0;
+
+    const cleaned = parsed
+      .map((s) => {
+        const uniquePayments = [];
+
+        s.payments.forEach((p) => {
+          const key = [
+            s.name,
+            new Date(p.date).toISOString().slice(0, 10),
+            Number(p.amount).toFixed(2),
+            p.currency || s.currency || "EUR",
+          ].join("|");
+
+          if (existingPaymentIndex.has(key)) {
+            duplicateCount++;
+          } else {
+            uniquePayments.push(p);
+          }
+        });
+
+        return {
+          ...s,
+          payments: uniquePayments,
+        };
+      })
+      .filter((s) => s.payments.length > 0);
+
+    if (cleaned.length === 0) {
+      alert("Nothing new to import (all payments were duplicates)");
+      return;
+    }
+
+    setImportFile(cleaned);
+    setImportPreview({
+      subscriptions: cleaned.length,
+      payments: cleaned.reduce((sum, s) => sum + s.payments.length, 0),
+      duplicates: duplicateCount,
+      sample: cleaned.slice(0, 3),
+    });
+  };
+
+
+
+  function parseCSV(text) {
+    const lines = text
+      .replace(/\r/g, "")   // 🔥 FIX WINDOWS CSV
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(",").map(h => h.trim());
+
+    const rows = lines.slice(1).map(row => {
+      const values = row.split(",").map(v => v.trim());
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h] = values[i] ?? "";
+      });
+      return obj;
+    });
+
+    const subsMap = {};
+
+    rows.forEach((row) => {
+      const name = row.name || "Imported subscription";
+
+      if (!subsMap[name]) {
+        subsMap[name] = {
+          id: crypto.randomUUID(),
+          name,
+          frequency: row.frequency || "monthly",
+          currency: row.currency || "EUR",
+          category: row.category || "Uncategorized",
+          method: row.method || "Unknown",
+          price: Number(row.price || row.amount || 0),
+          payments: [],
+        };
+      }
+
+      if (row.paymentDate || row.datePaid) {
+        const date = row.paymentDate || row.datePaid;
+        const amount = Number(row.amount || row.price || 0);
+
+        subsMap[name].payments.push({
+          id: crypto.randomUUID(),
+          date,
+          amount,
+          currency: row.currency || subsMap[name].currency,
+        });
+
+        subsMap[name].price = amount;
+      }
+    });
+
+    return Array.isArray(Object.values(subsMap))
+      ? Object.values(subsMap)
+      : [];
+  }
+
+
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
       <h1 className="text-2xl font-bold text-center mb-6">
@@ -335,14 +475,36 @@ export default function InsightsPage() {
           </table>
         </div>
 
-        <div className="mt-4">
-          <SettingButton
-            variant="primary"
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}
+            className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium"
           >
-            {t("export_csv")}
-          </SettingButton>
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            className="w-full bg-gray-200 dark:bg-gray-800 py-2 rounded-xl font-medium"
+          >
+            Import CSV
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => {
+              handleImportCSV(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
         </div>
+
+
       </Card>
 
       <PremiumGuard>
@@ -358,6 +520,50 @@ export default function InsightsPage() {
       >
         ← {t("button_back")}
       </button>
+
+      {/* ================= IMPORT PREVIEW MODAL ================= */}
+      {importPreview && (
+        <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
+            <h3 className="text-lg font-semibold mb-3">
+              Import CSV Preview
+            </h3>
+
+            <div className="text-sm space-y-1 mb-3">
+              <div>Subscriptions: <b>{importPreview.subscriptions}</b></div>
+              <div>Payments: <b>{importPreview.payments}</b></div>
+
+              {importPreview.duplicates > 0 && (
+                <div className="text-orange-600">
+                  Duplicates skipped: <b>{importPreview.duplicates}</b>
+                </div>
+              )}
+            </div>
+
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setImportPreview(null);
+                  setImportFile(null);
+                }}
+                className="px-3 py-1 rounded border"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmImport}
+                className="px-3 py-1 rounded bg-blue-600 text-white"
+              >
+                Confirm Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ================= END IMPORT PREVIEW ================= */}
+
     </div>
   );
 }

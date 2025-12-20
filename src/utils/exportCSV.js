@@ -1,18 +1,19 @@
 export function exportPaymentHistoryCSV(subscriptions) {
-  const rows = [["Subscription", "Date", "Price", "Currency"]];
+  const rows = [
+    ["name", "paymentDate", "amount", "currency"]
+  ];
 
   subscriptions.forEach((s) => {
-    const payments = [
-      ...(s.history || []),
-      s.datePaid,
-    ].filter(Boolean);
+    const payments = Array.isArray(s.payments)
+      ? s.payments
+      : [];
 
-    payments.forEach((d) => {
+    payments.forEach((p) => {
       rows.push([
         s.name,
-        new Date(d).toLocaleDateString(),
-        s.price,
-        s.currency || "EUR",
+        p.date,
+        p.amount,
+        p.currency || s.currency || "EUR",
       ]);
     });
   });
@@ -25,4 +26,6 @@ export function exportPaymentHistoryCSV(subscriptions) {
   link.href = url;
   link.download = "payment-history.csv";
   link.click();
+
+  URL.revokeObjectURL(url);
 }

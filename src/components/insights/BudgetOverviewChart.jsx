@@ -12,7 +12,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  Label,
 } from "recharts";
+
 
 import { useCurrency } from "../../context/CurrencyContext"; // adjust path
 import { convert as convertUtil } from "../../utils/currency";
@@ -63,10 +65,113 @@ const exportToCSV = (rows, filename = "subscriptions.csv") => {
   document.body.removeChild(link);
 };
 
+function PieCenterLabel({ viewBox, title, value }) {
+  const { cx, cy } = viewBox;
+
+  return (
+    <>
+      <text
+        x={cx}
+        y={cy - 6}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-gray-500 dark:fill-gray-400 text-xs"
+      >
+        {title}
+      </text>
+
+      <text
+        x={cx}
+        y={cy + 12}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-gray-900 dark:fill-gray-100 text-base font-semibold"
+      >
+        {value}
+      </text>
+    </>
+  );
+}
+
+function parseCSV(text) {
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(",").map(h => h.trim());
+
+  return lines.slice(1).map(row => {
+    const values = row.split(",").map(v => v.trim());
+    const obj = {};
+
+    headers.forEach((h, i) => {
+      obj[h] = values[i] ?? "";
+    });
+
+    return {
+      id: crypto.randomUUID(),
+      name: obj.name || "Imported subscription",
+      price: Number(obj.price) || 0,
+      currency: obj.currency || "EUR",
+      frequency: obj.frequency || "monthly",
+      category: obj.category || "Uncategorized",
+      method: obj.method || "Unknown",
+      datePaid: obj.datePaid || null,
+      payments: obj.datePaid
+        ? [{
+          id: crypto.randomUUID(),
+          date: obj.datePaid,
+          amount: Number(obj.price) || 0,
+          currency: obj.currency || "EUR",
+        }]
+        : [],
+    };
+  });
+}
+
+
 export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
   const { currency } = useCurrency();
   const convert = convertUtil;
+
+  const fileInputRef = React.useRef(null);
+
+  const handleImportCSV = async (file) => {
+    if (!file) return;
+
+    const text = await file.text();
+    const imported = parseCSV(text);
+
+    if (!imported.length) {
+      alert("Invalid or empty CSV file");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Import ${imported.length} subscriptions?\n\nExisting subscriptions will be kept.`
+    );
+
+    if (!confirm) return;
+
+    // 🔥 IMPORTANT: send to KV via API
+    const token = localStorage.getItem("token");
+
+    await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "save",
+        subscriptions: [...subscriptions, ...imported],
+      }),
+    });
+
+    window.location.reload(); // simplest + safest refresh
+  };
+
+
   const data = useMemo(() => {
     const now = new Date();
     const month = now.getMonth();
@@ -173,12 +278,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         <h3 className="text-sm font-semibold text-center w-full">
           Spending Overview ({currency})
         </h3>
-        <button
-          onClick={() => exportToCSV(subscriptions)}
-          className="text-xs bg-blue-600 text-white px-2 py-1 rounded"
-        >
-          Export CSV
-        </button>
+
+
       </div>
 
       <div className="flex justify-center mb-4 space-x-2 flex-wrap">
@@ -194,10 +295,12 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             {tab}
           </button>
         ))}
+
+
       </div>
 
-      <div className="h-64 mb-6">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full min-h-[260px] mb-6">
+        <ResponsiveContainer width="100%" aspect={1.6}>
           {activeTab === "Trends" ? (
             <LineChart data={data.trends}>
               <XAxis dataKey="label" />
@@ -218,13 +321,21 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 data={chartData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={70}
-                outerRadius={90}
-                label={({ name, value }) =>
-                  value > 0 ? `${name} (${currency} ${value.toFixed(2)})` : ""
-                }
+                innerRadius="62%"
+                outerRadius="82%"
+                paddingAngle={2}
                 animationDuration={600}
+                labelLine={false}
               >
+                <Label
+                  content={
+                    <PieCenterLabel
+                      title="Total this month"
+                      value={`${currency} ${data.totalThisMonth.toFixed(2)}`}
+                    />
+                  }
+                />
+
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
@@ -232,6 +343,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   />
                 ))}
               </Pie>
+
               <Tooltip
                 formatter={(val, name) => {
                   const matchingSubs = subscriptions.filter(
@@ -243,21 +355,22 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                       name === "Due"
                   );
 
-                  // Aggregate original amounts (if multiple subs match)
-                  const originalTotal = matchingSubs.reduce((sum, s) => sum + (s.price || 0), 0);
-                  const originalCurrency = matchingSubs[0]?.currency || currency;
+                  const originalTotal = matchingSubs.reduce(
+                    (sum, s) => sum + (s.price || 0),
+                    0
+                  );
 
-                  const formattedConverted = `${currency} ${val.toFixed(2)}`;
-                  const formattedOriginal =
-                    convert && rates && matchingSubs.length > 0
-                      ? ` (original: ${originalCurrency} ${originalTotal.toFixed(2)})`
-                      : "";
+                  const originalCurrency =
+                    matchingSubs[0]?.currency || currency;
 
-                  return formattedConverted + formattedOriginal;
+                  return `${currency} ${val.toFixed(2)}${rates && matchingSubs.length
+                    ? ` (original: ${originalCurrency} ${originalTotal.toFixed(2)})`
+                    : ""
+                    }`;
                 }}
               />
-
             </PieChart>
+
           )}
         </ResponsiveContainer>
       </div>
@@ -274,6 +387,31 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           <Stat label="Total this year" value={`${data.totalThisYear.toFixed(2)} ${currency}`} />
         </div>
       )}
+      <div className="flex mt-4 justify-around">
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(subscriptions)}
+            className="text-xs bg-blue-600 text-white px-3 py-1 rounded"
+          >
+            Export CSV
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="text-xs bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded"
+          >
+            Import CSV
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => handleImportCSV(e.target.files[0])}
+          />
+        </div>
+      </div>
     </div>
   );
 }
