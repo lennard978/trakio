@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        tight: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
+      },
       stroke: {
         green: '#22c55e',
         yellow: '#facc15',

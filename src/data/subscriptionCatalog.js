@@ -2,12 +2,12 @@
 
 export const subscriptionCatalog = [
   // Streaming / Entertainment
-  { name: "Netflix", icon: "netflix", category: "entertainment" },
-  { name: "Spotify", icon: "spotify", category: "entertainment" },
-  { name: "Disney+", icon: "disney", category: "entertainment" },
-  { name: "YouTube Premium", icon: "youtube", category: "entertainment" },
-  { name: "HBO Max", icon: "hbo", category: "entertainment" },
-  { name: "Paramount+", icon: "paramount", category: "entertainment" },
+  { name: "Netflix", icon: "netflix", category: "streaming" },
+  { name: "Spotify", icon: "spotify", category: "streaming" },
+  { name: "Disney+", icon: "disney", category: "streaming" },
+  { name: "YouTube Premium", icon: "youtube", category: "streaming" },
+  { name: "HBO Max", icon: "hbo", category: "streaming" },
+  { name: "Paramount+", icon: "paramount", category: "streaming" },
 
   // Amazon / Apple
   { name: "Amazon Prime", icon: "amazon", category: "shopping" },

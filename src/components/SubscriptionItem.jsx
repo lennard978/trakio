@@ -13,7 +13,6 @@ import PriceAlertBadge from "./PriceAlertBadge";
 import { computeNextRenewal } from "../utils/renewal";
 import { subscriptionHealth } from "../utils/subscriptionHealth";
 import { usePremium } from "../hooks/usePremium";
-import DefaultIcon from "./icons/DefaultSubscriptionIcon";
 import { getCategoryStyles } from "../utils/CategoryStyles";
 
 // ---------- UTILITIES ----------
@@ -76,17 +75,16 @@ export default function SubscriptionItem({
   const progressColor = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
   const baseColor = item.color || "rgba(255,255,255,0.9)";
-  const isDarkBg = isDarkColor(baseColor);
+  const isDarkMode =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+  const readableText = getReadableTextStyles(baseColor, isDarkMode);
 
-  const textColor = isDarkBg ? "text-white" : "text-gray-800";
-  const subTextColor = isDarkBg ? "text-gray-200" : "text-gray-600";
-  const labelColor = isDarkBg ? "text-gray-300" : "text-gray-500";
   const categoryStyle = getCategoryStyles(item.category);
-
-  const readableText = getReadableTextStyles(baseColor);
 
   const intensity =
     typeof item.gradientIntensity === "number" ? item.gradientIntensity : 0.25;
+
 
   /* 🔹 ADD: low-power detection */
   const prefersReducedMotion =
@@ -157,35 +155,28 @@ export default function SubscriptionItem({
     input?.click?.();
   };
 
-  // 🔹 ADD: normalize text contrast against translucent gradients
-  function getReadableTextStyles(bgColor) {
-    if (!bgColor) {
+  // ---------- TEXT READABILITY UTILITY ----------
+  // Theme-driven: light mode = dark text, dark mode = white text
+  function getReadableTextStyles(isDarkMode) {
+    if (isDarkMode) {
+      // 🌙 Dark mode: white text + stronger shadow
       return {
-        text: "text-gray-800",
-        subText: "text-gray-600",
-        label: "text-gray-500",
-        shadow: "",
+        text: "text-gray-900",
+        subText: "text-gray-900",
+        label: "text-gray-300",
+        shadow: "drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]",
+      };
+    } else {
+      return {
+        text: "text-gray-100",
+        subText: "text-gray-700",
+        label: "text-gray-600",
+        shadow: "drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]",
       };
     }
+    // 🌤 Light mode: dark text + subtle shadow
 
-    const dark = isDarkColor(bgColor);
-
-    // Detect very transparent backgrounds (common with rgba gradients)
-    const alphaMatch = bgColor.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/);
-    const alpha = alphaMatch ? Number(alphaMatch[1]) : 1;
-
-    const needsBoost = alpha < 0.35;
-
-    return {
-      text: dark || needsBoost ? "text-white" : "text-gray-800",
-      subText: dark || needsBoost ? "text-gray-200" : "text-gray-600",
-      label: dark || needsBoost ? "text-gray-300" : "text-gray-500",
-      shadow: needsBoost
-        ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
-        : "",
-    };
   }
-
 
   return (
     <SwipeToDeleteWrapper onDelete={() => onDelete(item.id)} deleteLabel={t("delete")}>
@@ -199,37 +190,37 @@ export default function SubscriptionItem({
 
         <div className="relative z-10 p-5 backdrop-blur-xl">
           <div className="flex justify-between items-start mb-1">
-            <div>
-              <HealthBadge {...subscriptionHealth(item)} />
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-row">
+              <div className="flex flex-col justify-center items-center">
+                <HealthBadge {...subscriptionHealth(item)} />
+                <div className="p-2">
                   {item.icon ? (
                     <img
                       src={`/icons/${item.icon}.svg`}
                       alt={item.name}
-                      className="w-6 h-6"
+                      className="w-8 h-8"
                     />
                   ) : (
                     <span className="text-xl" title={item.category}>
                       {categoryStyle.icon}
                     </span>
                   )}
-
-                  {/* <div className={`text-lg font-semibold ${readableText.text}`}>
-                    {item.name}
-                  </div> */}
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+
 
                 <div className="flex flex-col ml-2">
-                  <div className={`text-lg font-semibold ${readableText.text}`}>
+                  <div className={`text-lg font-tight tracking-tight font-semibold ${readableText.text}`}>
                     {item.name}
                   </div>
 
                   <div
                     className={`text-xs ${readableText.subText} ${readableText.shadow}`}
-                  >                {currency} {displayPrice?.toFixed(2)} /{" "}
-                    {t(`frequency_${item.frequency}`)}
+                  >
+                    {currency} {displayPrice?.toFixed(2)} / {t(`frequency_${item.frequency}`)} – {nextPaymentText}
                   </div>
+
                 </div>
               </div>
             </div>
@@ -275,15 +266,17 @@ export default function SubscriptionItem({
       </div>
 
       {/* Premium gradient animation */}
-      {premium.isPremium && (
-        <style>{`
+      {
+        premium.isPremium && (
+          <style>{`
           @keyframes trakioGradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
           }
         `}</style>
-      )}
+        )
+      }
     </SwipeToDeleteWrapper>
   );
 }
