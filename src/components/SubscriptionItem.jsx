@@ -13,6 +13,8 @@ import PriceAlertBadge from "./PriceAlertBadge";
 import { computeNextRenewal } from "../utils/renewal";
 import { subscriptionHealth } from "../utils/subscriptionHealth";
 import { usePremium } from "../hooks/usePremium";
+import DefaultIcon from "./icons/DefaultSubscriptionIcon";
+import { getCategoryStyles } from "../utils/CategoryStyles";
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
@@ -79,6 +81,7 @@ export default function SubscriptionItem({
   const textColor = isDarkBg ? "text-white" : "text-gray-800";
   const subTextColor = isDarkBg ? "text-gray-200" : "text-gray-600";
   const labelColor = isDarkBg ? "text-gray-300" : "text-gray-500";
+  const categoryStyle = getCategoryStyles(item.category);
 
   const readableText = getReadableTextStyles(baseColor);
 
@@ -195,16 +198,39 @@ export default function SubscriptionItem({
         />
 
         <div className="relative z-10 p-5 backdrop-blur-xl">
-          <div className="flex justify-between items-start mb-3 gap-3">
+          <div className="flex justify-between items-start mb-1">
             <div>
               <HealthBadge {...subscriptionHealth(item)} />
-              <div className={`text-lg mt-1 font-semibold ${readableText.text} ${readableText.shadow}`}
-              >                {item.name}
-              </div>
-              <div
-                className={`text-sm ${readableText.subText} ${readableText.shadow}`}
-              >                {currency} {displayPrice?.toFixed(2)} /{" "}
-                {t(`frequency_${item.frequency}`)}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  {item.icon ? (
+                    <img
+                      src={`/icons/${item.icon}.svg`}
+                      alt={item.name}
+                      className="w-6 h-6"
+                    />
+                  ) : (
+                    <span className="text-xl" title={item.category}>
+                      {categoryStyle.icon}
+                    </span>
+                  )}
+
+                  {/* <div className={`text-lg font-semibold ${readableText.text}`}>
+                    {item.name}
+                  </div> */}
+                </div>
+
+                <div className="flex flex-col ml-2">
+                  <div className={`text-lg font-semibold ${readableText.text}`}>
+                    {item.name}
+                  </div>
+
+                  <div
+                    className={`text-xs ${readableText.subText} ${readableText.shadow}`}
+                  >                {currency} {displayPrice?.toFixed(2)} /{" "}
+                    {t(`frequency_${item.frequency}`)}
+                  </div>
+                </div>
               </div>
             </div>
 

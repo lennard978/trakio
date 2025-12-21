@@ -204,7 +204,7 @@
 	"welcome_message": "Track all your recurring expenses in one place. Stay in control of your spending, avoid surprises, and never miss a renewal date again.",
 	"welcome_title": "Manage your subscriptions effortlessly",
 
-	"placeholder_examples": "Netflix, gym, Adobe…",
+	"placeholder_examples": "Netflix, Gym ...",
 	"trial_banner_one_day": "Your free trial ends tomorrow!",
 	"trial_banner_days_left": "{{count}} days left in your free trial",
 	"no_paid_date": "Payment date not set.",

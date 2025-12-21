@@ -101,6 +101,6 @@ export const CATEGORY_STYLES = {
   },
 };
 
-export function getCategoryStyle(key) {
+export function getCategoryStyles(key) {
   return CATEGORY_STYLES[key] || CATEGORY_STYLES.other;
 }

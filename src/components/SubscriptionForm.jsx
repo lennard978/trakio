@@ -12,6 +12,7 @@ import FrequencySelector from "../components/FrequencySelector";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import PaymentMethodIcon from "./icons/PaymentMethodIcons";
+import { subscriptionCatalog } from "../data/subscriptionCatalog";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -113,6 +114,8 @@ export default function SubscriptionForm() {
   const [currency, setCurrency] = useState("EUR");
   const [method, setMethod] = useState("");
   const [color, setColor] = useState(getRandomColor());
+  const [icon, setIcon] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   /* 🔹 ADD: gradient intensity */
   const [gradientIntensity, setGradientIntensity] = useState(
@@ -170,6 +173,14 @@ export default function SubscriptionForm() {
       throw new Error(msg);
     }
   };
+
+  const suggestions = useMemo(() => {
+    if (!name.trim()) return [];
+    const q = name.toLowerCase();
+    return subscriptionCatalog
+      .filter(s => s.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [name]);
 
   /* ------------------ Load Data ------------------ */
   useEffect(() => {
@@ -324,6 +335,7 @@ export default function SubscriptionForm() {
           {
             id: crypto.randomUUID(),
             name: name.trim(),
+            icon, // ✅ ADD THIS
             price: priceNum,
             frequency,
             category,
@@ -337,6 +349,7 @@ export default function SubscriptionForm() {
         ];
         showToast(t("toast_added"), "success");
       }
+
 
       await kvSave(updated);
       navigate("/dashboard");
@@ -396,6 +409,8 @@ export default function SubscriptionForm() {
   }
 
 
+
+
   /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
@@ -411,17 +426,49 @@ export default function SubscriptionForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
-            <div>
+            <div className="relative">
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("form_name")}
               </label>
+
               <input
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setShowSuggestions(true);
+                  setIcon(null);
+                }}
+                onFocus={() => setShowSuggestions(true)}
                 placeholder={t("placeholder_examples")}
                 className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
               />
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-20 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.name}
+                      type="button"
+                      onClick={() => {
+                        setName(s.name);
+                        setIcon(s.icon);
+                        setCategory(s.category || "other");
+                        setShowSuggestions(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <img
+                        src={`/icons/${s.icon}.svg`}
+                        alt=""
+                        className="w-5 h-5"
+                      />
+                      <span>{s.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             {/* Price */}
             <div>
