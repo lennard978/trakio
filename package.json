@@ -10,6 +10,8 @@
 		"lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0"
 	},
 	"dependencies": {
+		"@fontsource/inter": "^5.2.8",
+		"@fontsource/inter-tight": "^5.2.7",
 		"@heroicons/react": "^2.2.0",
 		"@vercel/analytics": "^1.6.1",
 		"@vercel/kv": "^3.0.0",
