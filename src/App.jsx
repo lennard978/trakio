@@ -36,6 +36,8 @@ const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Premium = lazy(() => import("./pages/Premium"));
+const SettingsCurrency = lazy(() => import("./pages/settings/SettingsCurrency"));
+
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
 
@@ -147,6 +149,16 @@ export default function App() {
             <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
             <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
             <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
+            <Route
+              path="/settings/currency"
+              element={
+                <ProtectedRoute>
+                  <AnimatedPage>
+                    <SettingsCurrency />
+                  </AnimatedPage>
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/login"

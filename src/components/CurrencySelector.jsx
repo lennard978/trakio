@@ -18,8 +18,13 @@ function getFlagEmoji(code) {
   return map[code] || "🏳️";
 }
 
-export default function CurrencySelector({ value, onChange }) {
+export default function CurrencySelector({ value, onChange, onOpenChange }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
+
   const containerRef = useRef(null);
   const selected = value || "EUR";
 
@@ -68,7 +73,7 @@ export default function CurrencySelector({ value, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-2 z-40 bg-white dark:bg-gray-900 border rounded-xl shadow-xl max-h-64 overflow-y-auto">
+        <div className="absolute left-0 right-0 mt-2 z-[60] bg-white dark:bg-gray-900 border rounded-xl shadow-xl max-h-64 overflow-y-auto">
           {supportedCurrencies.map((code) => (
             <button
               key={code}

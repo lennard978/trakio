@@ -5,16 +5,31 @@ import { useTranslation } from "react-i18next";
 import { usePremium } from "../hooks/usePremium";
 import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
 import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
+import { useCurrency } from "../context/CurrencyContext";
 
 // UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import MonthlyBudget from "../components/MonthlyBudget";
+import SettingsRow from "../components/ui/SettingsRow";
+
+import {
+  GlobeAltIcon,
+  TagIcon,
+  ArrowDownTrayIcon,
+  ShieldCheckIcon,
+  QuestionMarkCircleIcon,
+  StarIcon,
+  ShareIcon,
+} from "@heroicons/react/24/outline";
+import { CURRENCY_LABELS } from "../utils/currencyLabels";
+
 
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { currency } = useCurrency();
 
   const {
     isPremium,
@@ -200,89 +215,126 @@ export default function Settings() {
 
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
-      <h1 className="text-2xl text-center font-bold mb-2 text-gray-900 dark:text-white px-2">
+      {/* TITLE */}
+      <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mt-2">
         {t("settings_title") || "Settings"}
       </h1>
 
       {/* ACCOUNT INFO */}
-      <Card>
-        <h2 className="text-lg font-semibold mb-2">
-          {t("settings_account") || "Account"}
+      <section>
+        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+          Account Info
         </h2>
-        <p className="text-sm">
-          {t("settings_email") || "Email"}:{" "}
-          <span className="font-semibold">{user?.email}</span>
-        </p>
-      </Card>
+        <Card className="space-y-1">
+          <SettingsRow
+            icon={<GlobeAltIcon className="w-6 h-6" />}
+            title="Account"
+            description={user?.email}
+          />
+        </Card>
+      </section>
+
+      {/* ===================== PREFERENCES ===================== */}
+      <section>
+        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+          Preferences
+        </h2>
+        <Card className="space-y-1">
+          <SettingsRow
+            icon={<GlobeAltIcon className="w-6 h-6" />}
+            title="Base Currency"
+            description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
+            onClick={() => navigate("/settings/currency")}
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+          <SettingsRow
+            icon={<TagIcon className="w-6 h-6" />}
+            title="Manage Categories"
+            description="Create custom categories"
+            premium
+            onClick={() => navigate("/settings/categories")}
+          />
+        </Card>
+      </section>
+
+      {/* ===================== DATA MANAGEMENT ===================== */}
+      <section>
+        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+          Data Management
+        </h2>
+
+        <Card className="space-y-1">
+          <SettingsRow
+            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+            title="Export Data"
+            description="Export all subscriptions as CSV or PDF"
+            premium
+            onClick={() => navigate("/settings/export")}
+          />
+        </Card>
+      </section>
+
+      {/* ===================== PRIVACY & SECURITY ===================== */}
+      <section>
+        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+          Privacy & Security
+        </h2>
+
+        <Card className="space-y-1">
+          <SettingsRow
+            icon={<ShieldCheckIcon className="w-6 h-6" />}
+            title="Privacy Policy"
+            description="Learn how we protect your data"
+            href="/datenschutz"
+          />
+        </Card>
+      </section>
+
+      {/* ===================== SUPPORT ===================== */}
+      <section>
+        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+          Support
+        </h2>
+
+        <Card className="space-y-1">
+          <SettingsRow
+            icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
+            title="Help & Support"
+            description="Get help and find answers"
+            href="mailto:support@trakio.de"
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<StarIcon className="w-6 h-6" />}
+            title="Rate Trakio"
+            description="Help us improve with your feedback"
+            href="https://example.com"
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<ShareIcon className="w-6 h-6" />}
+            title="Share Trakio"
+            description="Share with friends and family"
+            href="https://trakio.de"
+          />
+        </Card>
+      </section>
 
       {/* TRIAL INFO */}
       <Card>
-        <h2 className="text-lg font-semibold mb-2">
+        <h2 className="text-sm font-semibold mb-2">
           {t("trial_status")}
         </h2>
         {renderTrialContent()}
       </Card>
 
       {/* PREMIUM STATUS */}
-      {/* <Card>
-        <h2 className="text-lg font-semibold mb-2">
-          {t("premium_subscription")}
-        </h2>
-        {renderPremiumContent()}
-      </Card> */}
-
       <SubscriptionStatusCard />
-
-      {/* <PremiumStatusBanner /> */}
-
-      {/* BUDGET SETTINGS */}
-      {/* <Card className="p-4">
-        <h3 className="font-semibold mb-2">
-          {t("budget_title")}
-        </h3>
-
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={monthlyBudget ?? ""}
-            onChange={(e) =>
-              setMonthlyBudget(
-                e.target.value ? Number(e.target.value) : null
-              )
-            }
-            placeholder={t("budget_placeholder")}
-            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-          />
-
-          <button
-            onClick={() => {
-              if (monthlyBudget != null && monthlyBudget > 0) {
-                localStorage.setItem(
-                  "monthly_budget",
-                  String(monthlyBudget)
-                );
-              }
-            }}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-          >
-            {t("save")}
-          </button>
-        </div>
-
-        <label className="flex items-center gap-2 mt-2 text-sm">
-          <input
-            type="checkbox"
-            checked={budgetAlertsEnabled}
-            onChange={(e) =>
-              setBudgetAlertsEnabled(e.target.checked)
-            }
-          />
-          {t("budget_alerts_enabled")}
-        </label>
-      </Card> */}
-
 
       {/* LOGOUT + BACK */}
       <Card>

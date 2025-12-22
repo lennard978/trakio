@@ -47,10 +47,13 @@ export default function UpcomingPayments({
   return (
     <div
       className="
-        bg-white dark:bg-gray-900
-        border border-gray-200 dark:border-gray-800
-        rounded-xl shadow-sm
-        p-4 mb-2
+        p-5 rounded-2xl
+        bg-white/90 dark:bg-black/30
+        border border-gray-300/60 dark:border-white/10
+        backdrop-blur-xl
+        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+        transition-all mb-2
       "
     >
       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">

@@ -198,18 +198,18 @@ export default function SubscriptionItem({
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col ml-2">
                       <div
-                        className={`text-lg font-tight tracking-tight drop-shadow-sm font-semibold ${readableText.text}`}
+                        className={`text-lg text-black dark:text-gray-300 font-tight tracking-tight drop-shadow-sm font-semibold`}
                       >
                         {item.name}
                       </div>
 
                       <div
-                        className={`text-xs font-medium tabular-nums ${readableText.subText} ${readableText.shadow}`}
+                        className={`text-xs text-black dark:text-gray-300 font-medium tabular-nums`}
                       >
                         {currency} {displayPrice?.toFixed(2)} /{" "}
                         {t(`frequency_${item.frequency}`)}
                       </div>
-                      <div className={`text-xs tabular-nums ${readableText.subText} ${readableText.shadow}`}
+                      <div className={`text-xs text-black dark:text-gray-300 tabular-nums`}
                       >
                         {nextPaymentText}
                       </div>
