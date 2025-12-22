@@ -13,6 +13,7 @@ import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
+import { useTheme } from "../hooks/useTheme";
 
 
 /* ------------------------------------------------------------------ */
@@ -60,6 +61,8 @@ export default function Dashboard() {
   const premium = usePremium();
   const { currency } = useCurrency();
   const [subscriptions, setSubscriptions] = useState([]);
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -218,6 +221,7 @@ export default function Dashboard() {
       console.error("KV save failed:", err);
     }
   };
+  console.log("Dashboard render", theme);
 
   /* ---------------- Render ---------------- */
   return (
@@ -298,6 +302,7 @@ export default function Dashboard() {
             <SubscriptionItem
               key={sub.id}
               item={sub}
+              theme={theme}
               currency={preferredCurrency}
               onDelete={(id) =>
                 persist(subscriptions.filter((s) => s.id !== id))

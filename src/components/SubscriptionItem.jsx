@@ -16,6 +16,7 @@ import { usePremium } from "../hooks/usePremium";
 import { getCategoryStyles } from "../utils/CategoryStyles";
 import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
+import { useTheme } from "../hooks/useTheme";
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
@@ -46,8 +47,9 @@ export default function SubscriptionItem({
   rates,
   convert,
   onDelete,
-  onMarkPaid,
+  onMarkPaid
 }) {
+  console.log("SubscriptionItem render");
   const navigate = useNavigate();
   const { t } = useTranslation();
   const premium = usePremium();
@@ -61,9 +63,8 @@ export default function SubscriptionItem({
 
   const categoryStyle = getCategoryStyles(item.category);
 
-  const isDarkMode =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("dark");
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
 
   const hasCustomColor = Boolean(item.color);
   const isLightCard = hasCustomColor && isLightSurface(item.color);

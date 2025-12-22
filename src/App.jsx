@@ -20,6 +20,7 @@ import { usePremium } from "./hooks/usePremium";
 
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "react-hot-toast";
+import { useTheme } from "./hooks/useTheme";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -73,6 +74,10 @@ export default function App() {
   const { i18n, t } = useTranslation();
   const dir = i18n.dir();
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
+
+  console.log("App render", theme);
 
   /* Currency */
   const { currency, setCurrency } = useCurrency();

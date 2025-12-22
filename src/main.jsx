@@ -21,6 +21,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { AuthProvider } from "./hooks/useAuth";
 import { PremiumProvider } from "./context/PremiumContext";
 import "./i18n.js";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Use BrowserRouter ALWAYS on Vercel.
 // HashRouter was only needed for GitHub Pages (you no longer need it).
@@ -29,17 +30,21 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ToastProvider>
-      <AuthProvider>
-        <PremiumProvider>
-          <Router >
-            <CurrencyProvider>
-              <App />
-            </CurrencyProvider>
-          </Router>
-        </PremiumProvider>
-      </AuthProvider>
-    </ToastProvider>
+    <ThemeProvider>
+
+      <ToastProvider>
+        <AuthProvider>
+          <PremiumProvider>
+            <Router >
+              <CurrencyProvider>
+                <App />
+              </CurrencyProvider>
+            </Router>
+          </PremiumProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
+
   </React.StrictMode>
 );
 
