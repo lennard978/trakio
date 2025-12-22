@@ -5,7 +5,7 @@ export default function SwipeToDeleteWrapper({
   children,
   onDelete,
   deleteLabel = "Delete",
-  style = {}, // ✅ Accept custom styles (e.g. backgroundColor)
+  style = {},
 }) {
   const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -14,6 +14,9 @@ export default function SwipeToDeleteWrapper({
 
   const MAX_SWIPE = -90;
   const THRESHOLD = -45;
+
+  // 🔑 Semantic swipe state (used for contrast decisions)
+  const isSwiping = isDragging || Math.abs(translateX) > 4;
 
   const handleTouchStart = (e) => {
     if (!e.touches?.length) return;
@@ -53,12 +56,9 @@ export default function SwipeToDeleteWrapper({
 
   return (
     <div className="relative mb-3" style={style}>
-      {/* Delete button (revealed on swipe) */}
+      {/* Delete button */}
       <div
-        className={`
-          absolute inset-y-0 right-3 flex items-center
-          transition-all duration-300 ease-in-out
-        `}
+        className="absolute inset-y-0 right-3 flex items-center transition-all duration-300 ease-in-out"
         style={{
           opacity: Math.abs(translateX) > 10 ? 1 : 0.2,
           transform: "scale(0.95)",
@@ -77,14 +77,13 @@ export default function SwipeToDeleteWrapper({
             backdrop-blur-xl backdrop-saturate-150
             shadow-[0_0_10px_rgba(255,70,70,0.25)]
             dark:shadow-[0_0_14px_rgba(255,50,50,0.3)]
-            p-5 
           "
         >
           {deleteLabel}
         </button>
       </div>
 
-      {/* Swipable container */}
+      {/* Swipable content */}
       <div
         style={{
           transform: `translateX(${translateX}px)`,
@@ -95,13 +94,9 @@ export default function SwipeToDeleteWrapper({
         onTouchEnd={handleTouchEnd}
         onClick={resetSwipe}
       >
-        {children ? (
-          children
-        ) : (
-          <div className="p-4 text-red-600 border border-red-400 rounded-md text-sm">
-            ⚠ No content provided to <code>SwipeToDeleteWrapper</code>.
-          </div>
-        )}
+        {typeof children === "function"
+          ? children({ isSwiping })
+          : children}
       </div>
     </div>
   );

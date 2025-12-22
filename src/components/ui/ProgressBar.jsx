@@ -61,7 +61,7 @@ export default function ProgressBar({
             text-[10px] font-semibold z-10 pointer-events-none
           "
           style={{
-            color: safeProgress < 15 ? "#1f2933" : "#000",
+            color: safeProgress < 15 ? "#1f2933" : "gray",
           }}
         >
           {safeProgress}%

@@ -14,29 +14,12 @@ import { computeNextRenewal } from "../utils/renewal";
 import { subscriptionHealth } from "../utils/subscriptionHealth";
 import { usePremium } from "../hooks/usePremium";
 import { getCategoryStyles } from "../utils/CategoryStyles";
+import { useReadableText } from "../hooks/useReadableText";
+import { isLightSurface } from "../utils/isLightSurface";
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
   return Math.ceil((dateA - dateB) / 86400000);
-}
-
-function rgbToHex(rgba) {
-  const m = rgba.match(/\d+/g);
-  if (!m || m.length < 3) return "#ffffff";
-  return (
-    "#" +
-    m.slice(0, 3).map((x) => Number(x).toString(16).padStart(2, "0")).join("")
-  );
-}
-
-function isDarkColor(bg) {
-  if (!bg) return false;
-  const hex = bg.startsWith("#") ? bg : rgbToHex(bg);
-  const r = parseInt(hex.substr(1, 2), 16);
-  const g = parseInt(hex.substr(3, 2), 16);
-  const b = parseInt(hex.substr(5, 2), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness < 150;
 }
 
 function toRgba(color, alpha) {
@@ -75,16 +58,25 @@ export default function SubscriptionItem({
   const progressColor = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
   const baseColor = item.color || "rgba(255,255,255,0.9)";
-  const isDarkMode =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("dark");
-  const readableText = getReadableTextStyles(baseColor, isDarkMode);
 
   const categoryStyle = getCategoryStyles(item.category);
 
-  const intensity =
-    typeof item.gradientIntensity === "number" ? item.gradientIntensity : 0.25;
+  const isDarkMode =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
 
+  const hasCustomColor = Boolean(item.color);
+  const isLightCard = hasCustomColor && isLightSurface(item.color);
+
+  const baseIntensity =
+    typeof item.gradientIntensity === "number"
+      ? item.gradientIntensity
+      : 0.25;
+
+  // 🌙 Reduce intensity in dark mode
+  const intensity = isDarkMode
+    ? Math.max(0.12, baseIntensity * 0.6)
+    : baseIntensity;
 
   /* 🔹 ADD: low-power detection */
   const prefersReducedMotion =
@@ -155,128 +147,117 @@ export default function SubscriptionItem({
     input?.click?.();
   };
 
-  // ---------- TEXT READABILITY UTILITY ----------
-  // Theme-driven: light mode = dark text, dark mode = white text
-  function getReadableTextStyles(isDarkMode) {
-    if (isDarkMode) {
-      // 🌙 Dark mode: white text + stronger shadow
-      return {
-        text: "text-gray-900",
-        subText: "text-gray-900",
-        label: "text-gray-300",
-        shadow: "drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]",
-      };
-    } else {
-      return {
-        text: "text-gray-100",
-        subText: "text-gray-700",
-        label: "text-gray-600",
-        shadow: "drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]",
-      };
-    }
-    // 🌤 Light mode: dark text + subtle shadow
-
-  }
-
   return (
-    <SwipeToDeleteWrapper onDelete={() => onDelete(item.id)} deleteLabel={t("delete")}>
-      <div className="relative overflow-hidden rounded-3xl border dark:border-white/10 shadow-lg">
-        {/* Gradient overlay */}
-        <div
-          className={`absolute inset-0 ${premium.isPremium ? "transition-all duration-500" : ""
-            }`}
-          style={gradientStyle}
-        />
+    <SwipeToDeleteWrapper
+      onDelete={() => onDelete(item.id)}
+      deleteLabel={t("delete")}
+    >
+      {({ isSwiping }) => {
+        const readableText = useReadableText({
+          isDarkMode,
+          isSwiping,
+          isLightCard,
+        });
 
-        <div className="relative z-10 p-5 backdrop-blur-xl">
-          <div className="flex justify-between items-start mb-1">
-            <div className="flex flex-row">
-              <div className="flex flex-col justify-center items-center">
-                <HealthBadge {...subscriptionHealth(item)} />
-                <div className="p-2">
-                  {item.icon ? (
-                    <img
-                      src={`/icons/${item.icon}.svg`}
-                      alt={item.name}
-                      className="w-8 h-8"
-                    />
-                  ) : (
-                    <span className="text-xl" title={item.category}>
-                      {categoryStyle.icon}
-                    </span>
+
+        return (
+          <div className={`
+  relative overflow-hidden rounded-3xl border shadow-lg
+  dark:border-white/10
+  ${isDarkMode && isLightCard ? "saturate-90" : ""}
+`}
+          >
+            {/* Gradient overlay */}
+            <div
+              className={`absolute inset-0 ${premium.isPremium ? "transition-all duration-500" : ""
+                }`}
+              style={gradientStyle}
+            />
+
+            <div className="relative z-10 p-5 backdrop-blur-xl">
+              <div className="flex justify-between items-start mb-1">
+                <div className="flex flex-row">
+                  <div className="flex flex-col justify-center items-center">
+                    <HealthBadge {...subscriptionHealth(item)} />
+                    <div className="p-2">
+                      {item.icon ? (
+                        <img
+                          src={`/icons/${item.icon}.svg`}
+                          alt={item.name}
+                          className="w-8 h-8"
+                        />
+                      ) : (
+                        <span className="text-xl" title={item.category}>
+                          {categoryStyle.icon}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col ml-2">
+                      <div
+                        className={`text-lg font-tight tracking-tight drop-shadow-sm font-semibold ${readableText.text}`}
+                      >
+                        {item.name}
+                      </div>
+
+                      <div
+                        className={`text-xs font-medium tabular-nums ${readableText.subText} ${readableText.shadow}`}
+                      >
+                        {currency} {displayPrice?.toFixed(2)} /{" "}
+                        {t(`frequency_${item.frequency}`)}
+                      </div>
+                      <div className={`text-xs tabular-nums ${readableText.subText} ${readableText.shadow}`}
+                      >
+                        {nextPaymentText}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-1">
+                  <CategoryChip category={item.category} />
+                  {premium.isPremium && item.priceAlert && (
+                    <PriceAlertBadge alert={item.priceAlert} />
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
 
+              <div className="flex items-center gap-4 flex-wrap">
+                <button
+                  onClick={openCalendar}
+                  title={nextPaymentText}
+                  className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
+                >
+                  {t("paid")}
+                </button>
 
-                <div className="flex flex-col ml-2">
-                  <div className={`text-lg font-tight tracking-tight font-semibold ${readableText.text}`}>
-                    {item.name}
-                  </div>
+                <ProgressBar
+                  progress={progress}
+                  color={progressColor}
+                  daysLeft={daysLeft}
+                />
 
-                  <div
-                    className={`text-xs ${readableText.subText} ${readableText.shadow}`}
-                  >
-                    {currency} {displayPrice?.toFixed(2)} / {t(`frequency_${item.frequency}`)} – {nextPaymentText}
-                  </div>
-
-                </div>
+                <button
+                  onClick={() => navigate(`/edit/${item.id}`)}
+                  className="px-4 py-1.5 capitalize rounded-xl text-xs bg-blue-500 text-white"
+                >
+                  {t("edit")}
+                </button>
               </div>
-            </div>
 
-            <div className="flex flex-col items-end gap-1">
-              <CategoryChip category={item.category} />
-              {premium.isPremium && item.priceAlert && (
-                <PriceAlertBadge alert={item.priceAlert} />
-              )}
+              <input
+                ref={dateInputRef}
+                type="date"
+                className="hidden"
+                onChange={(e) => onMarkPaid(item.id, e.target.value)}
+              />
             </div>
           </div>
-
-          <div className="flex items-center gap-4 flex-wrap">
-            <button
-              onClick={openCalendar}
-              title={nextPaymentText}
-              className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
-            >
-              {t("paid")}
-            </button>
-
-            <ProgressBar
-              progress={progress}
-              color={progressColor}
-              daysLeft={daysLeft}
-            />
-
-            <button
-              onClick={() => navigate(`/edit/${item.id}`)}
-              className="px-4 py-1.5 capitalize rounded-xl text-xs bg-blue-500 text-white"
-            >
-              {t("edit")}
-            </button>
-          </div>
-
-          <input
-            ref={dateInputRef}
-            type="date"
-            className="hidden"
-            onChange={(e) => onMarkPaid(item.id, e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Premium gradient animation */}
-      {
-        premium.isPremium && (
-          <style>{`
-          @keyframes trakioGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-        `}</style>
-        )
-      }
+        );
+      }}
     </SwipeToDeleteWrapper>
+
   );
 }

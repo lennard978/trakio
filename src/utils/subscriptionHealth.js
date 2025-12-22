@@ -52,7 +52,7 @@ export function subscriptionHealth(subscription) {
   if (diffDays >= -30) {
     return {
       status: "at_risk",
-      label: "At risk",
+      label: "At-risk",
       color: "yellow",
     };
   }

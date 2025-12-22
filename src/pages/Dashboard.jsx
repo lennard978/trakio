@@ -237,7 +237,7 @@ export default function Dashboard() {
       )}
 
       {/* ================= SUMMARY CARDS ================= */}
-      <div className="grid grid-cols-2 gap-3 mt-0 mb-3">
+      <div className="grid grid-cols-2 gap-2 mt-0 mb-2">
         <div className={`
         p-5 rounded-2xl
         bg-white/90 dark:bg-black/30
@@ -293,7 +293,7 @@ export default function Dashboard() {
       )}
 
       {sorted.length > 0 && (
-        <div className="space-y-3 mt-4">
+        <div className="space-y-2 mt-2">
           {sorted.map((sub) => (
             <SubscriptionItem
               key={sub.id}

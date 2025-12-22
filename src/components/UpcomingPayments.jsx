@@ -50,7 +50,7 @@ export default function UpcomingPayments({
         bg-white dark:bg-gray-900
         border border-gray-200 dark:border-gray-800
         rounded-xl shadow-sm
-        p-4 mb-4
+        p-4 mb-2
       "
     >
       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">

@@ -87,14 +87,14 @@ export default function SubscriptionForm() {
 
 
   const PRESET_COLORS = [
-    "rgba(248, 113, 113, 0.65)", // red
-    "rgba(250, 204, 21, 0.65)",  // yellow
-    "rgba(74, 222, 128, 0.65)",  // green
-    "rgba(96, 165, 250, 0.65)",  // blue
-    "rgba(167, 139, 250, 0.65)", // purple
-    "rgba(244, 114, 182, 0.65)", // pink
-    "rgba(52, 211, 153, 0.65)",  // teal
-    "rgba(249, 115, 22, 0.65)",  // orange
+    "rgba(248, 113, 113, 0.75)", // red
+    "rgba(250, 204, 21, 0.75)",  // yellow
+    "rgba(74, 222, 128, 0.75)",  // green
+    "rgba(96, 165, 250, 0.75)",  // blue
+    "rgba(167, 139, 250, 0.75)", // purple
+    "rgba(244, 114, 182, 0.75)", // pink
+    "rgba(52, 211, 153, 0.75)",  // teal
+    "rgba(249, 115, 22, 0.75)",  // orange
   ];
 
 
