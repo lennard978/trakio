@@ -387,31 +387,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           <Stat label="Total this year" value={`${data.totalThisYear.toFixed(2)} ${currency}`} />
         </div>
       )}
-      <div className="flex mt-4 justify-around">
-        <div className="flex gap-2">
-          <button
-            onClick={() => exportToCSV(subscriptions)}
-            className="text-xs bg-blue-600 text-white px-3 py-1 rounded"
-          >
-            Export CSV
-          </button>
-
-          <button
-            onClick={() => fileInputRef.current.click()}
-            className="text-xs bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded"
-          >
-            Import CSV
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => handleImportCSV(e.target.files[0])}
-          />
-        </div>
-      </div>
     </div>
   );
 }

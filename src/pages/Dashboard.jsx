@@ -14,7 +14,7 @@ import { computeNextRenewal } from "../utils/renewal";
 import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
-
+import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 
 /* ------------------------------------------------------------------ */
 /* Frequency normalization (shared logic with Insights) */
@@ -228,21 +228,18 @@ export default function Dashboard() {
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
       {hasSubscriptions ? (
-        <h1>
-          {/* {t("dashboard_title")} */}
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("dashboard_title")}
         </h1>
       ) : (
-        <div className="text-center text-gray-500 mt-6 mb-4">
-          <p className="mb-3">{t("dashboard_empty")}</p>
-          <Link to="/add" className="text-blue-600 hover:underline">
-            {t("dashboard_empty_cta")}
-          </Link>
-        </div>
+        <EmptyDashboardState />
       )}
 
-      {/* ================= SUMMARY CARDS ================= */}
-      <div className="grid grid-cols-2 gap-2 mt-0 mb-2">
-        <div className={`
+      {hasSubscriptions && (
+        <>
+          {/* ================= SUMMARY CARDS ================= */}
+          <div className="grid grid-cols-2 gap-2 mt-0 mb-2">
+            <div className={`
         p-5 rounded-2xl
         bg-white/90 dark:bg-black/30
         border border-gray-300/60 dark:border-white/10
@@ -251,15 +248,15 @@ export default function Dashboard() {
         dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
         transition-all
       `}>
-          <div className="text-sm text-black-900">
-            {t("dashboard_total_monthly")}
-          </div>
-          <div className="text-xl tabular-nums font-bold text-black-200 mt-1">
-            {preferredCurrency} {totalMonthly.toFixed(2)}
-          </div>
-        </div>
+              <div className="text-sm text-black-900">
+                {t("dashboard_total_monthly")}
+              </div>
+              <div className="text-xl tabular-nums font-bold text-black-200 mt-1">
+                {preferredCurrency} {totalMonthly.toFixed(2)}
+              </div>
+            </div>
 
-        <div className={`
+            <div className={`
         p-5 rounded-2xl
         bg-white/90 dark:bg-black/30
         border border-gray-300/60 dark:border-white/10
@@ -268,15 +265,17 @@ export default function Dashboard() {
         dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
         transition-all
       `}>          <div className="text-sm">
-            {t("dashboard_total_annual")}
+                {t("dashboard_total_annual")}
+              </div>
+              <div className="text-xl tabular-nums font-bold mt-1">
+                {preferredCurrency} {totalAnnual.toFixed(2)}
+              </div>
+            </div>
           </div>
-          <div className="text-xl tabular-nums font-bold mt-1">
-            {preferredCurrency} {totalAnnual.toFixed(2)}
-          </div>
-        </div>
-      </div>
-      {/* ================= END SUMMARY ================= */}
+          {/* ================= END SUMMARY ================= */}
 
+        </>
+      )}
 
       {hasSubscriptions && (
         <UpcomingPayments
@@ -336,3 +335,6 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+

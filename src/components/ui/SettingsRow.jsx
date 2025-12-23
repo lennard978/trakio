@@ -7,12 +7,6 @@ import {
 
 /**
  * Reusable row for settings lists
- * - icon: JSX icon on the left
- * - title: main label
- * - description: secondary text
- * - onClick OR href OR to (internal)
- * - premium: shows crown badge
- * - right: custom right-side UI (e.g., a switch). If provided, chevron is hidden.
  */
 export default function SettingsRow({
   icon,
@@ -23,6 +17,8 @@ export default function SettingsRow({
   to,
   premium = false,
   right = null,
+  accent = "orange",
+  glow = false,
 }) {
   const isExternal =
     typeof href === "string" &&
@@ -30,41 +26,53 @@ export default function SettingsRow({
 
   const showChevron = !right && !isExternal;
 
-  // Prefer explicit to= for internal navigation
+  const ACCENT_STYLES = {
+    orange: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+    blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+    green: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+    purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+    indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+    red: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+  };
+
+  const GLOW_STYLE =
+    "shadow-[0_0_0_1px_rgba(249,115,22,0.15),0_0_12px_rgba(249,115,22,0.25)]";
+
+
+  /* ---------- Shared Icon Wrapper ---------- */
+  const IconWrapper = (
+    <div
+      className={`
+    relative flex items-center justify-center
+    w-10 h-10 rounded-xl shrink-0
+    transition-all duration-200 ease-out
+    group-hover:-translate-y-[1px]
+    group-hover:scale-[1.03]
+    group-hover:shadow-md
++   ${ACCENT_STYLES[accent]}
+  `}
+    >
+      {icon}
+      {premium && (
+        <span className="absolute -top-1 -left-1 text-xs">👑</span>
+      )}
+    </div>
+  );
+
+  /* ---------- Internal navigation ---------- */
   if (to) {
     return (
       <Link
         to={to}
-        className="
-          w-full flex items-center gap-4 px-4 py-4
-          hover:bg-gray-50 dark:hover:bg-gray-800/50
-          transition rounded-xl
-        "
+        className={`
+  group w-full flex items-center gap-4 px-4 py-4
+  hover:bg-gray-50 dark:hover:bg-gray-800/50
+  transition rounded-xl
++ ${glow ? GLOW_STYLE : ""}
+`}
+
       >
-        <div
-          className="
-    relative flex items-center justify-center
-    w-10 h-10 rounded-xl
-    bg-orange-100 dark:bg-orange-900/30
-  "
-        >
-          <div
-            className="
-    relative flex items-center justify-center
-    w-10 h-10 rounded-xl
-    bg-orange-50 dark:bg-orange-900/30
-    text-orange-600 dark:text-orange-400
-  "
-          >            {icon}
-          </div>
-
-          {premium && (
-            <span className="absolute -top-1 -left-1 text-xs">
-              👑
-            </span>
-          )}
-        </div>
-
+        {IconWrapper}
 
         <div className="flex-1 text-left">
           <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -77,37 +85,30 @@ export default function SettingsRow({
           )}
         </div>
 
-        {right ? right : null}
-        {showChevron ? (
+        {right}
+        {showChevron && (
           <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-        ) : null}
+        )}
       </Link>
     );
   }
 
-  // External links
+  /* ---------- External links ---------- */
   if (href && isExternal) {
     return (
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="
-          w-full flex items-center gap-4 px-4 py-4
-          hover:bg-gray-50 dark:hover:bg-gray-800/50
-          transition rounded-xl
-        "
+        className={`
+  group w-full flex items-center gap-4 px-4 py-4
+  hover:bg-gray-50 dark:hover:bg-gray-800/50
+  transition rounded-xl
++ ${glow ? GLOW_STYLE : ""}
+`}
+
       >
-        <div
-          className="
-    relative flex items-center justify-center
-    w-10 h-10 rounded-xl
-    bg-orange-50 dark:bg-orange-900/30
-    text-orange-600 dark:text-orange-400
-  "
-        >          {icon}
-          {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
-        </div>
+        {IconWrapper}
 
         <div className="flex-1 text-left">
           <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -120,13 +121,13 @@ export default function SettingsRow({
           )}
         </div>
 
-        {right ? right : null}
+        {right}
         <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400" />
       </a>
     );
   }
 
-  // Button row (default)
+  /* ---------- Button row ---------- */
   return (
     <div
       role={onClick ? "button" : undefined}
@@ -138,23 +139,15 @@ export default function SettingsRow({
           onClick();
         }
       }}
-      className="
-      w-full flex items-center gap-4 px-4 py-4
-      hover:bg-gray-50 dark:hover:bg-gray-800/50
-      transition rounded-xl
-      cursor-pointer
-    "
+      className={`
+  group w-full flex items-center gap-4 px-4 py-4
+  hover:bg-gray-50 dark:hover:bg-gray-800/50
+  transition rounded-xl
++ ${glow ? GLOW_STYLE : ""}
+`}
+
     >
-      <div
-        className="
-    relative flex items-center justify-center
-    w-10 h-10 rounded-xl
-    bg-orange-50 dark:bg-orange-900/30
-    text-orange-600 dark:text-orange-400
-  "
-      >        {icon}
-        {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
-      </div>
+      {IconWrapper}
 
       <div className="flex-1 text-left">
         <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -167,10 +160,10 @@ export default function SettingsRow({
         )}
       </div>
 
-      {right ? right : null}
-      {showChevron ? (
+      {right}
+      {showChevron && (
         <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-      ) : null}
+      )}
     </div>
   );
 }

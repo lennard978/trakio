@@ -474,37 +474,6 @@ export default function InsightsPage() {
             </tbody>
           </table>
         </div>
-
-        {/* <div className="mt-4 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => exportPaymentHistoryCSV(subscriptions)}
-            className="w-full bg-blue-600 text-white py-2 rounded-xl font-medium"
-          >
-            Export CSV
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current.click()}
-            className="w-full bg-gray-200 dark:bg-gray-800 py-2 rounded-xl font-medium"
-          >
-            Import CSV
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => {
-              handleImportCSV(e.target.files[0]);
-              e.target.value = "";
-            }}
-          />
-        </div> */}
-
-
       </Card>
 
       <PremiumGuard>

@@ -28,6 +28,7 @@ import {
   exportFullJSON,
 } from "../utils/exportData";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
+import SectionHeader from "../components/ui/SectionHeader";
 
 export default function Settings({ setActiveSheet }) {
   const { user, logout } = useAuth();
@@ -225,12 +226,11 @@ export default function Settings({ setActiveSheet }) {
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
       {/* TITLE */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mt-2">
-          {t("settings_title") || "Settings"}
-        </h1>
-        <p className="text-sm text-gray-900 dark:text-gray-500 mt-1">Customize your app experience</p>
-      </div>
+      <SectionHeader
+        title="Preferences"
+        subtitle="Customize your app experience"
+      />
+
 
       {/* ACCOUNT INFO */}
       <section>
@@ -242,6 +242,8 @@ export default function Settings({ setActiveSheet }) {
             icon={<UserCircleIcon className="w-6 h-6" />}
             title="Account"
             description={user?.email}
+            accent="indigo"
+            glow
           />
         </Card>
       </section>
@@ -255,6 +257,7 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<GlobeAltIcon className="w-6 h-6" />}
             title="Base Currency"
+            glow
             description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
             onClick={() => {
               startTransition(() => {
@@ -262,12 +265,12 @@ export default function Settings({ setActiveSheet }) {
               });
             }}
           />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
 
           {/* Appearance */}
           <SettingsRow
             icon={<MoonIcon className="w-6 h-6" />}
             title="Appearance"
+            glow
             description={isDark ? "Dark mode" : "Light mode"}
             right={
               <ThemeSwitch
@@ -275,13 +278,14 @@ export default function Settings({ setActiveSheet }) {
                 onChange={toggleTheme}
               />
             }
+            accent="orange"
           />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
 
           {/* Language */}
           <SettingsRow
             icon={<LanguageIcon className="w-6 h-6" />}
             title="Language"
+            glow
             description={
               currentLang
                 ? `${currentLang.emoji} ${currentLang.label}`
@@ -306,35 +310,42 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download subscriptions"
+            premium
+            glow
             description="Export all subscriptions as CSV"
             onClick={() => exportSubscriptionsCSV(subscriptions)}
+            accent="blue"
           />
 
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download payment history"
             description="Export all past payments as CSV"
             premium
+            glow
+            accent="blue"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}
           />
 
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download annual summary"
             description="Yearly totals per subscription"
             premium
+            glow
+            accent="blue"
             onClick={() => exportAnnualSummaryCSV(subscriptions)}
           />
 
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Full data export"
+            accent="blue"
+            premium
+            glow
             description="Download everything (JSON)"
             onClick={() =>
               exportFullJSON({
@@ -366,32 +377,36 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<ShieldCheckIcon className="w-6 h-6" />}
             title="Privacy Policy"
+            glow
             description="How we collect, process and protect your data (GDPR)"
-            to="/datenschutz" />
-
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+            to="/datenschutz"
+            accent="green" />
 
           <SettingsRow
             icon={<BuildingOfficeIcon className="w-6 h-6" />}
             title="Legal Notice (Impressum)"
             description="Company information and legal disclosure"
-            to="/impressum" />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+            to="/impressum"
+            glow
+            accent="green" />
+
           <SettingsRow
             icon={<DocumentTextIcon className="w-6 h-6" />}
             title="Terms & Conditions (AGB)"
             description="Legal terms for using Trakio"
             to="/agb"
+            glow
+            accent="green"
           />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<DocumentTextIcon className="w-6 h-6" />}
             title="Widerrufsbelehrung"
             description="Informationen zum Widerrufsrecht"
             to="/widerruf"
+            glow
+            accent="green"
           />
-
         </Card>
       </section>
 
@@ -406,28 +421,31 @@ export default function Settings({ setActiveSheet }) {
             icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
             title="Help & Support"
             description="FAQs and contact support"
+            accent="purple"
+            glow
             onClick={() => {
               startTransition(() => {
                 setActiveSheet("help");
               });
             }}
           />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
             title="Rate Trakio"
             description="Help us improve by leaving a review"
             onClick={handleRate}
+            accent="purple"
+            glow
           />
-
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<ShareIcon className="w-6 h-6" />}
             title="Share Trakio"
             description="Share Trakio with friends and family"
             onClick={handleShare}
+            accent="purple"
+            glow
           />
 
         </Card>
