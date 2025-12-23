@@ -153,12 +153,11 @@ export default function App() {
               path="/settings/currency"
               element={
                 <ProtectedRoute>
-                  <AnimatedPage>
-                    <SettingsCurrency />
-                  </AnimatedPage>
+                  <AnimatedPage><SettingsCurrency /></AnimatedPage>
                 </ProtectedRoute>
               }
             />
+
 
             <Route
               path="/login"
