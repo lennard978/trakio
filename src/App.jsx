@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import {
   Routes,
   Route,
@@ -14,6 +14,7 @@ import AnimatedPage from "./components/AnimatedPage";
 import FloatingTabBar from "./components/FloatingTabBar";
 import LogoIcon from "./icons/icon-192.png";
 import CurrencySelector from "./components/CurrencySelector";
+import CurrencyPickerSheet from "./components/settings/CurrencyPickerSheet";
 
 import { useAuth } from "./hooks/useAuth";
 import { usePremium } from "./hooks/usePremium";
@@ -36,7 +37,6 @@ const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Premium = lazy(() => import("./pages/Premium"));
-const SettingsCurrency = lazy(() => import("./pages/settings/SettingsCurrency"));
 
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
@@ -77,7 +77,7 @@ export default function App() {
   const dir = i18n.dir();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
+  const [activeSheet, setActiveSheet] = useState(null);
 
   console.log("App render", theme);
 
@@ -149,15 +149,6 @@ export default function App() {
             <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
             <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
             <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
-            <Route
-              path="/settings/currency"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage><SettingsCurrency /></AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
 
             <Route
               path="/login"
@@ -214,10 +205,13 @@ export default function App() {
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <AnimatedPage><Settings /></AnimatedPage>
+                  <AnimatedPage>
+                    <Settings setActiveSheet={setActiveSheet} />
+                  </AnimatedPage>
                 </ProtectedRoute>
               }
             />
+
 
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
@@ -225,7 +219,11 @@ export default function App() {
       </main>
 
       {/* FLOATING TAB BAR */}
-      <FloatingTabBar dir={dir} />
+      <FloatingTabBar dir={dir} hidden={activeSheet !== null} />
+
+      {activeSheet === "currency" && (
+        <CurrencyPickerSheet onClose={() => setActiveSheet(null)} />
+      )}
 
       {/* FOOTER */}
       <div className="fixed bottom-0.5 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center pb-1 font-bold">

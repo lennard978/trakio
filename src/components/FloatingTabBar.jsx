@@ -48,14 +48,14 @@ export default function FloatingTabBar({ dir = "ltr" }) {
             {({ isActive }) => (
               <div
                 className={`relative flex flex-col items-center justify-center text-[11px] font-medium transition-all duration-200 ${isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 opacity-85"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-700 dark:text-gray-300 opacity-85"
                   }`}
               >
                 <span
                   className={`text-[20px] mb-0.5 transition-transform duration-200 ${isActive
-                      ? "scale-110 -translate-y-0.5"
-                      : "scale-95 translate-y-0"
+                    ? "scale-110 -translate-y-0.5"
+                    : "scale-95 translate-y-0"
                     }`}
                 >
                   {tab.icon}
@@ -86,8 +86,8 @@ export default function FloatingTabBar({ dir = "ltr" }) {
             {({ isActive }) => (
               <div
                 className={`flex flex-col items-center justify-center text-xs font-medium transition-all duration-200 ${isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 opacity-85"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-700 dark:text-gray-300 opacity-85"
                   }`}
               >
                 <span

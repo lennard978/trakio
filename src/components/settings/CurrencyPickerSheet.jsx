@@ -29,7 +29,7 @@ export default function CurrencyPickerSheet({ onClose }) {
 
       {/* sheet */}
       <div className="
-        absolute bottom-0 left-0 right-0
+        absolute top-0 left-0 right-0
         bg-white dark:bg-gray-900
         rounded-t-3xl
         max-h-[85vh]
@@ -37,7 +37,7 @@ export default function CurrencyPickerSheet({ onClose }) {
         shadow-2xl
       ">
         {/* handle */}
-        <div className="flex justify-center py-2 mt-24">
+        <div className="flex justify-center py-2">
           <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
         </div>
 

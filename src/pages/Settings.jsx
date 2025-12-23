@@ -4,13 +4,13 @@ import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { usePremium } from "../hooks/usePremium";
 import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
-import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
+// import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 import { useCurrency } from "../context/CurrencyContext";
 
 // UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
-import MonthlyBudget from "../components/MonthlyBudget";
+// import MonthlyBudget from "../components/MonthlyBudget";
 import SettingsRow from "../components/ui/SettingsRow";
 
 import {
@@ -25,7 +25,7 @@ import {
 import { CURRENCY_LABELS } from "../utils/currencyLabels";
 
 
-export default function Settings() {
+export default function Settings({ setActiveSheet }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -244,8 +244,9 @@ export default function Settings() {
             icon={<GlobeAltIcon className="w-6 h-6" />}
             title="Base Currency"
             description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
-            onClick={() => navigate("/settings/currency")}
+            onClick={() => setActiveSheet("currency")}
           />
+
 
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
           <SettingsRow
