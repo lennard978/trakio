@@ -11,7 +11,6 @@ export default function SubscriptionStatusCard() {
     trialEndsAt,
     cancelAtPeriodEnd,
     trialDaysLeft,
-    startCheckout,
   } = usePremium();
 
   const navigate = useNavigate();
@@ -19,7 +18,7 @@ export default function SubscriptionStatusCard() {
   const formatDate = (d) =>
     d ? new Date(d).toLocaleDateString() : null;
 
-  const goPortal = async () => {
+  const openBillingPortal = async () => {
     try {
       const token = localStorage.getItem("token");
 
@@ -32,25 +31,20 @@ export default function SubscriptionStatusCard() {
         body: JSON.stringify({ action: "portal" }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to create portal session");
-      }
+      if (!res.ok) throw new Error("Portal error");
 
       const { url } = await res.json();
-
-      // Redirect to Stripe Billing Portal
       window.location.href = url;
     } catch (err) {
-      console.error("Portal error:", err);
-      alert("Could not open billing portal. Please try again.");
+      console.error("Billing portal error:", err);
+      alert("Unable to open billing settings. Please try again.");
     }
   };
-
 
   return (
     <Card>
       <h3 className="text-sm font-semibold mb-2">
-        Subscription status
+        Subscription
       </h3>
 
       {/* LOADING */}
@@ -60,23 +54,16 @@ export default function SubscriptionStatusCard() {
         </p>
       )}
 
-      {/* UNKNOWN */}
-      {!loading && !status && (
-        <div className="text-sm space-y-2">
-          <p className="text-gray-400">
-            Subscription status is syncing…
-          </p>
-        </div>
-      )}
-
-      {/* ACTIVE */}
+      {/* PREMIUM ACTIVE */}
       {!loading && status === "active" && (
-        <div className="text-sm space-y-2">
-          <p className="text-green-600">Premium active</p>
+        <div className="space-y-2 text-sm">
+          <p className="font-medium text-green-600">
+            Premium active
+          </p>
 
           {cancelAtPeriodEnd ? (
-            <p className="text-yellow-600">
-              Subscription will end on{" "}
+            <p className="text-gray-500">
+              Access ends on{" "}
               <strong>{formatDate(premiumEndsAt)}</strong>
             </p>
           ) : (
@@ -86,30 +73,29 @@ export default function SubscriptionStatusCard() {
             </p>
           )}
 
-          <SettingButton onClick={goPortal}>
+          <SettingButton onClick={openBillingPortal}>
             Manage subscription
           </SettingButton>
         </div>
       )}
 
-      {/* TRIALING */}
+      {/* TRIAL */}
       {!loading && status === "trialing" && (
-        <div className="text-sm space-y-2">
-          <p className="text-blue-600">Free trial active</p>
+        <div className="space-y-2 text-sm">
+          <p className="font-medium text-blue-600">
+            Free trial active
+          </p>
 
-          {trialEndsAt ? (
+          {trialEndsAt && (
             <p className="text-gray-500">
-              Ends on <strong>{formatDate(trialEndsAt)}</strong>
-              {typeof trialDaysLeft === "number" ? (
+              Trial ends on{" "}
+              <strong>{formatDate(trialEndsAt)}</strong>
+              {typeof trialDaysLeft === "number" && (
                 <>
                   {" "}({trialDaysLeft} day
                   {trialDaysLeft === 1 ? "" : "s"} left)
                 </>
-              ) : null}
-            </p>
-          ) : (
-            <p className="text-gray-500">
-              Trial is active.
+              )}
             </p>
           )}
 
@@ -119,26 +105,30 @@ export default function SubscriptionStatusCard() {
         </div>
       )}
 
-      {/* PAST DUE */}
+      {/* PAYMENT ISSUE */}
       {!loading && status === "past_due" && (
-        <div className="text-sm space-y-2">
-          <p className="text-red-600">Payment failed</p>
+        <div className="space-y-2 text-sm">
+          <p className="font-medium text-red-600">
+            Payment issue
+          </p>
           <p className="text-gray-500">
             Please update your billing details to keep Premium access.
           </p>
 
-          <SettingButton onClick={goPortal}>
+          <SettingButton onClick={openBillingPortal}>
             Fix payment
           </SettingButton>
         </div>
       )}
 
-      {/* CANCELED / EXPIRED */}
+      {/* FREE PLAN */}
       {!loading && status === "canceled" && (
-        <div className="text-sm space-y-2">
-          <p className="text-gray-500">Free plan</p>
-          <p className="text-gray-400">
-            Premium is not active.
+        <div className="space-y-2 text-sm">
+          <p className="font-medium text-gray-700 dark:text-gray-300">
+            Free plan
+          </p>
+          <p className="text-gray-500">
+            You are currently using the free version.
           </p>
 
           <SettingButton onClick={() => navigate("/premium")}>
@@ -147,16 +137,17 @@ export default function SubscriptionStatusCard() {
         </div>
       )}
 
-      {/* FALLBACK FOR ANY OTHER STATUS */}
+      {/* FALLBACK */}
       {!loading &&
         status &&
         !["active", "trialing", "past_due", "canceled"].includes(status) && (
-          <div className="text-sm space-y-2">
-            <p className="text-gray-400">
-              Status: <strong>{status}</strong>
+          <div className="space-y-2 text-sm">
+            <p className="text-gray-500">
+              Subscription status: <strong>{status}</strong>
             </p>
+
             <SettingButton onClick={() => navigate("/premium")}>
-              Upgrade to Premium
+              View plans
             </SettingButton>
           </div>
         )}

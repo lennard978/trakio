@@ -1,4 +1,5 @@
 import React from "react";
+import { CheckIcon } from "@heroicons/react/24/solid";
 
 export default function PremiumFeatureRow({
   title,
@@ -6,15 +7,18 @@ export default function PremiumFeatureRow({
   premium = false,
 }) {
   return (
-    <div className="flex justify-between items-center py-2 text-sm">
-      <span>{title}</span>
+    <div className="flex items-center justify-between py-2 text-sm">
+      <span className="text-gray-700 dark:text-gray-300">
+        {title}
+      </span>
 
-      <div className="flex gap-4">
-        <span className={free ? "text-green-500" : "text-gray-400"}>
-          {free ? "✓" : "—"}
+      <div className="flex gap-6">
+        <span className="w-6 flex justify-center">
+          {free && <CheckIcon className="w-5 h-5 text-green-600" />}
         </span>
-        <span className={premium ? "text-green-500" : "text-gray-400"}>
-          {premium ? "✓" : "—"}
+
+        <span className="w-6 flex justify-center">
+          {premium && <CheckIcon className="w-5 h-5 text-green-600" />}
         </span>
       </div>
     </div>
