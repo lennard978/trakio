@@ -37,6 +37,8 @@ const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Premium = lazy(() => import("./pages/Premium"));
 const Widerrufsbelehrung = lazy(() => import("./pages/Widerrufsbelehrung"));
+const HelpSupportSheet = lazy(() => import("./components/help/HelpSupportSheet"));
+
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
 
@@ -189,7 +191,7 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AnimatedPage>
-                    <Settings />
+                    <Settings setActiveSheet={setActiveSheet} />
                   </AnimatedPage>
                 </ProtectedRoute>
               }
@@ -203,13 +205,18 @@ export default function App() {
       </main>
 
       {/* FLOATING TAB BAR */}
-      <FloatingTabBar dir={dir} hidden={activeSheet !== null} />
+      <FloatingTabBar hidden={activeSheet !== null} />
 
       {activeSheet === "currency" && (
         <CurrencyPickerSheet onClose={() => setActiveSheet(null)} />
       )}
+
       {activeSheet === "language" && (
         <LanguagePickerSheet onClose={() => setActiveSheet(null)} />
+      )}
+
+      {activeSheet === "help" && (
+        <HelpSupportSheet onClose={() => setActiveSheet(null)} />
       )}
 
 

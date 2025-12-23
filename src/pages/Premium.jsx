@@ -70,30 +70,56 @@ export default function Premium() {
       </div>
 
 
-      {/* LEGAL CONSENT */}
-      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
-        <label className="flex items-start gap-2">
+      {/* LEGAL CONSENT – PREMIUM STYLE */}
+      <div className="
+  rounded-2xl border
+  bg-gray-50 dark:bg-gray-800/60
+  border-gray-200 dark:border-gray-700
+  p-4 space-y-3
+">
+        <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+          Checkout & legal information
+        </div>
+
+        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+          By continuing, you agree to our{" "}
+          <a
+            href="/agb"
+            target="_blank"
+            className="underline font-medium"
+          >
+            Terms & Conditions
+          </a>{" "}
+          and{" "}
+          <a
+            href="/datenschutz"
+            target="_blank"
+            className="underline font-medium"
+          >
+            Privacy Policy
+          </a>.
+          You also consent that the service starts immediately and
+          acknowledge that your right of withdrawal expires once the
+          service begins.
+        </p>
+
+        <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={accepted}
             onChange={(e) => setAccepted(e.target.checked)}
-            required
+            className="mt-1 accent-blue-600"
           />
-
-          <span>
-            Ich akzeptiere die{" "}
-            <a href="/agb" target="_blank" className="underline">
-              AGB
-            </a>{" "}
-            und die{" "}
-            <a href="/datenschutz" target="_blank" className="underline">
-              Datenschutzerklärung
-            </a>{" "}
-            und stimme ausdrücklich zu, dass der Vertrag vor Ablauf der
-            Widerrufsfrist ausgeführt wird.
+          <span className="text-xs text-gray-700 dark:text-gray-300">
+            I understand and agree
           </span>
         </label>
+
+        <div className="text-[11px] text-gray-500 dark:text-gray-400">
+          Secure payments · Cancel anytime · No hidden fees
+        </div>
       </div>
+
 
 
       {/* PRICING */}

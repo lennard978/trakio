@@ -4,12 +4,11 @@ import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { usePremium } from "../hooks/usePremium";
 import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
-// import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
-import { MoonIcon, LanguageIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { MoonIcon, LanguageIcon, DocumentTextIcon, StarIcon, ShareIcon, UserCircleIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
 import ThemeSwitch from "../components/ui/ThemeSwitch";
-import LanguageSwitch from "../components/ui/LanguageSwitch";
+import { startTransition } from "react";
 // UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
@@ -18,12 +17,9 @@ import languages from "../utils/languages";
 
 import {
   GlobeAltIcon,
-  TagIcon,
   ArrowDownTrayIcon,
   ShieldCheckIcon,
   QuestionMarkCircleIcon,
-  StarIcon,
-  ShareIcon,
 } from "@heroicons/react/24/outline";
 import { CURRENCY_LABELS } from "../utils/currencyLabels";
 import {
@@ -44,6 +40,25 @@ export default function Settings({ setActiveSheet }) {
   const currentLang = languages.find(l => l.code === i18n.language);
   const [subscriptions, setSubscriptions] = useState([]);
 
+  const handleRate = () => {
+    window.open("https://trakio.de", "_blank");
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: "Trakio",
+      text: "I use Trakio to track all my subscriptions. Try it!",
+      url: "https://trakio.de",
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(shareData.url);
+      alert("Link copied to clipboard");
+    }
+  };
+
   useEffect(() => {
     if (!user?.email) return;
 
@@ -62,12 +77,6 @@ export default function Settings({ setActiveSheet }) {
       setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
     })();
   }, [user?.email]);
-
-
-  const toggleLanguage = () => {
-    const next = currentLang === "en" ? "de" : "en";
-    i18n.changeLanguage(next);
-  };
 
 
   const {
@@ -211,45 +220,6 @@ export default function Settings({ setActiveSheet }) {
     return null;
   };
 
-  const renderPremiumContent = () => {
-    if (isPremium) {
-      return (
-        <>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {t("active_sub")}
-          </p>
-
-          {!hasActiveTrial && (
-            <SettingButton
-              variant="primary"
-              className="mt-3"
-              onClick={handleManageSubscription}
-            >
-              {t("manage_sub")}
-            </SettingButton>
-          )}
-        </>
-      );
-    }
-
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("free_plan")}
-        </p>
-
-        {!hasActiveTrial && (
-          <SettingButton
-            variant="success"
-            onClick={() => navigate("/premium")}
-          >
-            {t("upgrade_premium")}
-          </SettingButton>
-        )}
-      </div>
-    );
-  };
-
   /* ------------------------------------------------------------------ */
 
   return (
@@ -269,7 +239,7 @@ export default function Settings({ setActiveSheet }) {
         </h2>
         <Card className="space-y-1">
           <SettingsRow
-            icon={<GlobeAltIcon className="w-6 h-6" />}
+            icon={<UserCircleIcon className="w-6 h-6" />}
             title="Account"
             description={user?.email}
           />
@@ -286,9 +256,14 @@ export default function Settings({ setActiveSheet }) {
             icon={<GlobeAltIcon className="w-6 h-6" />}
             title="Base Currency"
             description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
-            onClick={() => setActiveSheet("currency")}
+            onClick={() => {
+              startTransition(() => {
+                setActiveSheet("currency");
+              });
+            }}
           />
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
+
           {/* Appearance */}
           <SettingsRow
             icon={<MoonIcon className="w-6 h-6" />}
@@ -302,6 +277,7 @@ export default function Settings({ setActiveSheet }) {
             }
           />
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
+
           {/* Language */}
           <SettingsRow
             icon={<LanguageIcon className="w-6 h-6" />}
@@ -311,21 +287,15 @@ export default function Settings({ setActiveSheet }) {
                 ? `${currentLang.emoji} ${currentLang.label}`
                 : i18n.language
             }
-            onClick={() => setActiveSheet("language")}
+            onClick={() => {
+              startTransition(() => {
+                setActiveSheet("language");
+              });
+            }}
           />
-          {/* <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" /> */}
-
-          {/* <SettingsRow
-            icon={<TagIcon className="w-6 h-6" />}
-            title="Manage Categories"
-            description="Create custom categories"
-            premium
-            onClick={() => navigate("/settings/categories")}
-          /> */}
         </Card>
       </section>
 
-      {/* ===================== DATA MANAGEMENT ===================== */}
       {/* ===================== DATA MANAGEMENT ===================== */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
@@ -402,7 +372,7 @@ export default function Settings({ setActiveSheet }) {
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
-            icon={<DocumentTextIcon className="w-6 h-6" />}
+            icon={<BuildingOfficeIcon className="w-6 h-6" />}
             title="Legal Notice (Impressum)"
             description="Company information and legal disclosure"
             to="/impressum" />
@@ -425,27 +395,30 @@ export default function Settings({ setActiveSheet }) {
         </Card>
       </section>
 
-      {/* ===================== SUPPORT ===================== */}
+      {/* ===================== HELP & SUPPORT ===================== */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Support
+          Help & Support
         </h2>
-
+        {/* Intro */}
         <Card className="space-y-1">
           <SettingsRow
             icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
             title="Help & Support"
-            description="Get help and find answers"
-            href="mailto:support@trakio.de"
+            description="FAQs and contact support"
+            onClick={() => {
+              startTransition(() => {
+                setActiveSheet("help");
+              });
+            }}
           />
-
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
 
           <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
             title="Rate Trakio"
-            description="Help us improve with your feedback"
-            href="https://example.com"
+            description="Help us improve by leaving a review"
+            onClick={handleRate}
           />
 
           <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
@@ -453,11 +426,13 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<ShareIcon className="w-6 h-6" />}
             title="Share Trakio"
-            description="Share with friends and family"
-            href="https://trakio.de"
+            description="Share Trakio with friends and family"
+            onClick={handleShare}
           />
+
         </Card>
       </section>
+
 
       {/* TRIAL INFO */}
       <Card>
@@ -485,6 +460,7 @@ export default function Settings({ setActiveSheet }) {
           </SettingButton>
         </div>
       </Card>
+
     </div>
   );
 }

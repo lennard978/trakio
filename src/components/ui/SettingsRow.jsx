@@ -41,10 +41,30 @@ export default function SettingsRow({
           transition rounded-xl
         "
       >
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
-          {icon}
-          {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
+        <div
+          className="
+    relative flex items-center justify-center
+    w-10 h-10 rounded-xl
+    bg-orange-100 dark:bg-orange-900/30
+  "
+        >
+          <div
+            className="
+    relative flex items-center justify-center
+    w-10 h-10 rounded-xl
+    bg-orange-50 dark:bg-orange-900/30
+    text-orange-600 dark:text-orange-400
+  "
+          >            {icon}
+          </div>
+
+          {premium && (
+            <span className="absolute -top-1 -left-1 text-xs">
+              👑
+            </span>
+          )}
         </div>
+
 
         <div className="flex-1 text-left">
           <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -78,8 +98,14 @@ export default function SettingsRow({
           transition rounded-xl
         "
       >
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
-          {icon}
+        <div
+          className="
+    relative flex items-center justify-center
+    w-10 h-10 rounded-xl
+    bg-orange-50 dark:bg-orange-900/30
+    text-orange-600 dark:text-orange-400
+  "
+        >          {icon}
           {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
         </div>
 
@@ -102,17 +128,31 @@ export default function SettingsRow({
 
   // Button row (default)
   return (
-    <button
-      type="button"
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className="
-        w-full flex items-center gap-4 px-4 py-4
-        hover:bg-gray-50 dark:hover:bg-gray-800/50
-        transition rounded-xl
-      "
+      w-full flex items-center gap-4 px-4 py-4
+      hover:bg-gray-50 dark:hover:bg-gray-800/50
+      transition rounded-xl
+      cursor-pointer
+    "
     >
-      <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
-        {icon}
+      <div
+        className="
+    relative flex items-center justify-center
+    w-10 h-10 rounded-xl
+    bg-orange-50 dark:bg-orange-900/30
+    text-orange-600 dark:text-orange-400
+  "
+      >        {icon}
         {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
       </div>
 
@@ -131,6 +171,6 @@ export default function SettingsRow({
       {showChevron ? (
         <ChevronRightIcon className="w-5 h-5 text-gray-400" />
       ) : null}
-    </button>
+    </div>
   );
 }

@@ -254,7 +254,7 @@ export default function Dashboard() {
           <div className="text-sm text-black-900">
             {t("dashboard_total_monthly")}
           </div>
-          <div className="text-2xl tabular-nums font-bold text-black-200 mt-1">
+          <div className="text-xl tabular-nums font-bold text-black-200 mt-1">
             {preferredCurrency} {totalMonthly.toFixed(2)}
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function Dashboard() {
       `}>          <div className="text-sm">
             {t("dashboard_total_annual")}
           </div>
-          <div className="text-2xl tabular-nums font-bold mt-1">
+          <div className="text-xl tabular-nums font-bold mt-1">
             {preferredCurrency} {totalAnnual.toFixed(2)}
           </div>
         </div>
