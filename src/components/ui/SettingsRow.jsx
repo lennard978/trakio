@@ -1,5 +1,8 @@
 import React from "react";
-import { ChevronRightIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronRightIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
 
 /**
  * Reusable row for settings lists
@@ -8,6 +11,7 @@ import { ChevronRightIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24
  * - description: secondary text
  * - onClick OR href (external)
  * - premium: shows crown badge
+ * - right: custom right-side element (toggle, badge, etc.)
  */
 export default function SettingsRow({
   icon,
@@ -16,8 +20,9 @@ export default function SettingsRow({
   onClick,
   href,
   premium = false,
+  right = null,
 }) {
-  const Wrapper = onClick ? "button" : "a";
+  const Wrapper = onClick ? "button" : href ? "a" : "div";
 
   return (
     <Wrapper
@@ -26,7 +31,7 @@ export default function SettingsRow({
       target={href ? "_blank" : undefined}
       rel={href ? "noopener noreferrer" : undefined}
       className="
-        w-full flex items-center gap-4 px-4 py-4
+        w-full flex items-center gap-4 px-1 py-1
         hover:bg-gray-50 dark:hover:bg-gray-800/50
         transition rounded-xl
       "
@@ -51,12 +56,14 @@ export default function SettingsRow({
         )}
       </div>
 
-      {/* RIGHT ICON */}
-      {href ? (
+      {/* RIGHT SIDE */}
+      {right ? (
+        <div onClick={(e) => e.stopPropagation()}>{right}</div>
+      ) : href ? (
         <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400" />
-      ) : (
+      ) : onClick ? (
         <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-      )}
+      ) : null}
     </Wrapper>
   );
 }

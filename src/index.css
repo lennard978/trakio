@@ -302,3 +302,18 @@ html.ready {
 .dark .logo-img {
 	filter: brightness(1.2) saturate(1.2) invert(1);
 }
+
+@keyframes sheet-in {
+	from {
+		transform: translateY(40px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+.animate-sheet-in {
+	animation: sheet-in 220ms ease-out;
+}

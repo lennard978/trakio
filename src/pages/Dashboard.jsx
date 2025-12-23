@@ -225,11 +225,11 @@ export default function Dashboard() {
 
   /* ---------------- Render ---------------- */
   return (
-    <div className="max-w-2xl mx-auto mt-1 pb-6">
+    <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
       {hasSubscriptions ? (
-        <h1 className="text-2xl font-bold text-center mb-4">
-          {t("dashboard_title")}
+        <h1>
+          {/* {t("dashboard_title")} */}
         </h1>
       ) : (
         <div className="text-center text-gray-500 mt-6 mb-4">

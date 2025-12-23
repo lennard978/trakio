@@ -6,12 +6,15 @@ import { usePremium } from "../hooks/usePremium";
 import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
 // import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 import { useCurrency } from "../context/CurrencyContext";
-
+import { useTheme } from "../hooks/useTheme";
+import { MoonIcon, LanguageIcon } from "@heroicons/react/24/outline";
+import ThemeSwitch from "../components/ui/ThemeSwitch";
+import LanguageSwitch from "../components/ui/LanguageSwitch";
 // UI
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
-// import MonthlyBudget from "../components/MonthlyBudget";
 import SettingsRow from "../components/ui/SettingsRow";
+import languages from "../utils/languages";
 
 import {
   GlobeAltIcon,
@@ -30,6 +33,17 @@ export default function Settings({ setActiveSheet }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currency } = useCurrency();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  const { i18n } = useTranslation();
+  const currentLang = languages.find(l => l.code === i18n.language);
+
+
+  const toggleLanguage = () => {
+    const next = currentLang === "en" ? "de" : "en";
+    i18n.changeLanguage(next);
+  };
+
 
   const {
     isPremium,
@@ -216,9 +230,12 @@ export default function Settings({ setActiveSheet }) {
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
       {/* TITLE */}
-      <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-white mt-2">
-        {t("settings_title") || "Settings"}
-      </h1>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mt-2">
+          {t("settings_title") || "Settings"}
+        </h1>
+        <p className="text-sm text-gray-900 dark:text-gray-600 mt-1">Customize your app experience</p>
+      </div>
 
       {/* ACCOUNT INFO */}
       <section>
@@ -246,9 +263,33 @@ export default function Settings({ setActiveSheet }) {
             description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
             onClick={() => setActiveSheet("currency")}
           />
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Appearance */}
+          <SettingsRow
+            icon={<MoonIcon className="w-6 h-6" />}
+            title="Appearance"
+            description={isDark ? "Dark mode" : "Light mode"}
+            right={
+              <ThemeSwitch
+                checked={isDark}
+                onChange={toggleTheme}
+              />
+            }
+          />
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Language */}
+          <SettingsRow
+            icon={<LanguageIcon className="w-6 h-6" />}
+            title="Language"
+            description={
+              currentLang
+                ? `${currentLang.emoji} ${currentLang.label}`
+                : i18n.language
+            }
+            onClick={() => setActiveSheet("language")}
+          />
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
 
-
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
           <SettingsRow
             icon={<TagIcon className="w-6 h-6" />}
             title="Manage Categories"

@@ -4,17 +4,16 @@ import {
   Route,
   Link,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
-import DarkModeToggle from "./components/DarkModeToggle";
-import LanguageSwitcher from "./components/LanguageSwitcher";
+// import DarkModeToggle from "./components/DarkModeToggle";
+// import LanguageSwitcher from "./components/LanguageSwitcher";
 import AnimatedPage from "./components/AnimatedPage";
 import FloatingTabBar from "./components/FloatingTabBar";
 import LogoIcon from "./icons/icon-192.png";
-import CurrencySelector from "./components/CurrencySelector";
 import CurrencyPickerSheet from "./components/settings/CurrencyPickerSheet";
+import LanguagePickerSheet from "./components/settings/LanguagePickerSheet";
 
 import { useAuth } from "./hooks/useAuth";
 import { usePremium } from "./hooks/usePremium";
@@ -65,21 +64,17 @@ function TrialGuard({ children }) {
   if (premium.trialExpired && !premium.isPremium) {
     return <TrialExpired />;
   }
-
   return children;
 }
 
 /* -------------------- App -------------------- */
 export default function App() {
   const { user } = useAuth();
-  const premium = usePremium();
   const { i18n, t } = useTranslation();
   const dir = i18n.dir();
-  const navigate = useNavigate();
   const { theme } = useTheme();
   const [activeSheet, setActiveSheet] = useState(null);
 
-  console.log("App render", theme);
 
   /* Currency */
   const { currency, setCurrency } = useCurrency();
@@ -96,7 +91,7 @@ export default function App() {
       <Analytics />
 
       {/* HEADER */}
-      <header
+      {/* <header
         className="
           w-full sticky top-0 z-20
           border-b border-gray-200 dark:border-gray-800
@@ -121,22 +116,9 @@ export default function App() {
           </Link>
 
           <div className="flex items-center gap-3">
-            {premium.isPremium ? (
-              <CurrencySelector value={currency} onChange={setCurrency} />
-            ) : (
-              <button
-                onClick={() => navigate("/premium?reason=currency")}
-                className="px-3 py-2 text-xs rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
-              >
-                EUR - · {t("premium_locked_currency")}
-              </button>
-            )}
-
-            <DarkModeToggle />
-            <LanguageSwitcher />
           </div>
         </div>
-      </header>
+      </header> */}
 
       {/* MAIN */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
@@ -224,9 +206,13 @@ export default function App() {
       {activeSheet === "currency" && (
         <CurrencyPickerSheet onClose={() => setActiveSheet(null)} />
       )}
+      {activeSheet === "language" && (
+        <LanguagePickerSheet onClose={() => setActiveSheet(null)} />
+      )}
+
 
       {/* FOOTER */}
-      <div className="fixed bottom-0.5 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center pb-1 font-bold">
+      <div className="fixed bottom-0 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center pb-1 font-bold">
         <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300">
           <Link to="/impressum" className="hover:underline">Impressum</Link>
           <span>|</span>
