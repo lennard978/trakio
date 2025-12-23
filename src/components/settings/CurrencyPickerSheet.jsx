@@ -82,13 +82,14 @@ export default function CurrencyPickerSheet({ onClose }) {
           height: "calc(100dvh - env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
       >
         {/* handle */}
-        <div className="flex justify-center py-2">
+        <div
+          className="flex justify-center py-2 cursor-grab active:cursor-grabbing"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}>
           <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
         </div>
 
@@ -112,6 +113,7 @@ export default function CurrencyPickerSheet({ onClose }) {
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
             <input
               value={query}
+              autoFocus
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search currencies..."
               className="bg-transparent w-full outline-none text-sm placeholder-gray-400"
@@ -150,6 +152,11 @@ export default function CurrencyPickerSheet({ onClose }) {
               </button>
             );
           })}
+          {filtered.length === 0 && (
+            <div className="text-center text-sm text-gray-400 mt-6">
+              No currencies found
+            </div>
+          )}
         </div>
       </div>
     </div>

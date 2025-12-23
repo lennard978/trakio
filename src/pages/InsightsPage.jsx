@@ -334,7 +334,7 @@ export default function InsightsPage() {
                 {getCurrencyFlag(currency)}
               </div>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {currency} {totalMonthly.toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">
@@ -352,7 +352,7 @@ export default function InsightsPage() {
                 <ArrowPathIcon className="w-5 h-5 text-pink-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {currency} {totalAnnual.toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">
@@ -370,7 +370,7 @@ export default function InsightsPage() {
                 <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {activeSubs}
             </div>
             <div className="text-sm text-gray-500">
@@ -388,7 +388,7 @@ export default function InsightsPage() {
                 <TagIcon className="w-5 h-5 text-orange-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold">
               {currency} {avgPerSub.toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">
@@ -475,7 +475,7 @@ export default function InsightsPage() {
           </table>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2">
+        {/* <div className="mt-4 flex flex-col gap-2">
           <button
             type="button"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}
@@ -502,7 +502,7 @@ export default function InsightsPage() {
               e.target.value = "";
             }}
           />
-        </div>
+        </div> */}
 
 
       </Card>

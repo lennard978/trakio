@@ -7,7 +7,7 @@ import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard
 // import PremiumStatusBanner from "../components/premium/PremiumStatusBanner"
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
-import { MoonIcon, LanguageIcon } from "@heroicons/react/24/outline";
+import { MoonIcon, LanguageIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import ThemeSwitch from "../components/ui/ThemeSwitch";
 import LanguageSwitch from "../components/ui/LanguageSwitch";
 // UI
@@ -26,7 +26,12 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { CURRENCY_LABELS } from "../utils/currencyLabels";
-
+import {
+  exportSubscriptionsCSV,
+  exportAnnualSummaryCSV,
+  exportFullJSON,
+} from "../utils/exportData";
+import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 
 export default function Settings({ setActiveSheet }) {
   const { user, logout } = useAuth();
@@ -37,6 +42,26 @@ export default function Settings({ setActiveSheet }) {
   const isDark = theme === "dark";
   const { i18n } = useTranslation();
   const currentLang = languages.find(l => l.code === i18n.language);
+  const [subscriptions, setSubscriptions] = useState([]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    (async () => {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: "get", email: user.email }),
+      });
+
+      const data = await res.json();
+      setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
+    })();
+  }, [user?.email]);
 
 
   const toggleLanguage = () => {
@@ -234,7 +259,7 @@ export default function Settings({ setActiveSheet }) {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mt-2">
           {t("settings_title") || "Settings"}
         </h1>
-        <p className="text-sm text-gray-900 dark:text-gray-600 mt-1">Customize your app experience</p>
+        <p className="text-sm text-gray-900 dark:text-gray-500 mt-1">Customize your app experience</p>
       </div>
 
       {/* ACCOUNT INFO */}
@@ -288,18 +313,19 @@ export default function Settings({ setActiveSheet }) {
             }
             onClick={() => setActiveSheet("language")}
           />
-          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* <div className="h-px bg-gray-200 dark:bg-gray-700 mx-1" /> */}
 
-          <SettingsRow
+          {/* <SettingsRow
             icon={<TagIcon className="w-6 h-6" />}
             title="Manage Categories"
             description="Create custom categories"
             premium
             onClick={() => navigate("/settings/categories")}
-          />
+          /> */}
         </Card>
       </section>
 
+      {/* ===================== DATA MANAGEMENT ===================== */}
       {/* ===================== DATA MANAGEMENT ===================== */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
@@ -309,13 +335,56 @@ export default function Settings({ setActiveSheet }) {
         <Card className="space-y-1">
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Export Data"
-            description="Export all subscriptions as CSV or PDF"
+            title="Download subscriptions"
+            description="Export all subscriptions as CSV"
+            onClick={() => exportSubscriptionsCSV(subscriptions)}
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+            title="Download payment history"
+            description="Export all past payments as CSV"
             premium
-            onClick={() => navigate("/settings/export")}
+            onClick={() => exportPaymentHistoryCSV(subscriptions)}
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+            title="Download annual summary"
+            description="Yearly totals per subscription"
+            premium
+            onClick={() => exportAnnualSummaryCSV(subscriptions)}
+          />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+            title="Full data export"
+            description="Download everything (JSON)"
+            onClick={() =>
+              exportFullJSON({
+                user,
+                subscriptions,
+                settings: {
+                  currency,
+                  theme,
+                  language: i18n.language,
+                },
+              })
+            }
           />
         </Card>
+
+        <p className="text-xs text-gray-400 mt-2 px-2">
+          You can export or delete your data at any time.
+        </p>
       </section>
+
 
       {/* ===================== PRIVACY & SECURITY ===================== */}
       <section>
@@ -327,9 +396,32 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<ShieldCheckIcon className="w-6 h-6" />}
             title="Privacy Policy"
-            description="Learn how we protect your data"
-            href="/datenschutz"
+            description="How we collect, process and protect your data (GDPR)"
+            to="/datenschutz" />
+
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<DocumentTextIcon className="w-6 h-6" />}
+            title="Legal Notice (Impressum)"
+            description="Company information and legal disclosure"
+            to="/impressum" />
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+          <SettingsRow
+            icon={<DocumentTextIcon className="w-6 h-6" />}
+            title="Terms & Conditions (AGB)"
+            description="Legal terms for using Trakio"
+            to="/agb"
           />
+          <div className="h-px bg-gray-200 dark:bg-gray-700 mx-4" />
+
+          <SettingsRow
+            icon={<DocumentTextIcon className="w-6 h-6" />}
+            title="Widerrufsbelehrung"
+            description="Informationen zum Widerrufsrecht"
+            to="/widerruf"
+          />
+
         </Card>
       </section>
 

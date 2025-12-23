@@ -75,6 +75,7 @@ export default function LanguagePickerSheet({ onClose }) {
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
             <input
               value={query}
+              autoFocus
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search language…"
               className="bg-transparent w-full outline-none text-sm"

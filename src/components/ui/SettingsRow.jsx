@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   ChevronRightIcon,
   ArrowTopRightOnSquareIcon,
@@ -9,9 +10,9 @@ import {
  * - icon: JSX icon on the left
  * - title: main label
  * - description: secondary text
- * - onClick OR href (external)
+ * - onClick OR href OR to (internal)
  * - premium: shows crown badge
- * - right: custom right-side element (toggle, badge, etc.)
+ * - right: custom right-side UI (e.g., a switch). If provided, chevron is hidden.
  */
 export default function SettingsRow({
   icon,
@@ -19,32 +20,102 @@ export default function SettingsRow({
   description,
   onClick,
   href,
+  to,
   premium = false,
   right = null,
 }) {
-  const Wrapper = onClick ? "button" : href ? "a" : "div";
+  const isExternal =
+    typeof href === "string" &&
+    (href.startsWith("http") || href.startsWith("mailto:"));
 
+  const showChevron = !right && !isExternal;
+
+  // Prefer explicit to= for internal navigation
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="
+          w-full flex items-center gap-4 px-4 py-4
+          hover:bg-gray-50 dark:hover:bg-gray-800/50
+          transition rounded-xl
+        "
+      >
+        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
+          {icon}
+          {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
+        </div>
+
+        <div className="flex-1 text-left">
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {title}
+          </div>
+          {description && (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {description}
+            </div>
+          )}
+        </div>
+
+        {right ? right : null}
+        {showChevron ? (
+          <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+        ) : null}
+      </Link>
+    );
+  }
+
+  // External links
+  if (href && isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="
+          w-full flex items-center gap-4 px-4 py-4
+          hover:bg-gray-50 dark:hover:bg-gray-800/50
+          transition rounded-xl
+        "
+      >
+        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
+          {icon}
+          {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
+        </div>
+
+        <div className="flex-1 text-left">
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {title}
+          </div>
+          {description && (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {description}
+            </div>
+          )}
+        </div>
+
+        {right ? right : null}
+        <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400" />
+      </a>
+    );
+  }
+
+  // Button row (default)
   return (
-    <Wrapper
+    <button
+      type="button"
       onClick={onClick}
-      href={href}
-      target={href ? "_blank" : undefined}
-      rel={href ? "noopener noreferrer" : undefined}
       className="
-        w-full flex items-center gap-4 px-1 py-1
+        w-full flex items-center gap-4 px-4 py-4
         hover:bg-gray-50 dark:hover:bg-gray-800/50
         transition rounded-xl
       "
     >
-      {/* LEFT ICON */}
       <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800">
         {icon}
-        {premium && (
-          <span className="absolute -top-1 -left-1 text-xs">👑</span>
-        )}
+        {premium && <span className="absolute -top-1 -left-1 text-xs">👑</span>}
       </div>
 
-      {/* TEXT */}
       <div className="flex-1 text-left">
         <div className="font-medium text-gray-900 dark:text-gray-100">
           {title}
@@ -56,14 +127,10 @@ export default function SettingsRow({
         )}
       </div>
 
-      {/* RIGHT SIDE */}
-      {right ? (
-        <div onClick={(e) => e.stopPropagation()}>{right}</div>
-      ) : href ? (
-        <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400" />
-      ) : onClick ? (
+      {right ? right : null}
+      {showChevron ? (
         <ChevronRightIcon className="w-5 h-5 text-gray-400" />
       ) : null}
-    </Wrapper>
+    </button>
   );
 }
