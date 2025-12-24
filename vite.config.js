@@ -5,9 +5,6 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   base: "/",
-  server: {
-    historyApiFallback: true,
-  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url))
@@ -40,10 +37,23 @@ export default defineConfig({
           }
         ]
       },
-      // workbox: {
-      //   navigateFallback: "/index.html",
-      //   globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-      // },
+      workbox: {
+        navigateFallback: "/index.html",
+        navigateFallbackAllowlist: [/^\/(dashboard|settings|add|premium)?/],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "pages",
+              expiration: {
+                maxEntries: 50,
+              },
+            },
+          },
+        ],
+      },
+
     })
   ],
 });
