@@ -18,11 +18,10 @@ export default function Welcome() {
       <div className="flex justify-center mt-12 px-4 pb-24">
         <div className="max-w-md w-full">
           <Card className="text-center">
-            <p className="mb-4 text-lg font-semibold">
+            <p className="mb-2 text-lg font-semibold text-orange-600">
               {t("toast_login_success")}
             </p>
 
-            {/* Clean navigation */}
             <Link to="/dashboard" className="inline-block w-full">
               <SettingButton variant="primary">
                 {t("success_back")}
@@ -39,23 +38,35 @@ export default function Welcome() {
     <div className="flex justify-center mt-12 px-4 pb-24">
       <div className="max-w-lg w-full">
         <Card>
-          <h1 className="text-3xl font-bold mb-4 text-center tracking-tight">
+          <h1 className="text-3xl font-bold mb-3 text-center tracking-tight">
             {t("welcome_title")}
           </h1>
 
-          <p className="text-center text-base text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+          <p className="text-center text-base text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
             {t("welcome_message")}
+          </p>
+
+          {/* Premium-style value line */}
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">
+            {t("welcome_value_proposition") ||
+              "Track, analyze, and optimize all your subscriptions in one place."}
           </p>
 
           <div className="flex justify-center gap-3">
             <Link to="/login">
-              <SettingButton variant="primary" className="px-6">
+              <SettingButton
+                variant="primary"
+                className="px-6 bg-orange-500 hover:bg-orange-600 focus:ring-orange-500"
+              >
                 {t("button_sign_in")}
               </SettingButton>
             </Link>
 
             <Link to="/signup">
-              <SettingButton variant="neutral" className="px-6">
+              <SettingButton
+                variant="neutral"
+                className="px-6 border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              >
                 {t("button_sign_up")}
               </SettingButton>
             </Link>

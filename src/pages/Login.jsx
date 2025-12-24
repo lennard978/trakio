@@ -61,7 +61,7 @@ export default function Login() {
                   bg-white/80 dark:bg-gray-900/60
                   border border-gray-300/70 dark:border-gray-600
                   shadow-sm
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                  focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
                 placeholder="you@example.com"
@@ -81,7 +81,7 @@ export default function Login() {
                   bg-white/80 dark:bg-gray-900/60
                   border border-gray-300/70 dark:border-gray-600
                   shadow-sm
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                  focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
                 placeholder="••••••••"
@@ -99,7 +99,7 @@ export default function Login() {
             {t("login_no_account")}{" "}
             <Link
               to="/signup"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-orange-600 dark:text-orange-400 hover:underline"
             >
               {t("login_signup_link")}
             </Link>

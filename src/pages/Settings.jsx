@@ -226,11 +226,19 @@ export default function Settings({ setActiveSheet }) {
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
       {/* TITLE */}
-      <SectionHeader
-        title="Preferences"
-        subtitle="Customize your app experience"
-      />
+      <h1 className="text-2xl font-bold text-gray-600 dark:text-gray-250">{t("settings_title") || "Settings"}</h1>
 
+      {/* PREMIUM STATUS */}
+      <section>
+        <SubscriptionStatusCard />
+        {/* TRIAL INFO */}
+        <Card className="space-y-1 mt-2">
+          <h2 className="text-sm font-semibold mb-2">
+            {t("trial_status")}
+          </h2>
+          {renderTrialContent()}
+        </Card>
+      </section>
 
       {/* ACCOUNT INFO */}
       <section>
@@ -250,9 +258,10 @@ export default function Settings({ setActiveSheet }) {
 
       {/* ===================== PREFERENCES ===================== */}
       <section>
-        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Preferences
-        </h2>
+        <SectionHeader
+          title="Preferences"
+          subtitle="Customize your app experience"
+        />
         <Card className="space-y-1">
           <SettingsRow
             icon={<GlobeAltIcon className="w-6 h-6" />}
@@ -310,7 +319,7 @@ export default function Settings({ setActiveSheet }) {
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download subscriptions"
-            premium
+            // premium
             glow
             description="Export all subscriptions as CSV"
             onClick={() => exportSubscriptionsCSV(subscriptions)}
@@ -322,7 +331,7 @@ export default function Settings({ setActiveSheet }) {
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download payment history"
             description="Export all past payments as CSV"
-            premium
+            // premium
             glow
             accent="blue"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}
@@ -333,7 +342,7 @@ export default function Settings({ setActiveSheet }) {
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download annual summary"
             description="Yearly totals per subscription"
-            premium
+            // premium
             glow
             accent="blue"
             onClick={() => exportAnnualSummaryCSV(subscriptions)}
@@ -344,7 +353,7 @@ export default function Settings({ setActiveSheet }) {
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Full data export"
             accent="blue"
-            premium
+            // premium
             glow
             description="Download everything (JSON)"
             onClick={() =>
@@ -450,18 +459,6 @@ export default function Settings({ setActiveSheet }) {
 
         </Card>
       </section>
-
-
-      {/* TRIAL INFO */}
-      <Card>
-        <h2 className="text-sm font-semibold mb-2">
-          {t("trial_status")}
-        </h2>
-        {renderTrialContent()}
-      </Card>
-
-      {/* PREMIUM STATUS */}
-      <SubscriptionStatusCard />
 
       {/* LOGOUT + BACK */}
       <Card>

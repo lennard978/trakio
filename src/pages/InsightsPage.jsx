@@ -411,7 +411,7 @@ export default function InsightsPage() {
         </h2>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm table-auto">
+          <table className="w-full text-xs table-auto">
             <thead>
               <tr className="border-b">
                 <th>Subscription</th>

@@ -278,8 +278,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         <h3 className="text-sm font-semibold text-center w-full">
           Spending Overview ({currency})
         </h3>
-
-
       </div>
 
       <div className="flex justify-center mb-4 space-x-2 flex-wrap">

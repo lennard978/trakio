@@ -83,6 +83,33 @@ export default function SubscriptionForm() {
   const { user } = useAuth();
   const premium = usePremium();
   const { currency: mainCurrency } = useCurrency();
+  const [method, setMethod] = useState("");
+  const [methodOpen, setMethodOpen] = useState(false);
+
+
+  const PAYMENT_METHODS = [
+    { value: "visa", label: "Visa", icon: "💳", logo: "/icons/visa.svg" },
+    { value: "mastercard", label: "Mastercard", icon: "💳", logo: "/icons/mastercard.svg" },
+    { value: "paypal", label: "PayPal", icon: "🅿️", logo: "/icons/paypal.svg" },
+    { value: "klarna", label: "Klarna", icon: "🅺", logo: "/icons/klarna.svg" },
+    { value: "bank", label: "Bank Transfer", icon: "🏦" },
+    { value: "cash", label: "Cash", icon: "💵" },
+  ];
+  const methodRef = React.useRef(null);
+
+  const selectedMethod =
+    PAYMENT_METHODS.find((m) => m.value === method) || PAYMENT_METHODS[0];
+
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (methodRef.current && !methodRef.current.contains(e.target)) {
+        setMethodOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
 
 
@@ -112,7 +139,6 @@ export default function SubscriptionForm() {
   const [datePaid, setDatePaid] = useState("");
   const [notify, setNotify] = useState(true);
   const [currency, setCurrency] = useState("EUR");
-  const [method, setMethod] = useState("");
   const [color, setColor] = useState(getRandomColor());
   const [icon, setIcon] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -408,12 +434,9 @@ export default function SubscriptionForm() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-
-
-
   /* ------------------ JSX ------------------ */
   return (
-    <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
+    <div className="max-w-2xl mx-auto pb-2">
       <Card className="relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
@@ -508,21 +531,73 @@ export default function SubscriptionForm() {
             </div>
 
             {/* Payment Method */}
-            <div>
+            <div ref={methodRef} className="relative">
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Payment Method
               </label>
-              <div className="mb-2">
-                <PaymentMethodIcon method={method} />
-              </div>
-              <input
-                type="text"
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                placeholder="e.g. Visa, PayPal, Bank Transfer"
-                className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
-              />
+
+              {/* BUTTON */}
+              <button
+                type="button"
+                onClick={() => setMethodOpen((p) => !p)}
+                className="form-field"
+              >
+                <span className="flex items-center gap-2">
+                  {selectedMethod.logo ? (
+                    <img
+                      src={selectedMethod.logo}
+                      alt=""
+                      className="w-5 h-5 object-contain"
+                    />
+                  ) : (
+                    <span className="text-lg">{selectedMethod.icon}</span>
+                  )}
+                  <span>{selectedMethod.label}</span>
+                </span>
+
+                <span className="form-arrow">▾</span>
+              </button>
+
+              {/* DROPDOWN */}
+              {methodOpen && (
+                <div
+                  className="
+        absolute left-0 right-0 mt-2 rounded-xl shadow-xl z-40
+        bg-white dark:bg-gray-900
+        border border-gray-200 dark:border-gray-700
+        max-h-64 overflow-y-auto
+      "
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => {
+                        setMethod(m.value);
+                        setMethodOpen(false);
+                      }}
+                      className="
+            w-full flex items-center gap-3 px-4 py-3 text-left
+            hover:bg-gray-100 dark:hover:bg-gray-800
+            transition
+          "
+                    >
+                      {m.logo ? (
+                        <img
+                          src={m.logo}
+                          alt=""
+                          className="w-5 h-5 object-contain"
+                        />
+                      ) : (
+                        <span className="text-lg">{m.icon}</span>
+                      )}
+                      <span>{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             {/* Color Picker */}
             <div>

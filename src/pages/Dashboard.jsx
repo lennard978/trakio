@@ -228,9 +228,8 @@ export default function Dashboard() {
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
       {hasSubscriptions ? (
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("dashboard_title")}
-        </h1>
+        <>
+        </>
       ) : (
         <EmptyDashboardState />
       )}

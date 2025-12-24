@@ -26,7 +26,7 @@ export default function FloatingTabBar({ dir = "ltr" }) {
       {/* Mobile Bottom Navigation */}
       <nav
         className={`
-          fixed bottom-5 left-1/2 -translate-x-1/2
+          fixed bottom-4 left-1/2 -translate-x-1/2
           z-50 md:hidden
           w-[98%]
           px-4 py-2
