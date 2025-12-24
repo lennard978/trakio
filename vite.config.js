@@ -39,7 +39,14 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/index.html",
-        navigateFallbackAllowlist: [/^\/(dashboard|settings|add|premium)?/],
+
+        // VERY IMPORTANT
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/assets\//,
+          /^\/icons\//,
+        ],
+
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === "navigate",
@@ -47,7 +54,7 @@ export default defineConfig({
             options: {
               cacheName: "pages",
               expiration: {
-                maxEntries: 50,
+                maxEntries: 20,
               },
             },
           },
