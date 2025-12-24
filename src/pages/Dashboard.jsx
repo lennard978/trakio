@@ -36,6 +36,7 @@ const MONTHLY_FACTOR = {
   biennial: 1 / 24,
   triennial: 1 / 36,
 };
+const [loadError, setLoadError] = useState(false);
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -133,10 +134,19 @@ export default function Dashboard() {
         setSubscriptions(migrated);
         await saveSubscriptionsLocal(migrated);
       } catch (err) {
-        console.error("Load failed, fallback to local:", err);
+        console.warn("API failed, loading local data:", err);
+
         const local = await loadSubscriptionsLocal();
-        setSubscriptions(local);
+
+        if (local.length > 0) {
+          setSubscriptions(local);
+        } else {
+          // Only now show error state
+          setSubscriptions([]);
+          setLoadError(true);
+        }
       }
+
     };
 
     load();
@@ -271,18 +281,24 @@ export default function Dashboard() {
     window.addEventListener("online", sync);
     return () => window.removeEventListener("online", sync);
   }, []);
+  setLoadError(false);
 
   /* ---------------- Render ---------------- */
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
-      {hasSubscriptions ? (
+      {loadError ? (
+        <div className="text-center text-sm text-red-500 mt-6">
+          Failed to load subscription data.
+        </div>
+      ) : hasSubscriptions ? (
         <h1 className="text-2xl font-bold tracking-tight">
           {t("dashboard_title")}
         </h1>
       ) : (
         <EmptyDashboardState />
       )}
+
 
       {hasSubscriptions && (
         <>
