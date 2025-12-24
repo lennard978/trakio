@@ -15,6 +15,12 @@ import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
+import {
+  saveSubscriptionsLocal,
+  loadSubscriptionsLocal,
+  queueSyncJob,
+  flushQueue,
+} from "../utils/db";
 
 /* ------------------------------------------------------------------ */
 /* Frequency normalization (shared logic with Insights) */
@@ -79,14 +85,21 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user?.email) return;
 
-    (async () => {
+    const load = async () => {
+      // 🔴 OFFLINE → load from IndexedDB
+      if (!navigator.onLine) {
+        const local = await loadSubscriptionsLocal();
+        setSubscriptions(local);
+        return;
+      }
+
+      // 🟢 ONLINE → load from API
       try {
         const list = await kvGet(user.email);
 
         const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-          // Legacy migration (one-time)
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
@@ -111,19 +124,24 @@ export default function Dashboard() {
             ...s,
             id: s.id || crypto.randomUUID(),
             payments,
-            color: s.color || "#ffffff", // ✅ ensure it's carried forward
+            color: s.color || "#ffffff",
             history: undefined,
             datePaid: undefined,
           };
         });
 
         setSubscriptions(migrated);
+        await saveSubscriptionsLocal(migrated);
       } catch (err) {
-        console.error("Subscription load failed:", err);
-        setSubscriptions([]);
+        console.error("Load failed, fallback to local:", err);
+        const local = await loadSubscriptionsLocal();
+        setSubscriptions(local);
       }
-    })();
+    };
+
+    load();
   }, [user?.email]);
+
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -214,14 +232,45 @@ export default function Dashboard() {
 
   /* ---------------- Persist helper ---------------- */
   const persist = async (nextSubs) => {
+    // 1️⃣ UI updates immediately
     setSubscriptions(nextSubs);
+
+    // 2️⃣ Save locally (offline-safe)
+    await saveSubscriptionsLocal(nextSubs);
+
+    // 3️⃣ Try syncing to backend
     try {
       await kvSave(nextSubs);
     } catch (err) {
-      console.error("KV save failed:", err);
+      console.warn("Offline — queued for sync");
+
+      await queueSyncJob({
+        type: "SAVE_SUBSCRIPTIONS",
+        payload: nextSubs,
+        timestamp: Date.now(),
+      });
     }
   };
-  console.log("Dashboard render", theme);
+
+  /* ---------------- Flush queue on reconnect ---------------- */
+  useEffect(() => {
+    const sync = async () => {
+      if (!navigator.onLine) return;
+
+      try {
+        await flushQueue(async (job) => {
+          if (job.type === "SAVE_SUBSCRIPTIONS") {
+            await kvSave(job.payload);
+          }
+        });
+      } catch (err) {
+        console.error("Sync failed:", err);
+      }
+    };
+
+    window.addEventListener("online", sync);
+    return () => window.removeEventListener("online", sync);
+  }, []);
 
   /* ---------------- Render ---------------- */
   return (
