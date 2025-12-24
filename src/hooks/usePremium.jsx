@@ -28,23 +28,27 @@ export function usePremium() {
         ? trialEnds * 1000
         : null;
 
-    const isPremium =
-      (status === "active" || status === "trialing") &&
-      periodEndMs &&
-      periodEndMs > now;
-
     const hasActiveTrial =
       status === "trialing" &&
       trialEndMs &&
       trialEndMs > now;
 
+    const isPremium =
+      status === "active" &&
+      periodEndMs &&
+      periodEndMs > now;
+
+
     const trialExpired =
-      trialEndMs &&
+      !!trialEndMs &&
       trialEndMs <= now &&
       status !== "active";
 
     const noTrial =
-      !trialEndMs && status !== "active";
+      !trialEndMs &&
+      !hasActiveTrial &&
+      !isPremium;
+
 
     let trialDaysLeft = null;
     if (hasActiveTrial) {
@@ -56,7 +60,7 @@ export function usePremium() {
     }
 
     return {
-      isPremium: !!isPremium,
+      isPremium,
       hasActiveTrial,
       trialExpired,
       noTrial,
@@ -68,6 +72,7 @@ export function usePremium() {
         ? new Date(trialEndMs).toISOString()
         : null,
     };
+
   }, [status, currentPeriodEnd, trialEnds]);
 
   return {

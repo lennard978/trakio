@@ -156,70 +156,70 @@ export default function Settings({ setActiveSheet }) {
   /* ------------------------------------------------------------------
    * Trial logic
    * ------------------------------------------------------------------ */
-  const handleStartTrial = async () => {
-    const success = await startTrial();
-    if (success) alert("Trial started successfully.");
-  };
+  // const handleStartTrial = async () => {
+  //   const success = await startTrial();
+  //   if (success) alert("Trial started successfully.");
+  // };
 
-  const handleCancelTrial = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel your trial?"
-    );
-    if (!confirmed) return;
+  // const handleCancelTrial = async () => {
+  //   const confirmed = window.confirm(
+  //     "Are you sure you want to cancel your trial?"
+  //   );
+  //   if (!confirmed) return;
 
-    const success = await cancelTrial();
-    if (success) alert("Trial cancelled.");
-  };
+  //   const success = await cancelTrial();
+  //   if (success) alert("Trial cancelled.");
+  // };
 
-  const renderTrialContent = () => {
-    if (hasActiveTrial && trialEndDate) {
-      return (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {t("trial_end")}{" "}
-            <strong>{trialEndDate.toLocaleDateString()}</strong>
-            {trialDaysLeft !== null && (
-              <span>
-                {" "}
-                ({trialDaysLeft} {t("day")}
-                {trialDaysLeft === 1 ? "" : "s"} {t("left")})
-              </span>
-            )}
-          </p>
-          <SettingButton variant="danger" onClick={handleCancelTrial}>
-            {t("cancel_trial")}
-          </SettingButton>
-        </div>
-      );
-    }
+  // const renderTrialContent = () => {
+  //   if (hasActiveTrial && trialEndDate) {
+  //     return (
+  //       <div className="flex flex-col gap-2">
+  //         <p className="text-sm text-gray-700 dark:text-gray-300">
+  //           {t("trial_end")}{" "}
+  //           <strong>{trialEndDate.toLocaleDateString()}</strong>
+  //           {trialDaysLeft !== null && (
+  //             <span>
+  //               {" "}
+  //               ({trialDaysLeft} {t("day")}
+  //               {trialDaysLeft === 1 ? "" : "s"} {t("left")})
+  //             </span>
+  //           )}
+  //         </p>
+  //         <SettingButton variant="danger" onClick={handleCancelTrial}>
+  //           {t("cancel_trial")}
+  //         </SettingButton>
+  //       </div>
+  //     );
+  //   }
 
-    if (trialExpired && trialEndDate) {
-      return (
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("trial_expired")}{" "}
-          <strong>{trialEndDate.toLocaleDateString()}</strong>
-        </p>
-      );
-    }
+  //   if (trialExpired && trialEndDate) {
+  //     return (
+  //       <p className="text-sm text-gray-700 dark:text-gray-300">
+  //         {t("trial_expired")}{" "}
+  //         <strong>{trialEndDate.toLocaleDateString()}</strong>
+  //       </p>
+  //     );
+  //   }
 
-    if (noTrial) {
-      return (
-        <SettingButton variant="success" onClick={handleStartTrial}>
-          {t("start_seven_days")}
-        </SettingButton>
-      );
-    }
+  //   if (noTrial) {
+  //     return (
+  //       <SettingButton variant="success" onClick={handleStartTrial}>
+  //         {t("start_seven_days")}
+  //       </SettingButton>
+  //     );
+  //   }
 
-    if (isPremium) {
-      return (
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {t("no_info")}
-        </p>
-      );
-    }
+  //   if (isPremium) {
+  //     return (
+  //       <p className="text-sm text-gray-700 dark:text-gray-300">
+  //         {t("no_info")}
+  //       </p>
+  //     );
+  //   }
 
-    return null;
-  };
+  //   return null;
+  // };
 
   /* ------------------------------------------------------------------ */
 
@@ -231,13 +231,15 @@ export default function Settings({ setActiveSheet }) {
       {/* PREMIUM STATUS */}
       <section>
         <SubscriptionStatusCard />
+
+
         {/* TRIAL INFO */}
-        <Card className="space-y-1 mt-2">
+        {/* <Card className="space-y-1 mt-2">
           <h2 className="text-sm font-semibold mb-2">
             {t("trial_status")}
           </h2>
           {renderTrialContent()}
-        </Card>
+        </Card> */}
       </section>
 
       {/* ACCOUNT INFO */}

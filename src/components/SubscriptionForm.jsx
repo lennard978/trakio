@@ -13,6 +13,7 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import PaymentMethodIcon from "./icons/PaymentMethodIcons";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
+import { setPremiumIntent } from "../utils/premiumIntent";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -312,7 +313,10 @@ export default function SubscriptionForm() {
     e.preventDefault();
 
     if (!email) return showToast("Not authenticated", "error");
-    if (limitReached) return navigate("/premium?reason=limit");
+    if (limitReached) {
+      setPremiumIntent("limit");
+      return navigate("/settings");
+    }
     if (!name.trim()) return showToast(t("error_required"), "error");
 
     const priceNum = Number(price);
@@ -321,8 +325,10 @@ export default function SubscriptionForm() {
     }
 
     if (!datePaid) return showToast(t("error_paid_date_required"), "error");
-    if (requiresPremiumInterval) return navigate("/premium?reason=intervals");
-
+    if (requiresPremiumInterval) {
+      setPremiumIntent("interval");
+      return navigate("/settings");
+    }
     const paidRaw = normalizeDateString(datePaid);
     if (!paidRaw) return showToast(t("error_paid_date_required"), "error");
 
