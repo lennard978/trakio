@@ -36,7 +36,6 @@ const MONTHLY_FACTOR = {
   biennial: 1 / 24,
   triennial: 1 / 36,
 };
-const [loadError, setLoadError] = useState(false);
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -70,6 +69,7 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
+  const [loadError, setLoadError] = useState(false);
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -281,7 +281,6 @@ export default function Dashboard() {
     window.addEventListener("online", sync);
     return () => window.removeEventListener("online", sync);
   }, []);
-  setLoadError(false);
 
   /* ---------------- Render ---------------- */
   return (
