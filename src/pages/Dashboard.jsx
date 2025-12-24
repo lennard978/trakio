@@ -15,12 +15,6 @@ import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
-import {
-  saveSubscriptionsLocal,
-  loadSubscriptionsLocal,
-  queueSyncJob,
-  flushQueue,
-} from "../utils/db";
 
 /* ------------------------------------------------------------------ */
 /* Frequency normalization (shared logic with Insights) */
@@ -69,7 +63,6 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
-  const [loadError, setLoadError] = useState(false);
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -86,21 +79,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user?.email) return;
 
-    const load = async () => {
-      // 🔴 OFFLINE → load from IndexedDB
-      if (!navigator.onLine) {
-        const local = await loadSubscriptionsLocal();
-        setSubscriptions(local);
-        return;
-      }
-
-      // 🟢 ONLINE → load from API
+    (async () => {
       try {
         const list = await kvGet(user.email);
 
         const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
+          // Legacy migration (one-time)
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
@@ -125,33 +111,19 @@ export default function Dashboard() {
             ...s,
             id: s.id || crypto.randomUUID(),
             payments,
-            color: s.color || "#ffffff",
+            color: s.color || "#ffffff", // ✅ ensure it's carried forward
             history: undefined,
             datePaid: undefined,
           };
         });
 
         setSubscriptions(migrated);
-        await saveSubscriptionsLocal(migrated);
       } catch (err) {
-        console.warn("API failed, loading local data:", err);
-
-        const local = await loadSubscriptionsLocal();
-
-        if (local.length > 0) {
-          setSubscriptions(local);
-        } else {
-          // Only now show error state
-          setSubscriptions([]);
-          setLoadError(true);
-        }
+        console.error("Subscription load failed:", err);
+        setSubscriptions([]);
       }
-
-    };
-
-    load();
+    })();
   }, [user?.email]);
-
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -242,62 +214,26 @@ export default function Dashboard() {
 
   /* ---------------- Persist helper ---------------- */
   const persist = async (nextSubs) => {
-    // 1️⃣ UI updates immediately
     setSubscriptions(nextSubs);
-
-    // 2️⃣ Save locally (offline-safe)
-    await saveSubscriptionsLocal(nextSubs);
-
-    // 3️⃣ Try syncing to backend
     try {
       await kvSave(nextSubs);
     } catch (err) {
-      console.warn("Offline — queued for sync");
-
-      await queueSyncJob({
-        type: "SAVE_SUBSCRIPTIONS",
-        payload: nextSubs,
-        timestamp: Date.now(),
-      });
+      console.error("KV save failed:", err);
     }
   };
-
-  /* ---------------- Flush queue on reconnect ---------------- */
-  useEffect(() => {
-    const sync = async () => {
-      if (!navigator.onLine) return;
-
-      try {
-        await flushQueue(async (job) => {
-          if (job.type === "SAVE_SUBSCRIPTIONS") {
-            await kvSave(job.payload);
-          }
-        });
-      } catch (err) {
-        console.error("Sync failed:", err);
-      }
-    };
-
-    window.addEventListener("online", sync);
-    return () => window.removeEventListener("online", sync);
-  }, []);
+  console.log("Dashboard render", theme);
 
   /* ---------------- Render ---------------- */
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
-      {loadError ? (
-        <div className="text-center text-sm text-red-500 mt-6">
-          Failed to load subscription data.
-        </div>
-      ) : hasSubscriptions ? (
+      {hasSubscriptions ? (
         <h1 className="text-2xl font-bold tracking-tight">
           {t("dashboard_title")}
         </h1>
       ) : (
         <EmptyDashboardState />
       )}
-
 
       {hasSubscriptions && (
         <>

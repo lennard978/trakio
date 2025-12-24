@@ -13,8 +13,6 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import PaymentMethodIcon from "./icons/PaymentMethodIcons";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
-import { persistSubscriptions } from "../utils/persistSubscriptions";
-import { loadSubscriptionsLocal } from "../utils/db";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -143,27 +141,38 @@ export default function SubscriptionForm() {
   const token = localStorage.getItem("token");
 
   /* ------------------ Load Subscriptions ------------------ */
-  const loadSubscriptions = async () => {
-    // 🔴 OFFLINE → IndexedDB
-    if (!navigator.onLine) {
-      return await loadSubscriptionsLocal();
-    }
-
-    // 🟢 ONLINE → API
+  const kvGet = async () => {
     const res = await fetch("/api/subscriptions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ action: "get", email }),
     });
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch subscriptions");
-    }
-
     const data = await res.json();
     return Array.isArray(data.subscriptions) ? data.subscriptions : [];
   };
 
+  const kvSave = async (updated) => {
+    const res = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: "save", email, subscriptions: updated }),
+    });
+
+    if (!res.ok) {
+      let msg = "Failed to save subscriptions";
+      try {
+        const data = await res.json();
+        msg = data?.error || msg;
+      } catch { }
+      throw new Error(msg);
+    }
+  };
 
   const suggestions = useMemo(() => {
     if (!name.trim()) return [];
@@ -181,7 +190,7 @@ export default function SubscriptionForm() {
     const load = async () => {
       setLoading(true);
       try {
-        const list = await loadSubscriptions();
+        const list = await kvGet();
         if (cancelled) return;
 
         setSubscriptions(list);
@@ -217,6 +226,61 @@ export default function SubscriptionForm() {
     };
   }, [email, id, navigate, showToast]);
 
+
+  /* ------------------ Load + MIGRATION ------------------ */
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const list = await kvGet();
+        if (cancelled) return;
+        /* 🔹 ADD: migrate old subscriptions */
+        const migrated = list.map((s) => ({
+          ...s,
+          gradientIntensity:
+            typeof s.gradientIntensity === "number"
+              ? s.gradientIntensity
+              : CATEGORY_INTENSITY_DEFAULT[s.category] ??
+              CATEGORY_INTENSITY_DEFAULT.other,
+        }));
+
+        setSubscriptions(migrated);
+
+        if (id) {
+          const existing = migrated.find((s) => String(s.id) === String(id));
+          if (!existing) {
+            showToast("Subscription not found", "error");
+            navigate("/dashboard");
+            return;
+          }
+
+          setName(existing.name || "");
+          setPrice(String(existing.price || ""));
+          setFrequency(existing.frequency || "monthly");
+          setCategory(existing.category || "other");
+          setDatePaid(existing.datePaid || "");
+          setNotify(existing.notify !== false);
+          setCurrency(existing.currency || "EUR");
+          setMethod(existing.method || "");
+          setColor(existing.color || getRandomColor());
+          setGradientIntensity(existing.gradientIntensity);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load subscription data", "error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [email, id, navigate, showToast]);
   /* ------------------ Submit ------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -287,7 +351,7 @@ export default function SubscriptionForm() {
       }
 
 
-      await persistSubscriptions(updated);
+      await kvSave(updated);
       navigate("/dashboard");
     } catch (err) {
       console.error("Save failed:", err);
@@ -316,6 +380,15 @@ export default function SubscriptionForm() {
           )`,
       };
 
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
+        <Card>
+          <div className="py-8 text-center text-sm">Loading…</div>
+        </Card>
+      </div>
+    );
+  }
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
