@@ -21,6 +21,8 @@ import { usePremium } from "./hooks/usePremium";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "react-hot-toast";
 import { useTheme } from "./hooks/useTheme";
+import { AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -76,6 +78,7 @@ export default function App() {
   const dir = i18n.dir();
   const { theme } = useTheme();
   const [activeSheet, setActiveSheet] = useState(null);
+  const location = useLocation();
 
 
   /* Currency */
@@ -92,116 +95,88 @@ export default function App() {
       <Toaster position="top-center" />
       <Analytics />
 
-      {/* HEADER */}
-      {/* <header
-        className="
-          w-full sticky top-0 z-20
-          border-b border-gray-200 dark:border-gray-800
-          bg-white/70 dark:bg-gray-900/70
-          backdrop-blur-xl
-          shadow-[0_1px_8px_rgba(0,0,0,0.05)]
-        "
-      >
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            to={user ? "/dashboard" : "/"}
-            className="flex items-center gap-2"
-          >
-            <img
-              src={LogoIcon}
-              alt="Logo"
-              className="h-10 w-10 rounded-2xl shadow-sm"
-            />
-            <span className="hidden sm:inline text-sm font-semibold">
-              Subscription Tracker
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-          </div>
-        </div>
-      </header> */}
-
       {/* MAIN */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
-        <Suspense fallback={<LoadingSkeleton />}>
-          <Routes>
-            <Route path="/" element={<AnimatedPage><Welcome /></AnimatedPage>} />
-            <Route path="/premium" element={<AnimatedPage><Premium /></AnimatedPage>} />
-            <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
-            <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
-            <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
-            <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
-            <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
-            <Route path="/widerruf" element={<Widerrufsbelehrung />} />
+        <AnimatePresence mode="wait">
+          <Suspense fallback={<LoadingSkeleton />}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<AnimatedPage><Welcome /></AnimatedPage>} />
+              <Route path="/premium" element={<AnimatedPage><Premium /></AnimatedPage>} />
+              <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
+              <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
+              <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
+              <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
+              <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
+              <Route path="/widerruf" element={<Widerrufsbelehrung />} />
 
-            <Route
-              path="/login"
-              element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Login /></AnimatedPage>}
-            />
-            <Route
-              path="/signup"
-              element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>}
-            />
+              <Route
+                path="/login"
+                element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Login /></AnimatedPage>}
+              />
+              <Route
+                path="/signup"
+                element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>}
+              />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <Dashboard currency={currency} />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/insights"
-              element={
-                <ProtectedRoute>
-                  <TrialGuard>
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
                     <AnimatedPage>
-                      <InsightsPage />
+                      <Dashboard currency={currency} />
                     </AnimatedPage>
-                  </TrialGuard>
-                </ProtectedRoute>
-              }
-            />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/add"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage><AddEditSubscription /></AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/insights"
+                element={
+                  <ProtectedRoute>
+                    <TrialGuard>
+                      <AnimatedPage>
+                        <InsightsPage />
+                      </AnimatedPage>
+                    </TrialGuard>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/edit/:id"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage><AddEditSubscription /></AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/add"
+                element={
+                  <ProtectedRoute>
+                    <AnimatedPage><AddEditSubscription /></AnimatedPage>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AnimatedPage>
-                    <Settings setActiveSheet={setActiveSheet} />
-                  </AnimatedPage>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/edit/:id"
+                element={
+                  <ProtectedRoute>
+                    <AnimatedPage><AddEditSubscription /></AnimatedPage>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <AnimatedPage>
+                      <Settings setActiveSheet={setActiveSheet} />
+                    </AnimatedPage>
+                  </ProtectedRoute>
+                }
+              />
 
 
 
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Suspense>
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Suspense>
+        </AnimatePresence>
       </main>
 
       {/* FLOATING TAB BAR */}

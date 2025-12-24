@@ -153,74 +153,6 @@ export default function Settings({ setActiveSheet }) {
     }
   };
 
-  /* ------------------------------------------------------------------
-   * Trial logic
-   * ------------------------------------------------------------------ */
-  // const handleStartTrial = async () => {
-  //   const success = await startTrial();
-  //   if (success) alert("Trial started successfully.");
-  // };
-
-  // const handleCancelTrial = async () => {
-  //   const confirmed = window.confirm(
-  //     "Are you sure you want to cancel your trial?"
-  //   );
-  //   if (!confirmed) return;
-
-  //   const success = await cancelTrial();
-  //   if (success) alert("Trial cancelled.");
-  // };
-
-  // const renderTrialContent = () => {
-  //   if (hasActiveTrial && trialEndDate) {
-  //     return (
-  //       <div className="flex flex-col gap-2">
-  //         <p className="text-sm text-gray-700 dark:text-gray-300">
-  //           {t("trial_end")}{" "}
-  //           <strong>{trialEndDate.toLocaleDateString()}</strong>
-  //           {trialDaysLeft !== null && (
-  //             <span>
-  //               {" "}
-  //               ({trialDaysLeft} {t("day")}
-  //               {trialDaysLeft === 1 ? "" : "s"} {t("left")})
-  //             </span>
-  //           )}
-  //         </p>
-  //         <SettingButton variant="danger" onClick={handleCancelTrial}>
-  //           {t("cancel_trial")}
-  //         </SettingButton>
-  //       </div>
-  //     );
-  //   }
-
-  //   if (trialExpired && trialEndDate) {
-  //     return (
-  //       <p className="text-sm text-gray-700 dark:text-gray-300">
-  //         {t("trial_expired")}{" "}
-  //         <strong>{trialEndDate.toLocaleDateString()}</strong>
-  //       </p>
-  //     );
-  //   }
-
-  //   if (noTrial) {
-  //     return (
-  //       <SettingButton variant="success" onClick={handleStartTrial}>
-  //         {t("start_seven_days")}
-  //       </SettingButton>
-  //     );
-  //   }
-
-  //   if (isPremium) {
-  //     return (
-  //       <p className="text-sm text-gray-700 dark:text-gray-300">
-  //         {t("no_info")}
-  //       </p>
-  //     );
-  //   }
-
-  //   return null;
-  // };
-
   /* ------------------------------------------------------------------ */
 
   return (
@@ -231,15 +163,6 @@ export default function Settings({ setActiveSheet }) {
       {/* PREMIUM STATUS */}
       <section>
         <SubscriptionStatusCard />
-
-
-        {/* TRIAL INFO */}
-        {/* <Card className="space-y-1 mt-2">
-          <h2 className="text-sm font-semibold mb-2">
-            {t("trial_status")}
-          </h2>
-          {renderTrialContent()}
-        </Card> */}
       </section>
 
       {/* ACCOUNT INFO */}
@@ -316,7 +239,9 @@ export default function Settings({ setActiveSheet }) {
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
           Data Management
         </h2>
-
+        <p className="text-xs text-gray-400 mt-2 px-2">
+          You can export or delete your data at any time.
+        </p>
         <Card className="space-y-1">
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
@@ -327,8 +252,6 @@ export default function Settings({ setActiveSheet }) {
             onClick={() => exportSubscriptionsCSV(subscriptions)}
             accent="blue"
           />
-
-
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download payment history"
@@ -338,8 +261,6 @@ export default function Settings({ setActiveSheet }) {
             accent="blue"
             onClick={() => exportPaymentHistoryCSV(subscriptions)}
           />
-
-
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Download annual summary"
@@ -349,8 +270,6 @@ export default function Settings({ setActiveSheet }) {
             accent="blue"
             onClick={() => exportAnnualSummaryCSV(subscriptions)}
           />
-
-
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title="Full data export"
@@ -371,10 +290,6 @@ export default function Settings({ setActiveSheet }) {
             }
           />
         </Card>
-
-        <p className="text-xs text-gray-400 mt-2 px-2">
-          You can export or delete your data at any time.
-        </p>
       </section>
 
 

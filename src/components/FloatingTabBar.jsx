@@ -1,15 +1,19 @@
 // src/components/FloatingTabBar.jsx
-import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import React, { useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
+
+// Must match AnimatedPage swipeablePages array
+const swipeablePages = ["/dashboard", "/insights", "/add", "/settings"];
 
 export default function FloatingTabBar({ dir = "ltr" }) {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+  const directionRef = useRef(0);
 
-  // Hide when not logged in
   if (!user) return null;
 
   const isRTL = dir === "rtl";
@@ -20,6 +24,15 @@ export default function FloatingTabBar({ dir = "ltr" }) {
     { to: "/add", label: t("tab_add"), icon: "➕" },
     { to: "/settings", label: t("tab_settings"), icon: "⚙️" },
   ];
+
+  const handleNav = (target) => {
+    const currentIndex = swipeablePages.indexOf(location.pathname);
+    const nextIndex = swipeablePages.indexOf(target);
+
+    // Determine direction (for AnimatedPage animation)
+    directionRef.current = nextIndex > currentIndex ? 1 : -1;
+    navigate(target);
+  };
 
   return (
     <>
@@ -39,32 +52,29 @@ export default function FloatingTabBar({ dir = "ltr" }) {
         `}
         style={{ direction: isRTL ? "rtl" : "ltr" }}
       >
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className="flex-1 flex justify-center"
-          >
-            {({ isActive }) => (
-              <div
-                className={`relative flex flex-col items-center justify-center text-[11px] font-medium transition-all duration-200 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-700 dark:text-gray-300 opacity-85"
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.to;
+          return (
+            <button
+              key={tab.to}
+              onClick={() => handleNav(tab.to)}
+              className="flex-1 flex flex-col items-center justify-center text-[11px] font-medium"
+            >
+              <span
+                className={`text-[20px] mb-0.5 transition-transform duration-200 ${isActive ? "scale-110 -translate-y-0.5 text-blue-600 dark:text-blue-400" : "scale-95 text-gray-700 dark:text-gray-300 opacity-85"
                   }`}
               >
-                <span
-                  className={`text-[20px] mb-0.5 transition-transform duration-200 ${isActive
-                    ? "scale-110 -translate-y-0.5"
-                    : "scale-95 translate-y-0"
-                    }`}
-                >
-                  {tab.icon}
-                </span>
-                <span className="truncate max-w-[60px]">{tab.label}</span>
-              </div>
-            )}
-          </NavLink>
-        ))}
+                {tab.icon}
+              </span>
+              <span
+                className={`truncate max-w-[60px] transition-colors duration-200 ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300 opacity-85"
+                  }`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </nav>
 
       {/* Desktop Sidebar Navigation */}
@@ -77,30 +87,29 @@ export default function FloatingTabBar({ dir = "ltr" }) {
         `}
         style={{ direction: isRTL ? "rtl" : "ltr" }}
       >
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className="w-full flex flex-col items-center py-4"
-          >
-            {({ isActive }) => (
-              <div
-                className={`flex flex-col items-center justify-center text-xs font-medium transition-all duration-200 ${isActive
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-700 dark:text-gray-300 opacity-85"
+        {tabs.map((tab) => {
+          const isActive = location.pathname === tab.to;
+          return (
+            <button
+              key={tab.to}
+              onClick={() => handleNav(tab.to)}
+              className="w-full flex flex-col items-center py-4"
+            >
+              <span
+                className={`text-xl mb-1 transition-transform ${isActive ? "scale-110 text-blue-600 dark:text-blue-400" : "scale-95 text-gray-700 dark:text-gray-300 opacity-85"
                   }`}
               >
-                <span
-                  className={`text-xl mb-1 transition-transform ${isActive ? "scale-110" : "scale-95"
-                    }`}
-                >
-                  {tab.icon}
-                </span>
-                <span className="text-[10px] text-center">{tab.label}</span>
-              </div>
-            )}
-          </NavLink>
-        ))}
+                {tab.icon}
+              </span>
+              <span
+                className={`text-[10px] text-center ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300 opacity-85"
+                  }`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </aside>
     </>
   );
