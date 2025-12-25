@@ -1,7 +1,5 @@
-
-// BudgetOverviewChart.jsx (updated with tooltip showing original + converted)
-
-import React, { useMemo, useState } from "react";
+// src/components/insights/BudgetOverviewChart.jsx
+import React, { useMemo, useState, useEffect } from "react";
 import {
   PieChart,
   Pie,
@@ -14,26 +12,16 @@ import {
   Cell,
   Label,
 } from "recharts";
-
-
-import { useCurrency } from "../../context/CurrencyContext"; // adjust path
+import { motion } from "framer-motion";
+import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
-
-
+import AchievementsCard from "./InsightsAchievements";
+import InsightsSummary from "./InsightsSummary";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
 ];
-
-const Stat = ({ label, value }) => (
-  <div className="flex justify-between text-sm py-1 border-b border-gray-200 dark:border-gray-700">
-    <span>{label}</span>
-    <span className="font-medium">{value}</span>
-  </div>
-);
-
-const TABS = ["General", "Categories", "Frequency", "Payment Methods", "Trends"];
 
 const MONTHLY_FACTOR = {
   weekly: 4.345,
@@ -41,150 +29,59 @@ const MONTHLY_FACTOR = {
   monthly: 1,
   quarterly: 1 / 3,
   semiannual: 1 / 6,
-  nine_months: 1 / 9,
   yearly: 1 / 12,
   biennial: 1 / 24,
   triennial: 1 / 36,
 };
 
-const exportToCSV = (rows, filename = "subscriptions.csv") => {
-  if (!rows || rows.length === 0) return;
-  const headers = Object.keys(rows[0]).join(",");
-  const csv = [
-    headers,
-    ...rows.map(row => Object.values(row).join(",")),
-  ].join("\n");
+const TABS = ["General", "Categories", "Frequency", "Payment Methods", "Trends", "Forecast"];
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+const Stat = ({ label, value }) => (
+  <div className="flex justify-between text-sm py-1 border-b border-gray-800/70">
+    <span className="text-gray-300">{label}</span>
+    <span className="font-medium text-gray-100">{value}</span>
+  </div>
+);
+
+const Section = ({ title, children }) => (
+  <div className="rounded-xl bg-[#0e1420] border border-gray-800/60 shadow-sm p-4 mb-4">
+    {title && (
+      <h3 className="text-sm font-semibold text-gray-100 border-b border-gray-700/60 pb-2 mb-3">
+        {title}
+      </h3>
+    )}
+    {children}
+  </div>
+);
 
 function PieCenterLabel({ viewBox, title, value }) {
   const { cx, cy } = viewBox;
-
   return (
     <>
-      <text
-        x={cx}
-        y={cy - 6}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="fill-gray-500 dark:fill-gray-400 text-xs"
-      >
+      <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" className="fill-gray-400 text-xs">
         {title}
       </text>
-
-      <text
-        x={cx}
-        y={cy + 12}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="fill-gray-900 dark:fill-gray-100 text-base font-semibold"
-      >
+      <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle" className="fill-gray-100 text-base font-semibold">
         {value}
       </text>
     </>
   );
 }
 
-function parseCSV(text) {
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  if (lines.length < 2) return [];
-
-  const headers = lines[0].split(",").map(h => h.trim());
-
-  return lines.slice(1).map(row => {
-    const values = row.split(",").map(v => v.trim());
-    const obj = {};
-
-    headers.forEach((h, i) => {
-      obj[h] = values[i] ?? "";
-    });
-
-    return {
-      id: crypto.randomUUID(),
-      name: obj.name || "Imported subscription",
-      price: Number(obj.price) || 0,
-      currency: obj.currency || "EUR",
-      frequency: obj.frequency || "monthly",
-      category: obj.category || "Uncategorized",
-      method: obj.method || "Unknown",
-      datePaid: obj.datePaid || null,
-      payments: obj.datePaid
-        ? [{
-          id: crypto.randomUUID(),
-          date: obj.datePaid,
-          amount: Number(obj.price) || 0,
-          currency: obj.currency || "EUR",
-        }]
-        : [],
-    };
-  });
-}
-
-
 export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
   const { currency } = useCurrency();
   const convert = convertUtil;
 
-  const fileInputRef = React.useRef(null);
-
-  const handleImportCSV = async (file) => {
-    if (!file) return;
-
-    const text = await file.text();
-    const imported = parseCSV(text);
-
-    if (!imported.length) {
-      alert("Invalid or empty CSV file");
-      return;
-    }
-
-    const confirm = window.confirm(
-      `Import ${imported.length} subscriptions?\n\nExisting subscriptions will be kept.`
-    );
-
-    if (!confirm) return;
-
-    // 🔥 IMPORTANT: send to KV via API
-    const token = localStorage.getItem("token");
-
-    await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        action: "save",
-        subscriptions: [...subscriptions, ...imported],
-      }),
-    });
-
-    window.location.reload(); // simplest + safest refresh
-  };
-
-
+  // === Calculations ===
   const data = useMemo(() => {
+    if (!subscriptions?.length) return {};
     const now = new Date();
     const month = now.getMonth();
     const year = now.getFullYear();
 
-    let paidThisMonth = 0, paidThisYear = 0;
-    let dueThisMonth = 0, dueThisYear = 0;
-    let totalMonthly = 0;
-
-    const categoryMap = {};
-    const freqMap = {};
-    const methodMap = {};
-    const trends = [];
+    let paidThisMonth = 0, paidThisYear = 0, dueThisMonth = 0, dueThisYear = 0;
+    const categoryMap = {}, freqMap = {}, methodMap = {}, trends = [];
 
     for (const sub of subscriptions) {
       const {
@@ -197,12 +94,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       } = sub;
 
       const factor = MONTHLY_FACTOR[frequency] || 1;
-      const convertedPrice = convert && rates
-        ? convert(price, subCurrency, currency, rates)
-        : price;
-
+      const convertedPrice = convert ? convert(price, subCurrency, currency, rates) : price;
       const normalizedMonthly = convertedPrice * factor;
-      totalMonthly += normalizedMonthly;
 
       const paidDate = new Date(datePaid);
       const isPaidThisMonth = paidDate.getMonth() === month && paidDate.getFullYear() === year;
@@ -210,12 +103,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
       if (isPaidThisMonth) paidThisMonth += convertedPrice;
       if (isPaidThisYear) paidThisYear += convertedPrice;
-
-      const isDue = !datePaid || isNaN(paidDate.getTime());
-      if (isDue) {
-        dueThisMonth += normalizedMonthly;
-        dueThisYear += normalizedMonthly * 12;
-      }
+      if (!datePaid) { dueThisMonth += normalizedMonthly; dueThisYear += normalizedMonthly * 12; }
 
       categoryMap[category] = (categoryMap[category] || 0) + normalizedMonthly;
       freqMap[frequency] = (freqMap[frequency] || 0) + normalizedMonthly;
@@ -224,167 +112,297 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       if (!isNaN(paidDate.getTime())) {
         const label = paidDate.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
         const existing = trends.find(t => t.label === label);
-        if (existing) {
-          existing.total += convertedPrice;
-        } else {
-          trends.push({ label, total: convertedPrice });
-        }
+        existing ? (existing.total += convertedPrice) : trends.push({ label, total: convertedPrice });
       }
     }
 
     trends.sort((a, b) => new Date("1 " + a.label) - new Date("1 " + b.label));
 
+    // Growth + Forecast
+    const lastMonth = trends.at(-2)?.total ?? 0;
+    const thisMonth = trends.at(-1)?.total ?? 0;
+    const growthRate = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
+    const forecast = thisMonth * 1.08;
+
     return {
-      paidThisMonth,
-      paidThisYear,
-      dueThisMonth,
-      dueThisYear,
-      // Averages MUST be derived from real yearly totals to stay consistent
+      paidThisMonth, paidThisYear, dueThisMonth, dueThisYear,
       avgYearly: paidThisYear + dueThisYear,
       avgMonthly: (paidThisYear + dueThisYear) / 12,
-
       totalThisMonth: paidThisMonth + dueThisMonth,
       totalThisYear: paidThisYear + dueThisYear,
       categories: categoryMap,
       frequencies: freqMap,
       methods: methodMap,
-      trends
+      trends, growthRate, forecast
     };
   }, [subscriptions, currency, rates, convert]);
 
-  const getChartData = () => {
+  // Chart data
+  const chartData = useMemo(() => {
     switch (activeTab) {
-      case "General":
-        return [
-          { name: "Paid", value: data.paidThisMonth },
-          { name: "Due", value: data.dueThisMonth }
-        ];
-      case "Categories":
-        return Object.entries(data.categories).map(([name, value]) => ({ name, value }));
-      case "Frequency":
-        return Object.entries(data.frequencies).map(([name, value]) => ({ name, value }));
-      case "Payment Methods":
-        return Object.entries(data.methods).map(([name, value]) => ({ name, value }));
-      default:
-        return [];
+      case "General": return [
+        { name: "Paid", value: data.paidThisMonth },
+        { name: "Due", value: data.dueThisMonth }
+      ];
+      case "Categories": return Object.entries(data.categories || {}).map(([name, value]) => ({ name, value }));
+      case "Frequency": return Object.entries(data.frequencies || {}).map(([name, value]) => ({ name, value }));
+      case "Payment Methods": return Object.entries(data.methods || {}).map(([name, value]) => ({ name, value }));
+      case "Forecast": return [
+        ...data.trends,
+        { label: "Next (Predicted)", total: data.forecast }
+      ];
+      default: return [];
     }
+  }, [activeTab, data]);
+
+  const total = data.totalThisMonth || 0;
+  const topCategory = Object.entries(data.categories || {}).sort((a, b) => b[1] - a[1])[0];
+  const avgPerSub = subscriptions.length ? (total / subscriptions.length).toFixed(2) : "0.00";
+  const percentUsed = ((total / 500) * 100).toFixed(1);
+
+  // Upcoming
+  const upcoming = subscriptions.map((s) => ({
+    id: s.id,
+    name: s.name,
+    nextDue: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  }));
+
+  // Heatmap dummy
+  const heatmapValues = Array.from({ length: 12 }, (_, i) => ({
+    label: new Date(2025, i).toLocaleString("default", { month: "short" }),
+    intensity: Math.random(),
+  }));
+
+  const cardContainer = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } },
+  };
+  const cardItem = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
   };
 
-  const chartData = getChartData();
-
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-semibold text-center w-full">
-          Spending Overview ({currency})
-        </h3>
-      </div>
+    <div className="space-y-4">
+      {/* === Overview === */}
+      <Section title="Overview">
+        <motion.div
+          variants={cardContainer}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
+        >
+          {[
+            // === Growth Rate ===
+            {
+              label: "Growth Rate",
+              value: (() => {
+                const hasTrend = data.trends?.length > 1;
+                const growth = Number(data?.growthRate) || 0;
+                const isIncrease = growth > 0;
 
-      <div className="flex justify-center mb-4 space-x-2 flex-wrap">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1 mb-2 rounded-full text-sm font-medium ${activeTab === tab
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-300"
-              }`}
-          >
-            {tab}
-          </button>
-        ))}
+                if (!hasTrend) {
+                  return <span className="text-gray-500">—</span>;
+                }
+
+                const arrow = isIncrease ? "↑" : "↓";
+                const color = isIncrease ? "text-red-400" : "text-green-400";
+
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className={`${color} font-bold`}>
+                      {arrow} {Math.abs(growth).toFixed(1)}%
+                    </span>
+
+                    {/* mini sparkline */}
+                    <div className="h-5 w-16">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={data.trends}>
+                          <Line
+                            type="monotone"
+                            dataKey="total"
+                            stroke={isIncrease ? "#ef4444" : "#22c55e"}
+                            strokeWidth={2}
+                            dot={false}
+                            animationDuration={600}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                );
+              })(),
+            },
 
 
-      </div>
+            // === Top Category ===
+            {
+              label: "Top Category",
+              value: (
+                <span className="font-bold text-gray-100">
+                  {topCategory
+                    ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})`
+                    : "—"}
+                </span>
+              ),
+            },
 
-      <div className="w-full min-h-[260px] mb-6">
-        <ResponsiveContainer width="100%" aspect={1.6}>
-          {activeTab === "Trends" ? (
-            <LineChart data={data.trends}>
-              <XAxis dataKey="label" />
-              <YAxis />
-              <Tooltip formatter={(v) => `${currency} ${v.toFixed(2)}`} />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#3B82F6"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-                animationDuration={500}
-              />
-            </LineChart>
-          ) : (
-            <PieChart>
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius="62%"
-                outerRadius="82%"
-                paddingAngle={2}
-                animationDuration={600}
-                labelLine={false}
-              >
-                <Label
-                  content={
-                    <PieCenterLabel
-                      title="Total this month"
-                      value={`${currency} ${data.totalThisMonth.toFixed(2)}`}
-                    />
-                  }
-                />
+            // === Avg per Subscription ===
+            {
+              label: "Avg / Subscription",
+              value: (
+                <span className="font-bold text-gray-100">
+                  {currency} {(Number(avgPerSub) || 0).toFixed(2)}
+                </span>
+              ),
+            },
 
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
+            // === Total Subs ===
+            {
+              label: "Total Subs",
+              value: (
+                <span className="font-bold text-gray-100">
+                  {subscriptions?.length ?? 0}
+                </span>
+              ),
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={idx}
+              variants={cardItem}
+              className="flex flex-col justify-between p-3 rounded-lg bg-gray-800/60 h-full min-h-[88px]"
+            >
+              <div className="text-gray-400">{item.label}</div>
+              {item.value}
+            </motion.div>
+          ))}
+        </motion.div>
 
-              <Tooltip
-                formatter={(val, name) => {
-                  const matchingSubs = subscriptions.filter(
-                    (s) =>
-                      s.category === name ||
-                      s.frequency === name ||
-                      s.method === name ||
-                      name === "Paid" ||
-                      name === "Due"
-                  );
 
-                  const originalTotal = matchingSubs.reduce(
-                    (sum, s) => sum + (s.price || 0),
-                    0
-                  );
-
-                  const originalCurrency =
-                    matchingSubs[0]?.currency || currency;
-
-                  return `${currency} ${val.toFixed(2)}${rates && matchingSubs.length
-                    ? ` (original: ${originalCurrency} ${originalTotal.toFixed(2)})`
-                    : ""
-                    }`;
-                }}
-              />
-            </PieChart>
-
-          )}
-        </ResponsiveContainer>
-      </div>
-
-      {activeTab === "General" && (
-        <div className="space-y-1">
-          <Stat label="Average monthly payment" value={`${data.avgMonthly.toFixed(2)} ${currency}`} />
-          <Stat label="Expected yearly cost (this year)" value={`${data.avgYearly.toFixed(2)} ${currency}`} />
-          <Stat label="Due payments this month" value={`${data.dueThisMonth.toFixed(2)} ${currency}`} />
-          <Stat label="Due payments this year" value={`${data.dueThisYear.toFixed(2)} ${currency}`} />
-          <Stat label="Paid this month" value={`${data.paidThisMonth.toFixed(2)} ${currency}`} />
-          <Stat label="Paid this year" value={`${data.paidThisYear.toFixed(2)} ${currency}`} />
-          <Stat label="Total this month" value={`${data.totalThisMonth.toFixed(2)} ${currency}`} />
-          <Stat label="Total this year" value={`${data.totalThisYear.toFixed(2)} ${currency}`} />
+        {/* Budget usage */}
+        <div className="mt-4">
+          <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Budget usage</span>
+            <span>{percentUsed}%</span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+            <motion.div
+              className="h-2 rounded-full bg-green-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(percentUsed, 100)}%` }}
+              transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
+            />
+          </div>
         </div>
-      )}
+      </Section>
+
+      {/* === Charts & Forecast === */}
+      <Section title={`Spending Overview (${currency})`}>
+        <div className="flex flex-wrap justify-center mb-3 space-x-2">
+          {TABS.map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 py-1 mb-2 rounded-full text-sm font-medium ${activeTab === tab ? "bg-blue-600 text-white" : "bg-gray-700/70 text-gray-300 hover:bg-gray-600/80"}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-full min-h-[260px]">
+          <ResponsiveContainer width="100%" aspect={1.6}>
+            {activeTab === "Forecast" ? (
+              <LineChart data={chartData}>
+                <XAxis dataKey="label" stroke="#aaa" />
+                <YAxis stroke="#aaa" />
+                <Tooltip formatter={(v) => `${currency} ${v.toFixed(2)}`} />
+                <Line type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="forecast" stroke="#10B981" strokeDasharray="5 5" />
+              </LineChart>
+            ) : activeTab === "Trends" ? (
+              <LineChart data={data.trends}>
+                <XAxis dataKey="label" stroke="#aaa" />
+                <YAxis stroke="#aaa" />
+                <Tooltip formatter={(v) => `${currency} ${v.toFixed(2)}`} />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke={isIncrease ? "#ef4444" : "#22c55e"}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={true}
+                  animationDuration={700}
+                  animationEasing="ease-out"
+                />
+              </LineChart>
+            ) : (
+              <PieChart>
+                <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="82%" paddingAngle={2}>
+                  <Label content={<PieCenterLabel title="Total this month" value={`${currency} ${(data.totalThisMonth ?? 0).toFixed(2)}`} />} />
+                  {chartData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                </Pie>
+                <Tooltip formatter={(v) => `${currency} ${v.toFixed(2)}`} />
+              </PieChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+
+        {activeTab === "General" && (
+          <motion.div
+            className="space-y-1 mt-4"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Stat
+              label="Average monthly payment"
+              value={`${(Number(data?.avgMonthly) || 0).toFixed(2)} ${currency}`}
+            />
+
+            <Stat
+              label="Expected yearly cost (this year)"
+              value={`${(Number(data?.avgYearly) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Due payments this month"
+              value={`${(Number(data?.dueThisMonth) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Due payments this year"
+              value={`${(Number(data?.dueThisYear) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Paid this month"
+              value={`${(Number(data?.paidThisMonth) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Paid this year"
+              value={`${(Number(data?.paidThisYear) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Total this month"
+              value={`${(Number(data?.totalThisMonth) || 0).toFixed(2)} ${currency}`}
+            />
+            <Stat
+              label="Total this year"
+              value={`${(Number(data?.totalThisYear) || 0).toFixed(2)} ${currency}`}
+            />
+          </motion.div>
+        )}
+
+      </Section>
+
+      {/* === Achievements === */}
+      <AchievementsCard data={data} />
+
+      {/* === AI-Style Summary === */}
+      <InsightsSummary data={data} currency={currency} />
+
+      {/* === Heatmap === */}
+      <Section title="Spending Heatmap">
+        <div className="grid grid-cols-12 gap-1">
+          {heatmapValues.map((h) => (
+            <div key={h.label} title={h.label} className={`h-4 w-4 rounded ${h.intensity > 0.8 ? "bg-blue-600" : h.intensity > 0.4 ? "bg-blue-400" : "bg-blue-200"}`} />
+          ))}
+        </div>
+      </Section>
     </div>
   );
 }
