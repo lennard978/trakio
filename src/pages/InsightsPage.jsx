@@ -307,15 +307,12 @@ export default function InsightsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
-      {/* <h1 className="text-2xl font-bold text-center mb-6">
-        {t("insights_title")}
-      </h1> */}
-
+      {/* Budget Exceeded Banner */}
       {premium.isPremium &&
         forecast30 &&
         monthlyBudget &&
         forecast30.total > monthlyBudget && (
-          <div className="p-3 rounded-lg bg-red-100 text-red-800 text-sm text-center">
+          <div className="p-3 rounded-lg bg-[#2b0b0b]/80 border border-red-800/50 text-red-300 text-sm text-center shadow-inner shadow-red-900/30">
             {t("budget_exceeded", {
               spend: forecast30.total.toFixed(2),
               budget: monthlyBudget.toFixed(2),
@@ -323,152 +320,115 @@ export default function InsightsPage() {
           </div>
         )}
 
+      {/* Summary Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* ================= REPORTS SUMMARY ================= */}
-        <div className="grid grid-cols-2 gap-4 mb-1">
-
-          {/* Monthly Spend */}
-          <Card className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 text-black rounded-xl bg-purple-100 flex items-center justify-center text-xl">
-                {getCurrencyFlag(currency)}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 mb-1 sm:col-span-2 lg:col-span-4">
+          {[
+            {
+              icon: getCurrencyFlag(currency),
+              value: `${currency} ${totalMonthly.toFixed(2)}`,
+              label: t("monthly_spend"),
+              sub: `${t("active_subscriptions")} (${currency})`,
+              bg: "bg-purple-100",
+            },
+            {
+              icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
+              value: `${currency} ${totalAnnual.toFixed(2)}`,
+              label: t("annual_cost"),
+              sub: `${t("projected_yearly")} (${currency})`,
+              bg: "bg-pink-100",
+            },
+            {
+              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
+              value: activeSubs,
+              label: t("active_subs"),
+              sub: t("of_total", { count: activeSubs }),
+              bg: "bg-green-100",
+            },
+            {
+              icon: <TagIcon className="w-5 h-5 text-orange-600" />,
+              value: `${currency} ${avgPerSub.toFixed(2)}`,
+              label: t("avg_per_sub"),
+              sub: `${t("monthly_average")} (${currency})`,
+              bg: "bg-orange-100",
+            },
+          ].map((item, idx) => (
+            <Card
+              key={idx}
+              className="p-4 rounded-xl bg-gradient-to-b from-[#0e1420] to-[#1a1f2a]
+              border border-gray-800/70 shadow-inner shadow-[#141824]
+              hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
+                  {item.icon}
+                </div>
               </div>
-            </div>
-            <div className="text-xl font-bold">
-              {currency} {totalMonthly.toFixed(2)}
-            </div>
-            <div className="text-sm text-gray-500">
-              {t("monthly_spend")}
-            </div>
-            <div className="text-xs text-gray-400">
-              {t("active_subscriptions")} ({currency})
-            </div>
-          </Card>
-
-          {/* Annual Cost */}
-          <Card className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">
-                <ArrowPathIcon className="w-5 h-5 text-pink-600" />
-              </div>
-            </div>
-            <div className="text-xl font-bold">
-              {currency} {totalAnnual.toFixed(2)}
-            </div>
-            <div className="text-sm text-gray-500">
-              {t("annual_cost")}
-            </div>
-            <div className="text-xs text-gray-400">
-              {t("projected_yearly")} ({currency})
-            </div>
-          </Card>
-
-          {/* Active Subs */}
-          <Card className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-            <div className="text-xl font-bold">
-              {activeSubs}
-            </div>
-            <div className="text-sm text-gray-500">
-              {t("active_subs")}
-            </div>
-            <div className="text-xs text-gray-400">
-              {t("of_total", { count: activeSubs })}
-            </div>
-          </Card>
-
-          {/* Avg per Sub */}
-          <Card className="p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                <TagIcon className="w-5 h-5 text-orange-600" />
-              </div>
-            </div>
-            <div className="text-xl font-bold">
-              {currency} {avgPerSub.toFixed(2)}
-            </div>
-            <div className="text-sm text-gray-500">
-              {t("avg_per_sub")}
-            </div>
-            <div className="text-xs text-gray-400">
-              {t("monthly_average")} ({currency})
-            </div>
-          </Card>
-
+              <div className="text-xl font-bold text-gray-100">{item.value}</div>
+              <div className="text-sm text-gray-400">{item.label}</div>
+              <div className="text-xs text-gray-500">{item.sub}</div>
+            </Card>
+          ))}
         </div>
-        {/* ================= END REPORTS SUMMARY ================= */}
-
       </div>
 
-      {/* ---------------- Payment history ---------------- */}
-      <Card className="mt-6 p-5">
-        <h2 className="text-lg font-semibold mb-4 text-center">
+      {/* Payment History */}
+      <Card
+        className="mt-6 p-5 rounded-xl bg-gradient-to-b from-[#0e1420] to-[#1a1f2a]
+        border border-gray-800/70 shadow-inner shadow-[#141824]
+        hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300"
+      >
+        <h2 className="text-lg font-semibold mb-4 text-center text-gray-100 border-b border-gray-800/70 pb-2">
           {t("insights_payment_history")}
         </h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs table-auto">
+        <div className="overflow-x-auto rounded-lg border border-gray-800/70">
+          <table className="w-full text-xs table-auto text-gray-200">
             <thead>
-              <tr className="border-b">
-                <th>Subscription</th>
-                <th>Frequency</th>
-                <th>Payments</th>
-                <th>Dates</th>
-                <th>Amount Paid</th>
+              <tr className="border-b border-gray-700/70 bg-[#141824]/60 text-gray-400">
+                <th className="py-2 px-3 text-left font-medium">Subscription</th>
+                <th className="py-2 px-3 text-left font-medium">Frequency</th>
+                <th className="py-2 px-3 text-center font-medium">Payments</th>
+                <th className="py-2 px-3 text-left font-medium">Dates</th>
+                <th className="py-2 px-3 text-right font-medium">Amount Paid</th>
               </tr>
             </thead>
             <tbody>
               {subscriptions.map((s) => {
                 const payments = (() => {
                   if (Array.isArray(s.payments)) return s.payments;
-
                   const list = [];
-
                   if (Array.isArray(s.history)) {
-                    s.history.forEach((d) => {
-                      list.push({
-                        date: d,
-                        amount: s.price,
-                        currency: s.currency || "EUR",
-                      });
-                    });
+                    s.history.forEach((d) =>
+                      list.push({ date: d, amount: s.price, currency: s.currency || "EUR" })
+                    );
                   }
-
                   if (s.datePaid) {
-                    list.push({
-                      date: s.datePaid,
-                      amount: s.price,
-                      currency: s.currency || "EUR",
-                    });
+                    list.push({ date: s.datePaid, amount: s.price, currency: s.currency || "EUR" });
                   }
-
                   return list;
                 })();
 
                 const totalPaid = payments.reduce((sum, p) => {
-                  const converted = rates
-                    ? convert(p.amount, p.currency, currency, rates) // ✅ CORRECT
-                    : p.amount;
+                  const converted = rates ? convert(p.amount, p.currency, currency, rates) : p.amount;
                   return sum + converted;
                 }, 0);
 
                 return (
-                  <tr key={s.id} className="border-b text-center">
-                    <td className="font-medium">{s.name}</td>
-                    <td>{t(`frequency_${s.frequency}`)}</td>
-                    <td>{payments.length}</td>
-                    <td>
-                      {payments
-                        .map((p) => new Date(p.date).toLocaleDateString())
-                        .join(", ")}
+                  <tr
+                    key={s.id}
+                    className="border-b border-gray-800/70 hover:bg-[#ed7014]/10 transition-colors duration-200"
+                  >
+                    <td className="py-2 px-3 font-medium text-gray-100">{s.name}</td>
+                    <td className="py-2 px-3 text-gray-300">{t(`frequency_${s.frequency}`)}</td>
+                    <td className="py-2 px-3 text-center text-gray-300">{payments.length}</td>
+                    <td className="py-2 px-3 text-gray-400">
+                      {payments.map((p) => new Date(p.date).toLocaleDateString()).join(", ")}
                     </td>
-                    <td>{`${currency} ${totalPaid.toFixed(2)}`}</td>
+                    <td className="py-2 px-3 text-right text-gray-100">
+                      {`${currency} ${totalPaid.toFixed(2)}`}
+                    </td>
                   </tr>
-
                 );
               })}
             </tbody>
@@ -491,49 +451,51 @@ export default function InsightsPage() {
       </button>
 
       {/* ================= IMPORT PREVIEW MODAL ================= */}
-      {importPreview && (
-        <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-3">
-              Import CSV Preview
-            </h3>
+      {
+        importPreview && (
+          <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
+              <h3 className="text-lg font-semibold mb-3">
+                Import CSV Preview
+              </h3>
 
-            <div className="text-sm space-y-1 mb-3">
-              <div>Subscriptions: <b>{importPreview.subscriptions}</b></div>
-              <div>Payments: <b>{importPreview.payments}</b></div>
+              <div className="text-sm space-y-1 mb-3">
+                <div>Subscriptions: <b>{importPreview.subscriptions}</b></div>
+                <div>Payments: <b>{importPreview.payments}</b></div>
 
-              {importPreview.duplicates > 0 && (
-                <div className="text-orange-600">
-                  Duplicates skipped: <b>{importPreview.duplicates}</b>
-                </div>
-              )}
-            </div>
+                {importPreview.duplicates > 0 && (
+                  <div className="text-orange-600">
+                    Duplicates skipped: <b>{importPreview.duplicates}</b>
+                  </div>
+                )}
+              </div>
 
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setImportPreview(null);
-                  setImportFile(null);
-                }}
-                className="px-3 py-1 rounded border"
-              >
-                Cancel
-              </button>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setImportPreview(null);
+                    setImportFile(null);
+                  }}
+                  className="px-3 py-1 rounded border"
+                >
+                  Cancel
+                </button>
 
-              <button
-                onClick={confirmImport}
-                className="px-3 py-1 rounded bg-blue-600 text-white"
-              >
-                Confirm Import
-              </button>
+                <button
+                  onClick={confirmImport}
+                  className="px-3 py-1 rounded bg-blue-600 text-white"
+                >
+                  Confirm Import
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* ================= END IMPORT PREVIEW ================= */}
 
-    </div>
+    </div >
   );
 }
 
