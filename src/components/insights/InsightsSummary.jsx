@@ -1,14 +1,13 @@
+// src/components/insights/InsightsSummary.jsx
 import React, { useMemo, useEffect } from "react";
 import {
   motion,
   useMotionValue,
   useTransform,
   animate,
-  AnimatePresence,
 } from "framer-motion";
 import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-// === THEME COLORS ===
 const COLORS = {
   green: "#22C55E",
   orange: "#ED7014",
@@ -46,7 +45,8 @@ function StatusBadge({ label, color, emoji, value = 0 }) {
 
   return (
     <motion.div
-      className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium border border-gray-700/60 bg-gray-800/60 ${glowClass}`}
+      className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium border 
+      border-gray-300 dark:border-gray-700/60 bg-gray-100/70 dark:bg-gray-800/60 ${glowClass}`}
       animate={{
         boxShadow: [
           `0 0 10px 2px ${color}55`,
@@ -78,25 +78,22 @@ function StatusBadge({ label, color, emoji, value = 0 }) {
             strokeLinecap="round"
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-semibold">
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-900 dark:text-white font-semibold">
           {emoji}
         </span>
       </div>
-      <span className="text-gray-200">{label}</span>
+      <span className="text-gray-800 dark:text-gray-200">{label}</span>
     </motion.div>
   );
 }
 
-// === Mini Sparkline for Forecast Confidence ===
+// === Sparkline ===
 function ConfidenceSparkline({ trends, color }) {
   if (!trends?.length) return null;
-
   const sparkData = trends.slice(-6).map((t) => ({
     month: t.label,
     value: t.total,
   }));
-
-  const lineColor = color || COLORS.orange;
 
   return (
     <motion.div
@@ -118,21 +115,20 @@ function ConfidenceSparkline({ trends, color }) {
             cursor={false}
             formatter={(v) => [`${v.toFixed(2)}`, "Spending"]}
             contentStyle={{
-              backgroundColor: "#1e293b",
+              backgroundColor: "rgba(255,255,255,0.9)",
               borderRadius: "6px",
-              border: "1px solid rgba(255,255,255,0.05)",
-              color: "#fff",
+              border: "1px solid rgba(0,0,0,0.1)",
+              color: "#000",
             }}
           />
           <Line
             type="monotone"
             dataKey="value"
-            stroke={lineColor}
+            stroke={color || COLORS.orange}
             strokeWidth={2}
             dot={false}
-            isAnimationActive={true}
             animationDuration={700}
-            animationEasing="ease-out"
+            isAnimationActive
           />
         </LineChart>
       </ResponsiveContainer>
@@ -140,7 +136,7 @@ function ConfidenceSparkline({ trends, color }) {
   );
 }
 
-// === MAIN COMPONENT ===
+// === Main Component ===
 export default function InsightsSummary({ data, currency }) {
   const { summaryLines, status, confidence } = useMemo(() => {
     if (!data || !data.trends?.length) {
@@ -157,7 +153,6 @@ export default function InsightsSummary({ data, currency }) {
     const growth = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
     const forecast = data.forecast ?? thisMonth * 1.08;
 
-    // Volatility-based confidence
     const volatility =
       trends.length > 3
         ? trends
@@ -168,27 +163,16 @@ export default function InsightsSummary({ data, currency }) {
           }, 0) / trends.length
         : 0;
 
-    let confidence = {
+    let confidenceLevel = {
       label: "Stable",
       color: COLORS.green,
       emoji: "🟢",
       value: 90,
     };
-    if (volatility > thisMonth * 0.5) {
-      confidence = {
-        label: "Uncertain",
-        color: COLORS.red,
-        emoji: "🔴",
-        value: 40,
-      };
-    } else if (volatility > thisMonth * 0.25) {
-      confidence = {
-        label: "Volatile",
-        color: COLORS.orange,
-        emoji: "🟠",
-        value: 65,
-      };
-    }
+    if (volatility > thisMonth * 0.5)
+      confidenceLevel = { label: "Uncertain", color: COLORS.red, emoji: "🔴", value: 40 };
+    else if (volatility > thisMonth * 0.25)
+      confidenceLevel = { label: "Volatile", color: COLORS.orange, emoji: "🟠", value: 65 };
 
     const categories = Object.entries(data.categories || {});
     const topCategory = categories.sort((a, b) => b[1] - a[1])[0];
@@ -201,42 +185,25 @@ export default function InsightsSummary({ data, currency }) {
       emoji: "🟢",
       value: Math.abs(growth),
     };
-    if (growth > 15 || topPercent > 45) {
-      status = {
-        label: "Over Budget",
-        color: COLORS.red,
-        emoji: "🔴",
-        value: Math.min(growth, 100),
-      };
-    } else if ((growth > 5 && growth <= 15) || topPercent > 35) {
-      status = {
-        label: "Active Spending",
-        color: COLORS.orange,
-        emoji: "🟠",
-        value: Math.min(growth, 100),
-      };
-    } else if (growth < -5) {
-      status = {
-        label: "Improving",
-        color: COLORS.green,
-        emoji: "🟢",
-        value: Math.abs(growth),
-      };
-    }
+    if (growth > 15 || topPercent > 45)
+      status = { label: "Over Budget", color: COLORS.red, emoji: "🔴", value: Math.min(growth, 100) };
+    else if ((growth > 5 && growth <= 15) || topPercent > 35)
+      status = { label: "Active Spending", color: COLORS.orange, emoji: "🟠", value: Math.min(growth, 100) };
+    else if (growth < -5)
+      status = { label: "Improving", color: COLORS.green, emoji: "🟢", value: Math.abs(growth) };
 
-    const fmt = (num) =>
-      (isFinite(num) ? num : 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    const fmt = (num) => (isFinite(num) ? num : 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
-    const summaryLines = [];
-
-    if (growth > 10)
-      summaryLines.push(`📈 You spent ${growth.toFixed(1)}% more than last month.`);
-    else if (growth < -10)
-      summaryLines.push(`📉 Great work — spending decreased by ${Math.abs(growth).toFixed(1)}%.`);
-    else summaryLines.push(`⚖️ Your spending remained stable this month.`);
+    const summaryLines = [
+      growth > 10
+        ? `📈 You spent ${growth.toFixed(1)}% more than last month.`
+        : growth < -10
+          ? `📉 Great work — spending decreased by ${Math.abs(growth).toFixed(1)}%.`
+          : `⚖️ Your spending remained stable this month.`,
+    ];
 
     if (topCategory)
       summaryLines.push(
@@ -245,18 +212,14 @@ export default function InsightsSummary({ data, currency }) {
 
     summaryLines.push(
       `💰 Total spent this month: ${currency} ${fmt(thisMonth)}.`,
-      `🔮 Forecast for next month: ${currency} ${fmt(forecast)}.`
-    );
-
-    summaryLines.push(
+      `🔮 Forecast for next month: ${currency} ${fmt(forecast)}.`,
       topPercent > 40
         ? `⚠️ ${topPercent.toFixed(0)}% of spending is in **${topCategory[0]}** — consider balancing.`
-        : `🎯 Your spending is well distributed across categories.`
+        : `🎯 Your spending is well distributed across categories.`,
+      `💡 Keep tracking — consistency builds better results.`
     );
 
-    summaryLines.push(`💡 Keep tracking — consistency builds better results.`);
-
-    return { summaryLines, status, confidence };
+    return { summaryLines, status, confidence: confidenceLevel };
   }, [data, currency]);
 
   return (
@@ -264,11 +227,13 @@ export default function InsightsSummary({ data, currency }) {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="rounded-xl bg-[#0e1420] border border-gray-800/60 shadow-sm p-4"
+      className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
+      border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
+      hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300 p-4"
     >
       {/* Header + Badges */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-100">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           Financial Insights
         </h3>
         <div className="flex gap-2">
@@ -281,7 +246,7 @@ export default function InsightsSummary({ data, currency }) {
       <ConfidenceSparkline trends={data.trends} color={confidence.color} />
 
       {/* Multiline Summary */}
-      <div className="space-y-2 text-gray-300 text-sm leading-relaxed mt-3">
+      <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed mt-3">
         {summaryLines.map((line, i) => (
           <p key={i} className="whitespace-pre-wrap">
             {line}

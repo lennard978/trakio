@@ -16,7 +16,10 @@ export const subscriptionCatalog = [
   { name: "iCloud+", icon: "icloud", category: "software" },
 
   // Audio / Books
-  { name: "Audible", icon: "audible", category: "books" },
+  { name: "Audible UK", icon: "audible", category: "books" },
+  { name: "Audible DE", icon: "audible", category: "books" },
+  { name: "Audible US", icon: "audible", category: "books" },
+
   { name: "Deezer", icon: "deezer", category: "entertainment" },
 
   // Software / Cloud

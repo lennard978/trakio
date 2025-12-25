@@ -100,7 +100,16 @@ export default function App() {
         <AnimatePresence mode="wait">
           <Suspense fallback={<LoadingSkeleton />}>
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<AnimatedPage><Welcome /></AnimatedPage>} />
+              <Route
+                path="/"
+                element={
+                  user ? (
+                    <Navigate to="/dashboard" replace />
+                  ) : (
+                    <AnimatedPage><Welcome /></AnimatedPage>
+                  )
+                }
+              />
               <Route path="/premium" element={<AnimatedPage><Premium /></AnimatedPage>} />
               <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
               <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />

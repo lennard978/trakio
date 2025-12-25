@@ -264,5 +264,22 @@
 	"active_subscriptions": "Active subscriptions",
 	"avg_per_sub": "Avg per Sub",
 	"monthly_average": "Monthly average",
-	"of_total": "of {{count}} total"
+	"of_total": "of {{count}} total",
+
+	"upcoming_payments": "Upcoming payments",
+	"today": "Today",
+	"tomorrow": "Tomorrow",
+	"in_days": "In {{count}} days",
+
+	"budget_input_placeholder": "Set monthly budget",
+	"budget_save": "Save",
+	"budget_spent": "Spent",
+	"budget_remaining": "Remaining",
+	"budget_alert_high": "You've used over 90% of your monthly budget!",
+	"budget_premium_required": "Upgrade to Premium to set a budget",
+	"budget_auto_reset": "Auto-reset budget monthly",
+
+	"tooltip_annual_estimate": "Projected cost over 12 months",
+	"tooltip_monthly_estimate": "Estimated recurring cost per month",
+	"change_since_last_month": "Change since last month"
 }

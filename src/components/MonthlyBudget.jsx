@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { usePremium } from "../hooks/usePremium";
+import { useTranslation } from "react-i18next";
+import { LockClosedIcon } from "@heroicons/react/24/outline";
+import { useToast } from "../context/ToastContext";
 
-/* ---------------- Monthly factor ---------------- */
 const MONTHLY_FACTOR = {
   weekly: 4.345,
   biweekly: 2.1725,
@@ -17,18 +19,20 @@ export default function MonthlyBudget({
   rates,
   convert,
 }) {
+  const { t } = useTranslation();
   const premium = usePremium();
+  const { showToast } = useToast();
 
-  // Stored budget (source of truth)
   const [budget, setBudget] = useState(() => {
     const v = localStorage.getItem("monthly_budget");
     return v ? Number(v) : null;
   });
 
-  // Input field state (editable, not saved yet)
   const [input, setInput] = useState(budget ?? "");
+  const [autoReset, setAutoReset] = useState(() => {
+    return localStorage.getItem("budget_auto_reset") === "1";
+  });
 
-  /* ---------------- Recalculate monthly spend ---------------- */
   const spent = useMemo(() => {
     if (!Array.isArray(subscriptions)) return 0;
 
@@ -48,34 +52,56 @@ export default function MonthlyBudget({
 
   const remaining = budget != null ? budget - spent : null;
 
-  /* ---------------- Save handler ---------------- */
+  const percentUsed =
+    budget != null && budget > 0 ? Math.min(100, (spent / budget) * 100) : null;
+
   const saveBudget = () => {
     const value = Number(input);
     if (Number.isNaN(value) || value <= 0) return;
-
     localStorage.setItem("monthly_budget", String(value));
     setBudget(value);
   };
 
-  /* ---------------- Sync with Settings ---------------- */
+  // Handle auto-reset every 1st of month
+  useEffect(() => {
+    if (!autoReset) return;
+
+    const lastReset = localStorage.getItem("budget_last_reset");
+    const today = new Date();
+    const currentMonth = `${today.getFullYear()}-${today.getMonth() + 1}`;
+
+    if (lastReset !== currentMonth) {
+      setBudget(null);
+      setInput("");
+      localStorage.removeItem("monthly_budget");
+      localStorage.setItem("budget_last_reset", currentMonth);
+    }
+    showToast("Monthly budget has been reset", "info");
+
+  }, [autoReset, showToast]);
+
+  // Sync on storage update
   useEffect(() => {
     const sync = () => {
       const v = localStorage.getItem("monthly_budget");
       setBudget(v ? Number(v) : null);
       setInput(v ? Number(v) : "");
+      setAutoReset(localStorage.getItem("budget_auto_reset") === "1");
     };
 
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
 
-  const percent =
-    budget && budget > 0
-      ? Math.min(100, Math.round((spent / budget) * 100))
-      : 0;
+  const handleToggleReset = () => {
+    const newValue = !autoReset;
+    setAutoReset(newValue);
+    localStorage.setItem("budget_auto_reset", newValue ? "1" : "0");
+  };
 
   return (
-    <div className={`
+    <div
+      className="
         p-5 rounded-2xl
         bg-white/90 dark:bg-black/30
         border border-gray-300/60 dark:border-white/10
@@ -83,12 +109,14 @@ export default function MonthlyBudget({
         shadow-[0_8px_25px_rgba(0,0,0,0.08)]
         dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
         transition-all
-      `}>       <h3 className="text-sm font-medium text-center mb-3">
-        Monthly Budget
+      "
+    >
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center mb-3">
+        {t("budget_title")}
       </h3>
 
-      {/* ---------------- Budget input + button ---------------- */}
-      <div className="flex gap-2 mb-3">
+      {/* Input */}
+      <div className="flex gap-2 mb-4 items-center">
         <input
           type="number"
           min="0"
@@ -96,51 +124,83 @@ export default function MonthlyBudget({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={!premium.isPremium}
-          placeholder="Set monthly budget"
-          className="w-full px-3 py-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60"
+          placeholder={t("budget_input_placeholder")}
+          className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 text-sm"
         />
-
         <button
           onClick={saveBudget}
           disabled={!premium.isPremium}
-          className="px-3 py-1 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
+          className="px-3 py-2 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          Save
+          {t("budget_save")}
         </button>
       </div>
 
-      {/* ---------------- Budget stats ---------------- */}
-      <div className="text-sm space-y-1">
-        <div>
-          Spent: {currency} {spent.toFixed(2)}
+      {/* Budget info */}
+      <div className="text-sm space-y-2">
+        <div className="flex justify-between text-gray-600 dark:text-gray-300">
+          <span>{t("budget_spent")}</span>
+          <span>
+            {currency} {spent.toFixed(2)}
+          </span>
         </div>
 
         {budget != null && (
-          <div>
-            Remaining:{" "}
-            <span className={remaining < 0 ? "text-red-500" : ""}>
-              {currency} {remaining.toFixed(2)}
-            </span>
-          </div>
+          <>
+            <div className="flex justify-between font-medium text-gray-800 dark:text-gray-100">
+              <span>{t("budget_remaining")}</span>
+              <span className={remaining < 0 ? "text-red-500" : ""}>
+                {currency} {remaining.toFixed(2)}
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-800 mt-1 overflow-hidden">
+              <div
+                className={`h-2 transition-all duration-700 ease-out ${percentUsed < 90
+                  ? "bg-green-500"
+                  : percentUsed <= 100
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
+                  }`}
+                style={{ width: `${percentUsed}%` }}
+              />
+            </div>
+
+            {/* Alert */}
+            {percentUsed >= 90 && percentUsed < 100 && (
+              <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                ⚠️ {t("budget_alert_high")}
+              </div>
+            )}
+
+            {percentUsed >= 100 && (
+              <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                ❗ {t("budget_alert_high")}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ---------------- Progress bar ---------------- */}
-      {budget != null && (
-        <div className="mt-3">
-          <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div
-              className={`h-2 rounded-full ${percent >= 100 ? "bg-red-500" : "bg-green-500"
-                }`}
-              style={{ width: `${percent}%` }}
-            />
-          </div>
+      {/* Toggle Auto-reset */}
+      {premium.isPremium && (
+        <div className="flex items-center gap-2 mt-4 text-xs text-gray-600 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={autoReset}
+            onChange={handleToggleReset}
+            id="auto-reset"
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label htmlFor="auto-reset">{t("budget_auto_reset")}</label>
         </div>
       )}
 
       {!premium.isPremium && (
-        <div className="mt-3 text-xs text-gray-500 text-center">
-          Upgrade to Premium to set a budget
+        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+          <LockClosedIcon className="w-4 h-4" />
+          <span>{t("budget_premium_required")}</span>
         </div>
       )}
     </div>

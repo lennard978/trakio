@@ -131,8 +131,36 @@ export default function Dashboard() {
   const hasSubscriptions = subscriptions.length > 0;
   const preferredCurrency = premium.isPremium ? currency : "EUR";
 
+  // 🔢 Calculate previous month total
+  const previousMonthTotal = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-  /* ---------------- Totals (Monthly / Annual) ---------------- */
+    return subscriptions.reduce((sum, s) => {
+      if (!Array.isArray(s.payments)) return sum;
+
+      const lastMonthPayments = s.payments.filter((p) => {
+        const d = new Date(p.date);
+        const sameMonth = d.getMonth() === currentMonth - 1;
+        const sameYear = d.getFullYear() === currentYear;
+
+        // Handle January edge case (month === 0)
+        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const yearCheck = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        return d.getMonth() === prevMonth && d.getFullYear() === yearCheck;
+      });
+
+      const total = lastMonthPayments.reduce((subTotal, p) => {
+        const price = Number(p.amount || s.price || 0);
+        return subTotal + price;
+      }, 0);
+
+      return sum + total;
+    }, 0);
+  }, [subscriptions]);
+
 
   const totalMonthly = useMemo(() => {
     return subscriptions.reduce((sum, s) => {
@@ -141,6 +169,12 @@ export default function Dashboard() {
       return sum + price * factor;
     }, 0);
   }, [subscriptions]);
+  /* ---------------- Totals (Monthly / Annual) ---------------- */
+  const monthlyChange = useMemo(() => {
+    if (!previousMonthTotal || previousMonthTotal === 0) return null;
+    return ((totalMonthly - previousMonthTotal) / previousMonthTotal) * 100;
+  }, [totalMonthly, previousMonthTotal]);
+
 
   const totalAnnual = useMemo(() => {
     return totalMonthly * 12;
@@ -221,7 +255,6 @@ export default function Dashboard() {
       console.error("KV save failed:", err);
     }
   };
-  console.log("Dashboard render", theme);
 
   /* ---------------- Render ---------------- */
   return (
@@ -237,40 +270,63 @@ export default function Dashboard() {
       {hasSubscriptions && (
         <>
           {/* ================= SUMMARY CARDS ================= */}
-          <div className="grid grid-cols-2 gap-2 mt-0 mb-2">
-            <div className={`
-        p-5 rounded-2xl
-        bg-white/90 dark:bg-black/30
-        border border-gray-300/60 dark:border-white/10
-        backdrop-blur-xl
-        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
-        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
-        transition-all
-      `}>
-              <div className="text-sm text-black-900">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 mb-4">
+
+            {/* Monthly Total */}
+            <div
+              className="
+      p-5 rounded-2xl relative
+      bg-white/90 dark:bg-black/30
+      border border-gray-300/60 dark:border-white/10
+      backdrop-blur-xl
+      shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+      dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+      transition-all
+    "
+              title={`${t("change_since_last_month") || "Change since last month"}`}
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("dashboard_total_monthly")}
               </div>
-              <div className="text-xl tabular-nums font-bold text-black-200 mt-1">
+              <div className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white">
                 {preferredCurrency} {totalMonthly.toFixed(2)}
               </div>
+              {/* Optional percentage badge */}
+              {typeof monthlyChange === "number" && (
+                <div
+                  className={`absolute top-2 right-2 text-xs font-medium px-2 py-1 rounded-full ${monthlyChange >= 0
+                    ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300"
+                    : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300"
+                    }`}
+                >
+                  {monthlyChange >= 0 ? "+" : ""}
+                  {monthlyChange.toFixed(1)}%
+                </div>
+              )}
             </div>
 
-            <div className={`
-        p-5 rounded-2xl
-        bg-white/90 dark:bg-black/30
-        border border-gray-300/60 dark:border-white/10
-        backdrop-blur-xl
-        shadow-[0_8px_25px_rgba(0,0,0,0.08)]
-        dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
-        transition-all
-      `}>          <div className="text-sm">
+            {/* Annual Total */}
+            <div
+              className="
+      p-5 rounded-2xl
+      bg-white/90 dark:bg-black/30
+      border border-gray-300/60 dark:border-white/10
+      backdrop-blur-xl
+      shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+      dark:shadow-[0_18px_45px_rgba(0,0,0,0.45)]
+      transition-all
+    "
+              title={t("tooltip_annual_estimate") || "Projected cost over 12 months"}
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("dashboard_total_annual")}
               </div>
-              <div className="text-xl tabular-nums font-bold mt-1">
+              <div className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white">
                 {preferredCurrency} {totalAnnual.toFixed(2)}
               </div>
             </div>
           </div>
+
           {/* ================= END SUMMARY ================= */}
 
         </>

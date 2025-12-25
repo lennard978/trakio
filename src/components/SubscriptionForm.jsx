@@ -606,23 +606,29 @@ export default function SubscriptionForm() {
 
 
             {/* Color Picker */}
+            {/* Color Picker */}
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("label_color")} (optional)
               </label>
 
-              <div className="flex gap-2 flex-wrap mb-2">
+              {/* Color Choices */}
+              <div className="flex flex-wrap gap-2 mb-2">
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
                     type="button"
-                    className={`w-8 h-8 rounded-full border-2 ${color === c ? "border-black dark:border-white" : "border-transparent"}`}
+                    className={`
+          w-8 h-8 rounded-full border-2 transition-transform duration-150
+          ${color === c ? "border-black dark:border-white scale-110" : "border-gray-300 hover:scale-105"}
+        `}
                     style={{ backgroundColor: c }}
                     onClick={() => setColor(c)}
+                    title={c}
                   />
                 ))}
 
-                {/* Show current non-preset color if user manually typed or loaded one */}
+                {/* Current / Custom color (if different) */}
                 {!PRESET_COLORS.includes(color) && (
                   <div
                     className="w-8 h-8 rounded-full border-2 border-dashed border-gray-400"
@@ -630,17 +636,27 @@ export default function SubscriptionForm() {
                     title="Current saved color"
                   />
                 )}
-
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(hexToRgba(e.target.value))}
-                  className="w-10 h-8 p-0 border rounded"
-                  title="Custom color"
-                />
               </div>
 
+              {/* Custom color input */}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="color"
+                  value={`#${(color.match(/\d+/g) || [])
+                    .slice(0, 3)
+                    .map((v) => parseInt(v).toString(16).padStart(2, "0"))
+                    .join("")}`}
+                  onChange={(e) => setColor(hexToRgba(e.target.value))}
+                  className="w-10 h-8 p-0 border border-gray-400 rounded cursor-pointer"
+                  title="Pick custom color"
+                />
+
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {color}
+                </span>
+              </div>
             </div>
+
 
 
             {/* Date Paid */}

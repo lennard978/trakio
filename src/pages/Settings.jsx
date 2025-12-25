@@ -15,6 +15,7 @@ import SettingButton from "../components/ui/SettingButton";
 import SettingsRow from "../components/ui/SettingsRow";
 import languages from "../utils/languages";
 
+
 import {
   GlobeAltIcon,
   ArrowDownTrayIcon,
@@ -40,6 +41,9 @@ export default function Settings({ setActiveSheet }) {
   const { i18n } = useTranslation();
   const currentLang = languages.find(l => l.code === i18n.language);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importFile, setImportFile] = useState(null);
+  const fileInputRef = React.useRef(null);
 
   const handleRate = () => {
     window.open("https://trakio.de", "_blank");
@@ -79,6 +83,101 @@ export default function Settings({ setActiveSheet }) {
     })();
   }, [user?.email]);
 
+  function parseCSV(text) {
+    const lines = text
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(",").map((h) => h.trim());
+    const rows = lines.slice(1).map((row) => {
+      const values = row.split(",").map((v) => v.trim());
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h] = values[i] ?? "";
+      });
+      return obj;
+    });
+
+    const subsMap = {};
+
+    rows.forEach((row) => {
+      const name = row.name || "Imported subscription";
+      if (!subsMap[name]) {
+        subsMap[name] = {
+          id: crypto.randomUUID(),
+          name,
+          frequency: row.frequency || "monthly",
+          currency: row.currency || "EUR",
+          category: row.category || "Uncategorized",
+          method: row.method || "Unknown",
+          price: Number(row.price || row.amount || 0),
+          payments: [],
+        };
+      }
+      if (row.paymentDate || row.datePaid) {
+        const date = row.paymentDate || row.datePaid;
+        const amount = Number(row.amount || row.price || 0);
+        subsMap[name].payments.push({
+          id: crypto.randomUUID(),
+          date,
+          amount,
+          currency: row.currency || subsMap[name].currency,
+        });
+        subsMap[name].price = amount;
+      }
+    });
+
+    return Array.isArray(Object.values(subsMap))
+      ? Object.values(subsMap)
+      : [];
+  }
+
+  const handleImportCSV = async (file) => {
+    if (!file) return;
+    const text = await file.text();
+    const parsed = parseCSV(text);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      alert("Invalid or empty CSV file");
+      return;
+    }
+    let duplicateCount = 0;
+    const cleaned = parsed
+      .map((s) => {
+        const uniquePayments = [];
+        s.payments.forEach((p) => {
+          const key = [
+            s.name,
+            new Date(p.date).toISOString().slice(0, 10),
+            Number(p.amount).toFixed(2),
+            p.currency || s.currency || "EUR",
+          ].join("|");
+          if (existingPaymentIndex.has(key)) {
+            duplicateCount++;
+          } else {
+            uniquePayments.push(p);
+          }
+        });
+        return { ...s, payments: uniquePayments };
+      })
+      .filter((s) => s.payments.length > 0);
+
+    if (cleaned.length === 0) {
+      alert("Nothing new to import (all payments were duplicates)");
+      return;
+    }
+
+    setImportFile(cleaned);
+    setImportPreview({
+      subscriptions: cleaned.length,
+      payments: cleaned.reduce((sum, s) => sum + s.payments.length, 0),
+      duplicates: duplicateCount,
+      sample: cleaned.slice(0, 3),
+    });
+  };
 
   const {
     isPremium,
@@ -236,12 +335,11 @@ export default function Settings({ setActiveSheet }) {
 
       {/* ===================== DATA MANAGEMENT ===================== */}
       <section>
-        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Data Management
-        </h2>
-        <p className="text-xs text-gray-400 mt-2 px-2">
-          You can export or delete your data at any time.
-        </p>
+        <SectionHeader
+          title="Data Management"
+          subtitle="          You can export or delete your data at any time.
+"
+        />
         <Card className="space-y-1">
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
@@ -288,6 +386,21 @@ export default function Settings({ setActiveSheet }) {
                 },
               })
             }
+          />
+          <SettingsRow
+            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+            title="Import subscriptions"
+            description="Upload CSV with subscriptions"
+            glow
+            accent="blue"
+            onClick={() => fileInputRef.current?.click()}
+          />
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={(e) => handleImportCSV(e.target.files?.[0])}
           />
         </Card>
       </section>
@@ -392,6 +505,46 @@ export default function Settings({ setActiveSheet }) {
           </SettingButton>
         </div>
       </Card>
+
+      {importPreview && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
+            <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+              Import CSV Preview
+            </h3>
+            <div className="text-sm space-y-1 mb-3 text-gray-700 dark:text-gray-300">
+              <div>Subscriptions: <b>{importPreview.subscriptions}</b></div>
+              <div>Payments: <b>{importPreview.payments}</b></div>
+              {importPreview.duplicates > 0 && (
+                <div className="text-orange-600 dark:text-orange-400">
+                  Duplicates skipped: <b>{importPreview.duplicates}</b>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setImportPreview(null);
+                  setImportFile(null);
+                }}
+                className="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  alert("✅ File imported. (Save to backend not implemented yet)");
+                  setImportPreview(null);
+                  setImportFile(null);
+                }}
+                className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Confirm Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

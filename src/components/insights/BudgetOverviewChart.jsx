@@ -39,19 +39,19 @@ const MONTHLY_FACTOR = {
 const TABS = ["General", "Categories", "Frequency", "Payment Methods", "Trends", "Forecast"];
 
 const Stat = ({ label, value }) => (
-  <div className="flex justify-between text-sm py-1 border-b border-gray-800/60">
-    <span className="text-gray-300">{label}</span>
-    <span className="font-medium text-gray-100">{value}</span>
+  <div className="flex justify-between text-sm py-1 border-b border-gray-300 dark:border-gray-800/60">
+    <span className="text-gray-700 dark:text-gray-300">{label}</span>
+    <span className="font-medium text-gray-900 dark:text-gray-100">{value}</span>
   </div>
 );
 
-// ✨ Glossy gradient section container
+// ✨ Glossy gradient section container with light/dark mode
 const Section = ({ title, children }) => (
-  <div className="rounded-xl bg-gradient-to-b from-[#0e1420] to-[#1a1f2a] 
-  border border-gray-800/70 shadow-inner shadow-[#141824] 
+  <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
+  border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
   transition-all duration-300 hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60 p-4 mb-4">
     {title && (
-      <h3 className="text-sm font-semibold text-gray-100 border-b border-gray-700/60 pb-2 mb-3">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
         {title}
       </h3>
     )}
@@ -63,10 +63,10 @@ function PieCenterLabel({ viewBox, title, value }) {
   const { cx, cy } = viewBox;
   return (
     <>
-      <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" className="fill-gray-400 text-xs">
+      <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" className="fill-gray-600 dark:fill-gray-400 text-xs">
         {title}
       </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle" className="fill-gray-100 text-base font-semibold">
+      <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle" className="fill-gray-900 dark:fill-gray-100 text-base font-semibold">
         {value}
       </text>
     </>
@@ -89,7 +89,7 @@ function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 2, duratio
   }, [value]);
 
   return (
-    <motion.span className="tabular-nums font-bold text-gray-100">
+    <motion.span className="tabular-nums font-bold text-gray-900 dark:text-gray-100">
       {prefix}{display}{suffix}
     </motion.span>
   );
@@ -100,6 +100,11 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeRange, setActiveRange] = useState("6M");
   const { currency } = useCurrency();
   const convert = convertUtil;
+
+  const [budget, setBudget] = useState(() => {
+    const v = localStorage.getItem("monthly_budget");
+    return v ? Number(v) : null;
+  });
 
   // === MAIN DATA ===
   const data = useMemo(() => {
@@ -169,7 +174,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     };
   }, [subscriptions, currency, rates, convert]);
 
-  // === Spending Over Time (data-driven) ===
+  // === Spending Over Time ===
   const spendingData = useMemo(() => {
     if (!subscriptions?.length) return [];
 
@@ -179,11 +184,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const now = new Date();
     const months = Array.from({ length: limit }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (limit - 1 - i), 1);
-      return {
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: d.toLocaleString("default", { month: "short" }),
-        total: 0,
-      };
+      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleString("default", { month: "short" }), total: 0 };
     });
 
     subscriptions.forEach((sub) => {
@@ -212,10 +213,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const growthRate = prev ? (last - prev) / prev : 0;
     const forecast = Math.max(last * (1 + growthRate), 0);
 
-    return [
-      ...months.map((m) => ({ month: m.label, value: m.total })),
-      { month: "Next (Forecast)", value: forecast },
-    ];
+    return [...months.map((m) => ({ month: m.label, value: m.total })), { month: "Next (Forecast)", value: forecast }];
   }, [subscriptions, activeRange]);
 
   const [animatedData, setAnimatedData] = useState([]);
@@ -226,7 +224,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const start = animatedData.length ? animatedData.map(d => d.animatedValue || 0) : [];
     const end = spendingData.map(d => d.value);
 
-    const animate = () => {
+    const animateFrame = () => {
       frame++;
       const progress = Math.min(frame / duration, 1);
       const interpolated = spendingData.map((d, i) => ({
@@ -234,9 +232,9 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         animatedValue: (start[i] || 0) + (end[i] - (start[i] || 0)) * progress,
       }));
       setAnimatedData(interpolated);
-      if (progress < 1) requestAnimationFrame(animate);
+      if (progress < 1) requestAnimationFrame(animateFrame);
     };
-    animate();
+    animateFrame();
   }, [spendingData]);
 
   const chartData = useMemo(() => {
@@ -256,27 +254,26 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   const total = data.totalThisMonth || 0;
   const topCategory = Object.entries(data.categories || {}).sort((a, b) => b[1] - a[1])[0];
   const avgPerSub = subscriptions.length ? (total / subscriptions.length).toFixed(2) : "0.00";
-  const percentUsed = ((total / 500) * 100).toFixed(1);
+  const percentUsed = budget ? ((total / budget) * 100).toFixed(1) : "0.0"; // ✅
 
-  const cardContainer = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } },
-  };
-  const cardItem = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-  };
+  const cardContainer = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } } };
+  const cardItem = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } };
+
+  useEffect(() => {
+    const sync = () => {
+      const v = localStorage.getItem("monthly_budget");
+      setBudget(v ? Number(v) : null);
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
 
   return (
     <div className="space-y-4">
       {/* Overview */}
       <Section title="Overview">
-        <motion.div
-          variants={cardContainer}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
-        >
+        <motion.div variants={cardContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           {[
             {
               label: "Growth Rate",
@@ -284,12 +281,9 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 const hasTrend = data.trends?.length > 1;
                 const growth = Number(data?.growthRate) || 0;
                 const isIncrease = growth > 0;
-
                 if (!hasTrend) return <span className="text-gray-500">—</span>;
-
                 const arrow = isIncrease ? "↑" : "↓";
                 const color = isIncrease ? "text-orange-400" : "text-green-400";
-
                 return (
                   <div className="flex items-center gap-2">
                     <span className={`${color} font-bold`}>
@@ -298,14 +292,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                     <div className="h-5 w-16">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data.trends}>
-                          <Line
-                            type="monotone"
-                            dataKey="total"
-                            stroke={data.isIncrease ? "#ED7014" : "#22c55e"}
-                            strokeWidth={2}
-                            dot={false}
-                            animationDuration={600}
-                          />
+                          <Line type="monotone" dataKey="total" stroke={data.isIncrease ? "#ED7014" : "#22c55e"} strokeWidth={2} dot={false} animationDuration={600} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -316,10 +303,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             {
               label: "Top Category",
               value: (
-                <span className="font-bold text-gray-100">
-                  {topCategory
-                    ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})`
-                    : "—"}
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {topCategory ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})` : "—"}
                 </span>
               ),
             },
@@ -336,7 +321,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             {
               label: "Total Subs",
               value: (
-                <span className="font-bold text-gray-100">
+                <span className="font-bold text-gray-900 dark:text-gray-100">
                   {subscriptions?.length ?? 0}
                 </span>
               ),
@@ -346,12 +331,12 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               key={idx}
               variants={cardItem}
               className="flex flex-col justify-between p-3 rounded-lg 
-              bg-gradient-to-b from-[#1a1f2a] to-[#0e1420]
-              border border-gray-800/70 hover:border-[#ed7014]/60 
-              shadow-inner shadow-[#141824] transition-all duration-300 
+              bg-gradient-to-b from-white to-gray-100 dark:from-[#1a1f2a] dark:to-[#0e1420]
+              border border-gray-300 dark:border-gray-800/70 hover:border-[#ed7014]/60 
+              shadow-sm dark:shadow-inner dark:shadow-[#141824] transition-all duration-300 
               h-full min-h-[88px]"
             >
-              <div className="text-gray-400">{item.label}</div>
+              <div className="text-gray-700 dark:text-gray-400">{item.label}</div>
               {item.value}
             </motion.div>
           ))}
@@ -359,11 +344,11 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
         {/* Budget usage */}
         <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <div className="flex justify-between text-xs text-gray-700 dark:text-gray-400 mb-1">
             <span>Budget usage</span>
             <span>{percentUsed}%</span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
             <motion.div
               className="h-2 rounded-full bg-[#ED7014]"
               initial={{ width: 0 }}
@@ -384,7 +369,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               className={`px-3 py-1 mb-2 rounded-full text-sm font-medium transition-all duration-300 
                 ${activeTab === tab
                   ? "bg-[#ED7014] text-white shadow-md shadow-[#ed7014]/30"
-                  : "bg-gray-800/60 text-gray-300 hover:bg-[#ed7014]/30 hover:text-white"
+                  : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/30 hover:text-white"
                 }`}
             >
               {tab}
@@ -474,9 +459,9 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           className="flex flex-col md:flex-row md:items-center md:justify-between mb-3"
         >
           <div>
-            <h4 className="text-sm font-semibold text-gray-100">Projection for the last {activeRange}</h4>
-            <p className="text-xs text-gray-400 mt-1 max-w-md">
-              💡 These bars estimate your spending pattern based on current subscriptions.{"\n"}
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Projection for the last {activeRange}</h4>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 max-w-md">
+              💡 These bars estimate your spending pattern based on current subscriptions.<br />
               They dynamically project monthly costs to help visualize trends.
             </p>
           </div>
@@ -492,7 +477,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 
                 ${activeRange === range
                     ? "bg-[#ED7014] text-white shadow-md shadow-[#ed7014]/40"
-                    : "bg-gray-800/60 text-gray-300 hover:bg-[#ed7014]/40 hover:text-white"
+                    : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/40 hover:text-white"
                   }`}
               >
                 {range}
@@ -522,30 +507,20 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={animatedData.length ? animatedData : spendingData}>
-                  <XAxis
-                    dataKey="month"
-                    stroke="#aaa"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={{ stroke: "#333" }}
-                  />
+                  <XAxis dataKey="month" stroke="#aaa" fontSize={12} tickLine={false} axisLine={{ stroke: "#333" }} />
                   <YAxis hide />
                   <Tooltip
                     cursor={{ fill: "rgba(255,255,255,0.05)" }}
                     formatter={(v) => [`${currency} ${v.toFixed(2)}`, "Spending"]}
                     contentStyle={{
-                      backgroundColor: "#1e293b",
+                      backgroundColor: "rgba(255,255,255,0.9)",
+                      color: "#000",
                       borderRadius: "6px",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                      color: "#fff",
+                      border: "1px solid rgba(0,0,0,0.1)",
                     }}
+                    wrapperStyle={{ backdropFilter: "blur(8px)" }}
                   />
-                  <Bar
-                    dataKey="animatedValue"
-                    radius={[10, 10, 10, 10]}
-                    fill="url(#barGradient)"
-                    isAnimationActive={false}
-                  />
+                  <Bar dataKey="animatedValue" radius={[10, 10, 10, 10]} fill="url(#barGradient)" isAnimationActive={false} />
                   <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#ED7014" stopOpacity={0.9} />

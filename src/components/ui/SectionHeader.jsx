@@ -9,7 +9,7 @@ export default function SectionHeader({ title, subtitle }) {
         duration: 0.35,
         ease: "easeOut",
       }}
-      className="px-2 mb-2"
+      className="px-2 mb-3"
     >
       <h2 className="text-xs uppercase tracking-wide text-gray-500">
         {title}
