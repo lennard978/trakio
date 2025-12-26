@@ -39,7 +39,6 @@ const MONTHLY_FACTOR = {
   triennial: 1 / 36,
 };
 
-const TABS = ["General", "Categories", "Frequency", "Payment Methods", "Trends", "Forecast"];
 
 const Stat = ({ label, value }) => (
   <div className="flex justify-between text-sm py-1 border-b border-gray-300 dark:border-gray-800/60">
@@ -52,7 +51,14 @@ const Stat = ({ label, value }) => (
 // ✨ Glossy gradient section container with light/dark mode
 const Section = ({ title, children }) => {
   const { t } = useTranslation(); // ✅ Fix: bring t into this scope
-
+  const TABS = [
+    t("tabs.general"),
+    t("tabs.categories"),
+    t("tabs.frequency"),
+    t("tabs.payment_methods"),
+    t("tabs.trends"),
+    t("tabs.forecast"),
+  ];
   return (
     <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
   border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
@@ -483,7 +489,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   <Label
                     content={
                       <PieCenterLabel
-                        title="Total this month"
+                        title={t("total_this_month")}
                         value={`${currency} ${(data.totalThisMonth ?? 0).toFixed(2)}`}
                       />
                     }

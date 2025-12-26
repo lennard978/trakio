@@ -6,6 +6,7 @@ import {
   animate,
 } from "framer-motion";
 import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const COLORS = {
   green: "#22C55E",
@@ -14,7 +15,6 @@ const COLORS = {
   gray: "#6B7280",
 };
 
-// === Animated Circular Badge ===
 function StatusBadge({ label, color, emoji, value = 0 }) {
   const motionValue = useMotionValue(0);
   const radius = 9;
@@ -86,67 +86,28 @@ function StatusBadge({ label, color, emoji, value = 0 }) {
   );
 }
 
-// === Sparkline ===
-function ConfidenceSparkline({ trends, color }) {
-  if (!trends?.length) return null;
-  const sparkData = trends.slice(-6).map((t) => ({
-    month: t.label,
-    value: t.total,
-  }));
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="h-[60px] mt-2"
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={sparkData}>
-          <XAxis
-            dataKey="month"
-            stroke="#555"
-            fontSize={10}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip
-            cursor={false}
-            formatter={(v) => [`${v.toFixed(2)}`, "Spending"]}
-            contentStyle={{
-              backgroundColor: "rgba(255,255,255,0.9)",
-              borderRadius: "6px",
-              border: "1px solid rgba(0,0,0,0.1)",
-              color: "#000",
-            }}
-          />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={color || COLORS.orange}
-            strokeWidth={2}
-            dot={false}
-            animationDuration={700}
-            isAnimationActive
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </motion.div>
-  );
-}
-
-// === Main Component ===
 export default function InsightsSummary({ data, currency }) {
+  const { t } = useTranslation();
+
   const { summaryLines, status, confidence } = useMemo(() => {
     if (!data) {
       return {
-        summaryLines: ["📊 Not enough data to generate insights yet."],
-        status: { label: "No Data", color: COLORS.gray, emoji: "⚪", value: 0 },
-        confidence: { label: "Unknown", color: COLORS.gray, emoji: "❔", value: 0 },
+        summaryLines: [t("insight_line_no_data")],
+        status: {
+          label: t("insight_status_no_data"),
+          color: COLORS.gray,
+          emoji: "⚪",
+          value: 0,
+        },
+        confidence: {
+          label: t("insight_confidence_unknown"),
+          color: COLORS.gray,
+          emoji: "❔",
+          value: 0,
+        },
       };
     }
 
-    // ✅ Ensure trends exist before use
     const trends = data.trends || [];
 
     const lastMonth = trends.at(-2)?.total ?? 0;
@@ -154,14 +115,12 @@ export default function InsightsSummary({ data, currency }) {
     const growth = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
     const forecast = data.forecast ?? thisMonth * 1.08;
 
-    // ✅ Unified Budget Logic (same as BudgetOverviewChart)
     const monthlyBudget = Number(localStorage.getItem("monthly_budget")) || 0;
     const overBudget = monthlyBudget > 0 && thisMonth > monthlyBudget;
     const percentUsed = monthlyBudget
       ? ((thisMonth / monthlyBudget) * 100).toFixed(1)
       : "0.0";
 
-    // --- Volatility ---
     const volatility =
       trends.length > 3
         ? trends
@@ -174,27 +133,26 @@ export default function InsightsSummary({ data, currency }) {
         : 0;
 
     let confidenceLevel = {
-      label: "Stable",
+      label: t("insight_confidence_stable"),
       color: COLORS.green,
       emoji: "🟢",
       value: 90,
     };
     if (volatility > thisMonth * 0.5)
       confidenceLevel = {
-        label: "Uncertain",
+        label: t("insight_confidence_uncertain"),
         color: COLORS.red,
         emoji: "🔴",
         value: 40,
       };
     else if (volatility > thisMonth * 0.25)
       confidenceLevel = {
-        label: "Volatile",
+        label: t("insight_confidence_volatile"),
         color: COLORS.orange,
         emoji: "🟠",
         value: 65,
       };
 
-    // --- Categories ---
     const categories = Object.entries(data.categories || {});
     const topCategory = categories.sort((a, b) => b[1] - a[1])[0];
     const totalSpending = categories.reduce((s, [, v]) => s + v, 0);
@@ -202,9 +160,8 @@ export default function InsightsSummary({ data, currency }) {
       ? (topCategory[1] / totalSpending) * 100
       : 0;
 
-    // --- Spending Status ---
     let status = {
-      label: "Balanced",
+      label: t("insight_status_balanced"),
       color: COLORS.green,
       emoji: "🟢",
       value: Math.abs(growth),
@@ -212,75 +169,88 @@ export default function InsightsSummary({ data, currency }) {
 
     if (overBudget) {
       status = {
-        label: "Over Budget",
+        label: t("insight_status_over_budget"),
         color: COLORS.red,
         emoji: "🔴",
         value: Math.min(Number(percentUsed), 100),
       };
     } else if (growth > 15 || topPercent > 45) {
       status = {
-        label: "High Spending",
+        label: t("insight_status_high_spending"),
         color: COLORS.orange,
         emoji: "🟠",
         value: Math.min(growth, 100),
       };
     } else if (growth > 5 && growth <= 15) {
       status = {
-        label: "Active Spending",
+        label: t("insight_status_active_spending"),
         color: COLORS.orange,
         emoji: "🟠",
         value: Math.min(growth, 100),
       };
     } else if (growth < -5) {
       status = {
-        label: "Improving",
+        label: t("insight_status_improving"),
         color: COLORS.green,
         emoji: "🟢",
         value: Math.abs(growth),
       };
     }
 
-    // --- Format helper ---
     const fmt = (num) =>
       (isFinite(num) ? num : 0).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
 
-    // --- Summary Lines ---
-    const summaryLines = [
-      growth > 10
-        ? `📈 You spent ${growth.toFixed(1)}% more than last month.`
-        : growth < -10
-          ? `📉 Great work — spending decreased by ${Math.abs(growth).toFixed(1)}%.`
-          : `⚖️ Your spending remained stable this month.`,
-    ];
+    const summaryLines = [];
 
-    if (topCategory)
+    if (growth > 10) {
+      summaryLines.push(t("insight_line_growth_up", { growth: growth.toFixed(1) }));
+    } else if (growth < -10) {
+      summaryLines.push(t("insight_line_growth_down", { growth: Math.abs(growth).toFixed(1) }));
+    } else {
+      summaryLines.push(t("insight_line_growth_stable"));
+    }
+
+    if (topCategory) {
       summaryLines.push(
-        `🏷️ Top category: **${topCategory[0]}**, ${currency} ${fmt(
-          topCategory[1]
-        )} (${topPercent.toFixed(1)}%).`
+        t("insight_line_top_category", {
+          category: topCategory[0],
+          currency,
+          amount: fmt(topCategory[1]),
+          percent: topPercent.toFixed(1),
+        })
       );
+    }
 
     summaryLines.push(
-      `💰 Total spent this month: ${currency} ${fmt(thisMonth)}.`,
+      t("insight_line_total_spent", {
+        currency,
+        amount: fmt(thisMonth),
+      }),
       monthlyBudget
-        ? `📊 Budget used: ${percentUsed}% of your ${currency} ${fmt(
-          monthlyBudget
-        )} budget.`
-        : `📊 No budget set for this month.`,
-      `🔮 Forecast for next month: ${currency} ${fmt(forecast)}.`,
+        ? t("insight_line_budget_used", {
+          percentUsed,
+          currency,
+          budget: fmt(monthlyBudget),
+        })
+        : t("insight_line_no_budget"),
+      t("insight_line_forecast", {
+        currency,
+        forecast: fmt(forecast),
+      }),
       topPercent > 40
-        ? `⚠️ ${topPercent.toFixed(
-          0
-        )}% of spending is in **${topCategory[0]}** — consider balancing.`
-        : `🎯 Your spending is well distributed across categories.`,
-      `💡 Keep tracking — consistency builds better results.`
+        ? t("insight_line_top_warning", {
+          percent: topPercent.toFixed(0),
+          category: topCategory[0],
+        })
+        : t("insight_line_distribution_good"),
+      t("insight_line_consistency_tip")
     );
 
     return { summaryLines, status, confidence: confidenceLevel };
-  }, [data, currency]);
+  }, [data, currency, t]);
 
   return (
     <motion.div
@@ -293,15 +263,12 @@ export default function InsightsSummary({ data, currency }) {
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Financial Insights
+          {t("insight_title")}
         </h3>
         <div className="flex gap-2">
-          {/* <StatusBadge {...status} /> */}
           <StatusBadge {...confidence} />
         </div>
       </div>
-
-      {/* <ConfidenceSparkline trends={data.trends} color={confidence.color} /> */}
 
       <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed mt-3">
         {summaryLines.map((line, i) => (

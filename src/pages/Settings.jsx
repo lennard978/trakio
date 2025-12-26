@@ -49,7 +49,7 @@ export default function Settings({ setActiveSheet }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen text-gray-400">
-        Loading...
+        {t("loading") || "Loading..."}
       </div>
     );
   }

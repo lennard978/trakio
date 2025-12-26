@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { consumePremiumIntent } from "../../utils/premiumIntent";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function formatDate(d) {
   if (!d) return null;
@@ -48,6 +49,7 @@ function clamp(n, min = 0, max = 100) {
 export default function SubscriptionStatusCard() {
   const premium = usePremium();
   const navigate = useNavigate();
+  const { t } = useTranslation(); // ✅ Fix: bring t into this scope
 
   const {
     loading,
@@ -129,9 +131,9 @@ export default function SubscriptionStatusCard() {
         }
   `}
     >
-      {premium.hasActiveTrial && "Trial"}
-      {premium.isPremium && "Active"}
-      {!premium.hasActiveTrial && !premium.isPremium && "Free"}
+      {premium.hasActiveTrial && t("subscription_badge_trial")}
+      {premium.isPremium && t("subscription_badge_active")}
+      {!premium.hasActiveTrial && !premium.isPremium && t("subscription_badge_free")}
     </span>
 
   ) : null;
@@ -139,27 +141,27 @@ export default function SubscriptionStatusCard() {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Subscription</h3>
+        <h3 className="text-sm font-semibold">{t("subscription")}</h3>
         {badge}
       </div>
 
       {loading && (
-        <p className="text-sm text-gray-400">Checking subscription status…</p>
+        <p className="text-sm text-gray-400">{t("subscription_checking")}</p>
       )}
 
       {!loading && premium.isPremium && (
         <div className="space-y-2 text-sm">
           <p className="text-gray-700 dark:text-gray-300">
-            You have full access to all Premium features.
+            {t("subscription_active_access")}
           </p>
 
           {cancelAtPeriodEnd ? (
             <p className="text-yellow-600 dark:text-yellow-400">
-              Access ends on <strong>{formatDate(premiumEndsAt)}</strong>
+              {t("subscription_access_ends")}
             </p>
           ) : (
             <p className="text-gray-500">
-              Next billing date: <strong>{formatDate(premiumEndsAt)}</strong>
+              {t("subscription_next_billing", { date: formatDate(premiumEndsAt) || "N/A" })}
             </p>
           )}
 
@@ -168,11 +170,11 @@ export default function SubscriptionStatusCard() {
             <p className="text-gray-500">{nextBillingText}</p>
           )}
           <p className="text-xs text-gray-400">
-            Cancel anytime. Your plan stays active until the end of the billing period.
+            {t("subscription_cancel_note")}
           </p>
 
           <SettingButton variant="neutral" onClick={openBillingPortal}>
-            Manage subscription
+            {t("subscription_manage")}
           </SettingButton>
         </div>
       )}
@@ -180,20 +182,23 @@ export default function SubscriptionStatusCard() {
       {!loading && premium.hasActiveTrial && !premium.isPremium && (
         <div className="space-y-3 text-sm">
           <p className="text-gray-700 dark:text-gray-300">
-            You’re currently on a free trial.
+            {t("subscription_trial")}
           </p>
 
           {/* Trial end date */}
           {trialEndsAt && (
             <p className="text-gray-500">
-              Trial ends on <strong>{formatDate(trialEndsAt)}</strong>
+              {t("subscription_trial_ends", { date: formatDate(trialEndsAt) || "N/A" })}
             </p>
           )}
 
           {/* Days left */}
           <p className="text-xs text-gray-500">
-            {daysLeft} day{daysLeft === 1 ? "" : "s"} left
+            {t(daysLeft === 1 ? "subscription_trial_days_left" : "subscription_trial_days_left_plural", {
+              days: daysLeft,
+            })}
           </p>
+
 
           {/* Progress bar */}
           <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
@@ -216,7 +221,7 @@ export default function SubscriptionStatusCard() {
           {/* Price hint */}
           <p className="text-xs text-gray-400 flex items-center gap-1">
             <span className="text-green-400">💸</span>
-            €4/month after trial
+            {t("subscription_price_hint")}
           </p>
 
 
@@ -229,7 +234,7 @@ export default function SubscriptionStatusCard() {
                 : ""
             }
           >
-            Upgrade to Premium
+            {t("subscription_upgrade_cta")}
           </SettingButton>
 
           {/* Cancel trial */}
@@ -238,7 +243,7 @@ export default function SubscriptionStatusCard() {
             onClick={premium.cancelTrial}
             className="text-xs text-gray-400 hover:text-red-500 underline mt-1 self-start"
           >
-            Cancel trial
+            {t("subscription_cancel_trial")}
           </button>
         </div>
       )}
@@ -247,25 +252,25 @@ export default function SubscriptionStatusCard() {
       {!loading && status === "past_due" && (
         <div className="space-y-2 text-sm">
           <p className="text-gray-700 dark:text-gray-300">
-            Your last payment failed.
+            {t("subscription_failed")}
           </p>
           <p className="text-gray-500">
-            Please update your billing details to keep Premium access.
+            {t("subscription_failed_details")}
           </p>
 
           <SettingButton variant="danger" onClick={openBillingPortal}>
-            Fix payment
+            {t("subscription_fix_payment")}
           </SettingButton>
         </div>
       )}
       {!loading && !premium.isPremium && !premium.hasActiveTrial && (
         <div className="space-y-3 text-sm">
           <p className="text-gray-700 dark:text-gray-300">
-            You’re currently on the free plan.
+            {t("subscription_free_plan")}
           </p>
 
           <p className="text-gray-500">
-            Start a free 7-day trial to unlock premium features.
+            {t("subscription_start_trial_info")}
           </p>
 
           {/* Start trial (primary CTA) */}
@@ -278,7 +283,7 @@ export default function SubscriptionStatusCard() {
                   : ""
               }
             >
-              Start free trial
+              {t("subscription_start_trial")}
             </SettingButton>
 
           )}
@@ -288,16 +293,14 @@ export default function SubscriptionStatusCard() {
             variant="neutral"
             onClick={() => navigate("/premium")}
           >
-            View Premium plans
+            {t("subscription_view_plans")}
           </SettingButton>
 
           <p className="text-xs text-gray-400">
-            No payment required · Cancel anytime
+            {t("subscription_no_payment_note")}
           </p>
         </div>
       )}
-
-
     </Card>
   );
 }
