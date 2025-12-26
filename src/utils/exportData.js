@@ -1,23 +1,28 @@
-import { exportPaymentHistoryCSV } from "./exportCSV";
 
 export function exportSubscriptionsCSV(subscriptions) {
   const rows = [
-    ["name", "price", "currency", "frequency", "category", "method"]
+    ["name", "frequency", "category", "method", "currency", "amount", "paymentDate"]
   ];
 
   subscriptions.forEach((s) => {
-    rows.push([
-      s.name,
-      s.price,
-      s.currency || "EUR",
-      s.frequency,
-      s.category,
-      s.method || ""
-    ]);
+    const payments = Array.isArray(s.payments) ? s.payments : [];
+
+    payments.forEach((p) => {
+      rows.push([
+        s.name,
+        s.frequency || "monthly",
+        s.category || "Uncategorized",
+        s.method || "Unknown",
+        p.currency || s.currency || "EUR",
+        p.amount?.toFixed(2) ?? "0.00",
+        p.date || ""
+      ]);
+    });
   });
 
   downloadCSV(rows, "subscriptions.csv");
 }
+
 
 export function exportAnnualSummaryCSV(subscriptions) {
   const rows = [["name", "annual_cost", "currency"]];

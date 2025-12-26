@@ -33,7 +33,7 @@ import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 import SectionHeader from "../components/ui/SectionHeader";
 
 export default function Settings({ setActiveSheet }) {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currency } = useCurrency();
@@ -45,6 +45,18 @@ export default function Settings({ setActiveSheet }) {
   const [importPreview, setImportPreview] = useState(null);
   const [importFile, setImportFile] = useState(null);
   const fileInputRef = React.useRef(null);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen text-gray-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user?.email) {
+    return <p className="text-center mt-10 text-gray-500">You are not logged in.</p>;
+  }
 
   const handleRate = () => {
     window.open("https://trakio.de", "_blank");
@@ -66,6 +78,8 @@ export default function Settings({ setActiveSheet }) {
   };
 
   useEffect(() => {
+    console.log("👤 User object:", user); // <- Add this
+
     if (!user?.email) return;
 
     (async () => {
@@ -80,6 +94,7 @@ export default function Settings({ setActiveSheet }) {
       });
 
       const data = await res.json();
+
       setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
     })();
   }, [user?.email]);
@@ -120,6 +135,8 @@ export default function Settings({ setActiveSheet }) {
         };
       }
       if (row.paymentDate || row.datePaid) {
+        console.log("📄 Raw row:", row);
+
         const date = row.paymentDate || row.datePaid;
         const amount = Number(row.amount || row.price || 0);
         subsMap[name].payments.push({
@@ -148,10 +165,25 @@ export default function Settings({ setActiveSheet }) {
       return;
     }
 
-    // 🔍 Create a Set of existing payment keys to detect duplicates
+    const token = localStorage.getItem("token");
+
+    // 🔁 Refetch subscriptions from backend (avoid stale state)
+    const res = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: "get", email: user.email }),
+    });
+
+    const backend = await res.json();
+    const current = Array.isArray(backend.subscriptions) ? backend.subscriptions : [];
+
+    // 🔍 Duplicate detection
     const existingPaymentIndex = new Set();
 
-    subscriptions.forEach((s) => {
+    current.forEach((s) => {
       s.payments?.forEach((p) => {
         const key = [
           s.name,
@@ -164,7 +196,7 @@ export default function Settings({ setActiveSheet }) {
       });
     });
 
-    // ✅ Filter out duplicate payments
+    // ✅ Filter duplicates
     let duplicateCount = 0;
 
     const cleaned = parsed
@@ -411,33 +443,6 @@ export default function Settings({ setActiveSheet }) {
               })
             }
           />
-          <SettingsRow
-            icon={<TrashIcon className="w-6 h-6" />}
-            title={t("settings_delete_all_subs")}
-            description={t("settings_delete_all_subs_desc") || "Permanently delete all your subscriptions"}
-            accent="red"
-            glow
-            onClick={async () => {
-              if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
-
-              const token = localStorage.getItem("token");
-
-              await fetch("/api/subscriptions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  action: "save",
-                  subscriptions: [],
-                }),
-              });
-
-              setSubscriptions([]);
-              alert("✅ " + (t("settings_delete_all_subs_success") || "All subscriptions deleted successfully."));
-            }}
-          />
 
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
@@ -453,6 +458,44 @@ export default function Settings({ setActiveSheet }) {
             ref={fileInputRef}
             className="hidden"
             onChange={(e) => handleImportCSV(e.target.files?.[0])}
+          />
+          <SettingsRow
+            icon={<TrashIcon className="w-6 h-6" />}
+            title={t("settings_delete_all_subs")}
+            description={t("settings_delete_all_subs_desc") || "Permanently delete all your subscriptions"}
+            accent="red"
+            glow
+            onClick={async () => {
+              if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
+              console.log(importFile)
+              const token = localStorage.getItem("token");
+
+              await fetch("/api/subscriptions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  action: "save",
+                  subscriptions: [],
+                }),
+              });
+
+              // ✅ Immediately re-fetch from backend
+              const res = await fetch("/api/subscriptions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ action: "get", email: user.email }),
+              });
+              const data = await res.json();
+              setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
+
+              alert("✅ " + (t("settings_delete_all_subs_success") || "All subscriptions deleted successfully."));
+            }}
           />
         </Card>
       </section>
@@ -579,10 +622,7 @@ export default function Settings({ setActiveSheet }) {
                   const token = localStorage.getItem("token");
 
                   try {
-                    // 1. Combine existing + imported subscriptions
-                    const merged = [...subscriptions, ...importFile];
-
-                    // 2. Save to backend
+                    // Save only new cleaned subscriptions
                     await fetch("/api/subscriptions", {
                       method: "POST",
                       headers: {
@@ -591,31 +631,28 @@ export default function Settings({ setActiveSheet }) {
                       },
                       body: JSON.stringify({
                         action: "save",
-                        subscriptions: merged,
+                        subscriptions: importFile,
                       }),
                     });
 
-                    // 3. Update local UI
-                    setSubscriptions(merged);
+                    // Refresh UI after import
+                    const res = await fetch("/api/subscriptions", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ action: "get", email: user.email }),
+                    });
+                    const data = await res.json();
+                    setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
 
-                    // 4. Notify
-                    alert("✅ t('import_success_message') || 'Import successful!'");
+                    alert(t("import_success_message") === "import_success_message" ? "Import successful!" : t("import_success_message"));
                   } catch (err) {
-                    console.error(t("import_failed_message"), err);
-                    alert("❌ t('import_failed_message') || 'Import failed. Please try again.'");
+                    console.error("Import failed", err);
+                    alert(t("import_failed_message") || "Import failed. Please try again.");
                   }
 
-                  setImportPreview(null);
-                  setImportFile(null);
-                }}
-
-                className="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                {t("cancel") || "Cancel"}
-              </button>
-              <button
-                onClick={() => {
-                  alert("✅ t('import_confirmed_message') || 'Import confirmed!'");
                   setImportPreview(null);
                   setImportFile(null);
                 }}
@@ -623,6 +660,7 @@ export default function Settings({ setActiveSheet }) {
               >
                 {t("confirm_import") || "Confirm Import"}
               </button>
+
             </div>
           </div>
         </div>

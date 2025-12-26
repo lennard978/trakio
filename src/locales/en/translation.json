@@ -440,5 +440,12 @@
 	"tab_trends": "Trends",
 	"tab_forecast": "Forecast",
 
-	"currency_symbol": "{{currency}}"
+	"currency_symbol": "{{currency}}",
+	"import_success_message": "Import successful!",
+	"import_failed_message": "Import failed. Please try again.",
+	"confirm_import": "Confirm Import",
+	"cancel": "Cancel",
+
+	"settings_delete_all_subs_success": "All subscriptions deleted successfully.",
+	"settings_delete_all_subs_confirm": "Are you sure you want to delete all subscriptions?"
 }
