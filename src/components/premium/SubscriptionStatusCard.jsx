@@ -161,8 +161,9 @@ export default function SubscriptionStatusCard() {
             </p>
           ) : (
             <p className="text-gray-500">
-              {t("subscription_next_billing", { date: formatDate(premiumEndsAt) || "N/A" })}
-            </p>
+              {t("subscription_next_billing", {
+                date: premiumEndsAt ? formatDate(premiumEndsAt) : "N/A",
+              })}            </p>
           )}
 
           {/* Trust boosters */}

@@ -315,6 +315,36 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               ),
               icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
             },
+
+            {
+              label: t("top_category"),
+              icon: <StarIcon className="w-5 h-5 text-green-600" />,
+              value: (
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {topCategory
+                    ? (
+                      <>
+                        {topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} <br />
+                        <span className="text-xl">{getCurrencyFlag(currency)} </span>
+                        ({currency} {(Number(topCategory[1]) || 0).toFixed(2)})
+                      </>
+                    )
+
+                    : "—"}
+                </span>
+              ),
+            },
+            {
+              label: t("avg_per_sub"),
+              icon: <AdjustmentsVerticalIcon className="w-5 h-5 text-pink-600" />,
+              value: (
+                <AnimatedNumber
+                  value={Number(avgPerSub) || 0}
+                  prefix={currency + " "}
+                  decimals={2}
+                />
+              ),
+            },
             {
               label: t("active_subscriptions"),
               value: (
@@ -324,7 +354,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               ),
               icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
             },
-
             // === Existing Overview metrics ===
             {
               label: t("growth_rate"),
@@ -359,37 +388,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 );
               })(),
             },
-            {
-              label: t("top_category"),
-              icon: <StarIcon className="w-5 h-5 text-green-600" />,
-              value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {topCategory
-                    ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})`
-                    : "—"}
-                </span>
-              ),
-            },
-            {
-              label: t("avg_per_sub"),
-              icon: <AdjustmentsVerticalIcon className="w-5 h-5 text-pink-600" />,
-              value: (
-                <AnimatedNumber
-                  value={Number(avgPerSub) || 0}
-                  prefix={currency + " "}
-                  decimals={2}
-                />
-              ),
-            },
-            {
-              label: t("total_subs"),
-              icon: <AcademicCapIcon className="w-5 h-5 text-purple-600" />,
-              value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {subscriptions?.length ?? 0}
-                </span>
-              ),
-            },
+
           ].map((item, idx) => (
             <motion.div
               key={idx}
@@ -432,10 +431,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         <div className="flex flex-wrap justify-center mb-3 space-x-2">
           {TABS.map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               className={`px-3 py-1 mb-2 rounded-full text-sm font-medium transition-all duration-300 
-                ${activeTab === tab
+      ${activeTab === tab.key
                   ? "bg-[#ED7014] text-white shadow-md shadow-[#ed7014]/30"
                   : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/30 hover:text-white"
                 }`}
@@ -443,6 +442,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               {tab.label}
             </button>
           ))}
+
         </div>
 
         <div className="w-full min-h-[260px]">
@@ -578,7 +578,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   <YAxis hide />
                   <Tooltip
                     cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                    formatter={(v) => [`${currency} ${v.toFixed(2)}`, "Spending"]}
+                    formatter={(v) => [`${currency} ${v.toFixed(2)}`, t("spending")]}
                     contentStyle={{
                       backgroundColor: "rgba(255,255,255,0.9)",
                       color: "#000",

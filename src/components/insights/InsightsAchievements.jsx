@@ -1,21 +1,46 @@
 // src/components/insights/InsightsAchievements.jsx
 import React from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 export default function InsightsAchievements({ data }) {
+  const { t } = useTranslation();
   const achievements = [];
 
   if (data.growthRate < 0)
-    achievements.push({ icon: "💰", title: "Under Budget", desc: "You've reduced your monthly spending!" });
+    achievements.push({
+      icon: "💰",
+      title: t("achievements_under_budget_title"),
+      desc: t("achievements_under_budget_desc"),
+    });
+
   if (data.totalThisMonth < 100)
-    achievements.push({ icon: "🪙", title: "Saver Mode", desc: "Great job staying frugal this month." });
+    achievements.push({
+      icon: "🪙",
+      title: t("achievements_saver_mode_title"),
+      desc: t("achievements_saver_mode_desc"),
+    });
+
   if (data.topCategory && data.topCategory?.[1] > 50)
-    achievements.push({ icon: "🎬", title: "Streaming Fan", desc: "Your top category is entertainment!" });
+    achievements.push({
+      icon: "🎬",
+      title: t("achievements_streaming_fan_title"),
+      desc: t("achievements_streaming_fan_desc"),
+    });
+
   if ((data.trends?.length ?? 0) > 6)
-    achievements.push({ icon: "📈", title: "Consistent Tracker", desc: "6+ months of tracking activity!" });
+    achievements.push({
+      icon: "📈",
+      title: t("achievements_consistent_tracker_title"),
+      desc: t("achievements_consistent_tracker_desc"),
+    });
 
   if (!achievements.length)
-    achievements.push({ icon: "🌟", title: "Explorer", desc: "Keep tracking to unlock more insights." });
+    achievements.push({
+      icon: "🌟",
+      title: t("achievements_explorer_title"),
+      desc: t("achievements_explorer_desc"),
+    });
 
   return (
     <div
@@ -24,7 +49,7 @@ export default function InsightsAchievements({ data }) {
       hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300 p-4"
     >
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
-        Achievements
+        {t("achievements_title")}
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {achievements.map((a, i) => (

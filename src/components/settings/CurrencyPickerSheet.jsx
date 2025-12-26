@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { XMarkIcon, CheckIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useCurrency } from "../../context/CurrencyContext";
 import { CURRENCY_LABELS } from "../../utils/currencyLabels";
+import { useTranslation } from "react-i18next";
 
 const ALL_CURRENCIES = Object.keys(CURRENCY_LABELS);
 const CLOSE_THRESHOLD = 120;
@@ -11,6 +12,7 @@ export default function CurrencyPickerSheet({ onClose }) {
   const [query, setQuery] = useState("");
   const [offsetY, setOffsetY] = useState(0);
   const startY = useRef(null);
+  const { t } = useTranslation();
 
   const filtered = useMemo(() => {
     if (!query) return ALL_CURRENCIES;
@@ -96,9 +98,9 @@ export default function CurrencyPickerSheet({ onClose }) {
         {/* header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Select Base Currency</h2>
+            <h2 className="text-lg font-semibold">{t("settings_currency_select")}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Choose your base currency
+              {t("settings_currency_subtitle")}
             </p>
           </div>
           <button onClick={onClose}>

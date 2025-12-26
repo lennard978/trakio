@@ -151,7 +151,7 @@ export default function SubscriptionItem({
   return (
     <SwipeToDeleteWrapper
       onDelete={() => onDelete(item.id)}
-      deleteLabel={t("delete")}
+      deleteLabel={t("button_delete")}
     >
       {({ isSwiping }) => {
         const readableText = useReadableText({

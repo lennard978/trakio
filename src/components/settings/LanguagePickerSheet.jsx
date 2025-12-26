@@ -4,7 +4,7 @@ import languages from "../../utils/languages";
 import React, { useEffect, useMemo, useState } from "react";
 
 export default function LanguagePickerSheet({ onClose }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -57,9 +57,9 @@ export default function LanguagePickerSheet({ onClose }) {
         {/* Header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Select Language</h2>
+            <h2 className="text-lg font-semibold">{t("settings_language_select")}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Choose your app language
+              {t("settings_language_select_subtitle")}
             </p>
           </div>
           <button onClick={onClose}>

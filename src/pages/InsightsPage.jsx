@@ -129,11 +129,11 @@ export default function InsightsPage() {
           <table className="w-full text-xs table-auto text-gray-700 dark:text-gray-200">
             <thead>
               <tr className="border-b border-gray-300 dark:border-gray-700/70 bg-gray-100 dark:bg-[#141824]/60 text-gray-600 dark:text-gray-400">
-                <th className="py-2 px-3 text-left font-medium">Subscription</th>
-                <th className="py-2 px-3 text-left font-medium">Frequency</th>
-                <th className="py-2 px-3 text-center font-medium">Payments</th>
-                <th className="py-2 px-3 text-left font-medium">Dates</th>
-                <th className="py-2 px-3 text-right font-medium">Amount Paid</th>
+                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Subscription")}</th>
+                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Frequency")}</th>
+                <th className="py-2 px-3 text-center font-medium">{t("insights_payment_Payments")}</th>
+                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Dates")}</th>
+                <th className="py-2 px-3 text-right font-medium">{t("insights_payment_Amount")}</th>
               </tr>
             </thead>
             <tbody>
