@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePremium } from "../hooks/usePremium";
+import { useTranslation } from "react-i18next";
 
 export default function Success() {
   const navigate = useNavigate();
   const premium = usePremium();
   const [status, setStatus] = useState("activating");
-
+  const { t } = useTranslation();
   useEffect(() => {
     let attempts = 0;
     const maxAttempts = 10;
