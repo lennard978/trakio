@@ -48,30 +48,23 @@ const Stat = ({ label, value }) => (
 );
 
 
+
 // ✨ Glossy gradient section container with light/dark mode
 const Section = ({ title, children }) => {
-  const { t } = useTranslation(); // ✅ Fix: bring t into this scope
-  const TABS = [
-    t("tabs.general"),
-    t("tabs.categories"),
-    t("tabs.frequency"),
-    t("tabs.payment_methods"),
-    t("tabs.trends"),
-    t("tabs.forecast"),
-  ];
   return (
     <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
-  border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
-  transition-all duration-300 hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60 p-4 mb-4">
+      border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
+      transition-all duration-300 hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60 p-4 mb-4">
       {title && (
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
-          {t("section_overview")}
+          {title}
         </h3>
       )}
       {children}
     </div>
   );
 };
+
 
 function PieCenterLabel({ viewBox, title, value }) {
   const { cx, cy } = viewBox;
@@ -121,6 +114,16 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const v = localStorage.getItem("monthly_budget");
     return v ? Number(v) : null;
   });
+
+  const TABS = useMemo(() => [
+    { key: "General", label: t("tab_general") },
+    { key: "Categories", label: t("tab_categories") },
+    { key: "Frequency", label: t("tab_frequency") },
+    { key: "Payment Methods", label: t("tab_payment_methods") },
+    { key: "Trends", label: t("tab_trends") },
+    { key: "Forecast", label: t("tab_forecast") },
+  ], [t]);
+
 
   // === MAIN DATA ===
   const data = useMemo(() => {
@@ -288,7 +291,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   return (
     <div className="space-y-4">
       {/* Overview */}
-      <Section title={t("overview")}>
+      <Section title={t("Overview")}>
         <motion.div variants={cardContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           {[
             // === Summary metrics ===
@@ -305,7 +308,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             {
               label: t("annual_cost"),
               value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
+                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
                   {`${currency} ${(data.totalThisYear ?? 0).toFixed(2)}`}
                 </span>
               ),
@@ -319,15 +323,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 </span>
               ),
               icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
-            },
-            {
-              label: t("avg_per_subscription"),
-              value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {currency} {(Number(avgPerSub) || 0).toFixed(2)}
-                </span>
-              ),
-              icon: <TagIcon className="w-5 h-5 text-orange-600" />,
             },
 
             // === Existing Overview metrics ===
@@ -445,7 +440,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/30 hover:text-white"
                 }`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
