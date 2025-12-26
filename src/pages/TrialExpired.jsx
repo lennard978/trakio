@@ -42,8 +42,9 @@ export default function TrialExpired() {
           to="/dashboard"
           className="text-blue-600 dark:text-blue-300 hover:underline text-sm"
         >
-          Continue in read-only mode
+          {t("trial_expired_continue_read_only")}
         </Link>
+
       </div>
     </div>
   );

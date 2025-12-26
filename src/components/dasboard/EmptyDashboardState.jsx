@@ -1,22 +1,24 @@
 import { Link } from "react-router-dom";
 import { useCurrency } from "../../context/CurrencyContext";
 import { usePremium } from "../../hooks/usePremium";
+import { useTranslation, Trans } from "react-i18next";
 
 export default function EmptyDashboardState() {
   const { currency } = useCurrency();
   const { isPremium } = usePremium();
+  const { t } = useTranslation();
 
   return (
     <div className="mt-12 mb-8 text-center px-4">
       {/* Title */}
       <h1 className="text-3xl font-bold tracking-tight mb-3">
-        No Subscriptions Yet
+        {t("insights_no_subscriptions")}
       </h1>
 
       {/* Description */}
       <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
-        Start tracking your subscriptions in <strong>{currency}</strong> to
-        understand your spending patterns and stay in control of your finances.
+        <Trans i18nKey="dashboard_intro_text" values={{ currency }} components={{ 1: <strong /> }} />
+
       </p>
 
       {/* CTA */}
@@ -43,22 +45,22 @@ export default function EmptyDashboardState() {
           />
 
           <span className="relative text-xl leading-none">＋</span>
-          <span className="relative">Add your first subscription</span>
+          <span className="relative">{t("add_first")}</span>
         </button>
       </Link>
 
       {/* Premium teaser */}
       {!isPremium && (
         <div className="mt-4 text-xs text-orange-600 dark:text-orange-400">
-          Premium unlocks analytics, alerts & exports
+          {t("premium_unlock")}
         </div>
       )}
 
       {/* Feature bullets */}
       <div className="mt-10 space-y-4 text-left max-w-sm mx-auto">
-        <Feature icon="👁️" text="Track monthly expenses automatically" />
-        <Feature icon="🔔" text="Get renewal reminders before you’re charged" />
-        <Feature icon="📈" text="Analyze spending trends over time" />
+        <Feature icon="👁️" text={t("track")} />
+        <Feature icon="🔔" text={t("get")} />
+        <Feature icon="📈" text={t("analyze")} />
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ export default function Signup() {
                   focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
-                placeholder="you@example.com"
+                placeholder={t("signup_email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -89,7 +89,7 @@ export default function Signup() {
                   focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
-                placeholder="******"
+                placeholder={t("signup_password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

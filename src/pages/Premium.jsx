@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePremium } from "../hooks/usePremium";
 
 import PremiumFeatureRow from "../components/PremiumFeatureRow";
+import { t } from "i18next";
 
 export default function Premium() {
   const premium = usePremium();
@@ -14,17 +15,17 @@ export default function Premium() {
     return (
       <div className="max-w-xl mx-auto mt-10 px-4 text-center">
         <h1 className="text-3xl font-bold mb-3">
-          You’re Premium 🎉
+          {t(premium_already_title)}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          All premium features are unlocked and ready to use.
+          {t(premium_already_message)}
         </p>
 
         <button
           onClick={() => navigate("/dashboard")}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow"
         >
-          Go to Dashboard
+          {t(premium_go_to_dashboard)}
         </button>
       </div>
     );
@@ -36,10 +37,10 @@ export default function Premium() {
       {/* HEADER */}
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">
-          Upgrade to Premium
+          {t(premium_upgrade_title)}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Take full control of your subscriptions — and your money.
+          {t(premium_subtitle)}
         </p>
       </div>
 
@@ -47,26 +48,26 @@ export default function Premium() {
       <div className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
         <div className="flex gap-2 items-start">
           <span>✔️</span>
-          <span>Never forget a subscription renewal again</span>
+          <span>{t(premium_benefit_1)}</span>
         </div>
         <div className="flex gap-2 items-start">
           <span>✔️</span>
-          <span>See upcoming payments before they hit your bank</span>
+          <span>{t(premium_benefit_2)}</span>
         </div>
         <div className="flex gap-2 items-start">
           <span>✔️</span>
-          <span>Get alerted before subscriptions silently get more expensive</span>
+          <span>{t(premium_benefit_3)}</span>
         </div>
       </div>
 
       {/* FEATURES */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-5 space-y-3">
-        <PremiumFeatureRow title="Upcoming payments overview" free premium />
-        <PremiumFeatureRow title="Monthly budget overview & spending progress" premium />
-        <PremiumFeatureRow title="Price increase alerts" premium />
-        <PremiumFeatureRow title="Detect forgotten and unused subscriptions" premium />
-        <PremiumFeatureRow title="Advanced analytics & payment timeline" premium />
-        <PremiumFeatureRow title="CSV export for reports & backups" premium />
+        <PremiumFeatureRow title={t(premium_feature_1)} free premium />
+        <PremiumFeatureRow title={t(premium_feature_2)} premium />
+        <PremiumFeatureRow title={t(premium_feature_3)} premium />
+        <PremiumFeatureRow title={t(premium_feature_4)} premium />
+        <PremiumFeatureRow title={t(premium_feature_5)} premium />
+        <PremiumFeatureRow title={t(premium_feature_6)} premium />
       </div>
 
 
@@ -78,17 +79,17 @@ export default function Premium() {
   p-4 space-y-3
 ">
         <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
-          Checkout & legal information
+          {t(premium_checkout_title)}
         </div>
 
         <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-          By continuing, you agree to our{" "}
+          {t(premium_checkout_text)}
           <a
             href="/agb"
             target="_blank"
             className="underline font-medium"
           >
-            Terms & Conditions
+            {t(premium_terms_of_service) || "Terms of Service"}
           </a>{" "}
           and{" "}
           <a
@@ -96,11 +97,9 @@ export default function Premium() {
             target="_blank"
             className="underline font-medium"
           >
-            Privacy Policy
+            {t(premium_privacy_policy) || "Privacy Policy"}
           </a>.
-          You also consent that the service starts immediately and
-          acknowledge that your right of withdrawal expires once the
-          service begins.
+          {t(premium_checkout_text_consent)}
         </p>
 
         <label className="flex items-start gap-3 cursor-pointer">
@@ -111,12 +110,12 @@ export default function Premium() {
             className="mt-1 accent-blue-600"
           />
           <span className="text-xs text-gray-700 dark:text-gray-300">
-            I understand and agree
+            {t(premium_consent_checkbox)}
           </span>
         </label>
 
         <div className="text-[11px] text-gray-500 dark:text-gray-400">
-          Secure payments · Cancel anytime · No hidden fees
+          {t(premium_checkout_footer)}
         </div>
       </div>
 
@@ -126,10 +125,10 @@ export default function Premium() {
       <div className="grid gap-4">
         {/* MONTHLY */}
         <div className="border rounded-2xl p-5 text-center dark:border-gray-800">
-          <h3 className="font-semibold mb-1">Monthly</h3>
-          <div className="text-3xl font-bold mb-1">€4</div>
+          <h3 className="font-semibold mb-1">{t(premium_monthly_title)}</h3>
+          <div className="text-3xl font-bold mb-1">{t(premium_monthly_price)}</div>
           <p className="text-sm text-gray-500 mb-4">
-            Billed monthly · Cancel anytime
+            {t(premium_monthly_note)}
           </p>
 
           <button
@@ -137,24 +136,24 @@ export default function Premium() {
             onClick={() => premium.startCheckout("monthly")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
           >
-            Start Monthly Plan
+            {t(premium_start_monthly_plan)}
           </button>
 
           <p className="text-xs text-gray-500 mt-2">
-            7-day free trial · Cancel anytime
+            {t(premium_monthly_trial_note)}
           </p>
         </div>
 
         {/* YEARLY */}
         <div className="border-2 border-blue-600 rounded-2xl p-5 text-center relative">
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-            Best value
+            {t(premium_best_value)}
           </span>
 
-          <h3 className="font-semibold mb-1">Yearly</h3>
-          <div className="text-3xl font-bold mb-1">€40</div>
+          <h3 className="font-semibold mb-1">{t(premium_yearly_title)}</h3>
+          <div className="text-3xl font-bold mb-1">{t(premium_yearly_price)}</div>
           <p className="text-xs text-gray-500 mb-4">
-            Save 17% · €3.33 / month
+            {t(premium_yearly_note)}
           </p>
 
           <button
@@ -162,21 +161,21 @@ export default function Premium() {
             onClick={() => premium.startCheckout("yearly")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
           >
-            Start Yearly Plan
+            {t(premium_yearly_button)}
           </button>
 
           <p className="text-xs text-gray-500 mt-2">
-            7-day free trial · Cancel anytime
+            {t(premium_trial_note)}
           </p>
         </div>
       </div>
 
       {/* TRUST */}
       <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-        <div>• 7-day free trial</div>
-        <div>• Cancel anytime in one click</div>
-        <div>• Secure payments handled by Stripe</div>
-        <div>• We never access your bank account</div>
+        <div>• {t(premium_trust_1)}</div>
+        <div>• {t(premium_trust_2)}</div>
+        <div>• {t(premium_trust_3)}</div>
+        <div>• {t(premium_trust_4)}</div>
       </div>
     </div>
   );

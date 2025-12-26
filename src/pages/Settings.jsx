@@ -14,6 +14,7 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import SettingsRow from "../components/ui/SettingsRow";
 import languages from "../utils/languages";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 
 import {
@@ -138,13 +139,34 @@ export default function Settings({ setActiveSheet }) {
 
   const handleImportCSV = async (file) => {
     if (!file) return;
+
     const text = await file.text();
     const parsed = parseCSV(text);
+
     if (!Array.isArray(parsed) || parsed.length === 0) {
       alert("Invalid or empty CSV file");
       return;
     }
+
+    // 🔍 Create a Set of existing payment keys to detect duplicates
+    const existingPaymentIndex = new Set();
+
+    subscriptions.forEach((s) => {
+      s.payments?.forEach((p) => {
+        const key = [
+          s.name,
+          new Date(p.date).toISOString().slice(0, 10),
+          Number(p.amount).toFixed(2),
+          p.currency || s.currency || "EUR",
+        ].join("|");
+
+        existingPaymentIndex.add(key);
+      });
+    });
+
+    // ✅ Filter out duplicate payments
     let duplicateCount = 0;
+
     const cleaned = parsed
       .map((s) => {
         const uniquePayments = [];
@@ -155,12 +177,14 @@ export default function Settings({ setActiveSheet }) {
             Number(p.amount).toFixed(2),
             p.currency || s.currency || "EUR",
           ].join("|");
+
           if (existingPaymentIndex.has(key)) {
             duplicateCount++;
           } else {
             uniquePayments.push(p);
           }
         });
+
         return { ...s, payments: uniquePayments };
       })
       .filter((s) => s.payments.length > 0);
@@ -178,6 +202,7 @@ export default function Settings({ setActiveSheet }) {
       sample: cleaned.slice(0, 3),
     });
   };
+
 
   const {
     isPremium,
@@ -267,12 +292,12 @@ export default function Settings({ setActiveSheet }) {
       {/* ACCOUNT INFO */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Account Info
+          {t("settings_section_account_info") || "Account Information"}
         </h2>
         <Card className="space-y-1">
           <SettingsRow
             icon={<UserCircleIcon className="w-6 h-6" />}
-            title="Account"
+            title={t("settings_account") || "Account"}
             description={user?.email}
             accent="indigo"
             glow
@@ -283,13 +308,13 @@ export default function Settings({ setActiveSheet }) {
       {/* ===================== PREFERENCES ===================== */}
       <section>
         <SectionHeader
-          title="Preferences"
-          subtitle="Customize your app experience"
+          title={t("settings_section_preferences") || "Preferences"}
+          subtitle={t("settings_section_preferences_desc") || "Customize your experience"}
         />
         <Card className="space-y-1">
           <SettingsRow
             icon={<GlobeAltIcon className="w-6 h-6" />}
-            title="Base Currency"
+            title={t("settings_currency") || "Currency"}
             glow
             description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
             onClick={() => {
@@ -302,7 +327,7 @@ export default function Settings({ setActiveSheet }) {
           {/* Appearance */}
           <SettingsRow
             icon={<MoonIcon className="w-6 h-6" />}
-            title="Appearance"
+            title={t("settings_appearance") || "Appearance"}
             glow
             description={isDark ? "Dark mode" : "Light mode"}
             right={
@@ -317,7 +342,7 @@ export default function Settings({ setActiveSheet }) {
           {/* Language */}
           <SettingsRow
             icon={<LanguageIcon className="w-6 h-6" />}
-            title="Language"
+            title={t("settings_language") || "Language"}
             glow
             description={
               currentLang
@@ -336,24 +361,23 @@ export default function Settings({ setActiveSheet }) {
       {/* ===================== DATA MANAGEMENT ===================== */}
       <section>
         <SectionHeader
-          title="Data Management"
-          subtitle="          You can export or delete your data at any time.
-"
+          title={t("settings_section_data_management") || "Data Management"}
+          subtitle={t("settings_section_data_management_desc") || "You can export or delete your data at any time."}
         />
         <Card className="space-y-1">
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Download subscriptions"
+            title={t("settings_export_subs") || "Download subscriptions"}
             // premium
             glow
-            description="Export all subscriptions as CSV"
+            description={t("settings_export_subs_desc") || "Export all subscriptions as CSV"}
             onClick={() => exportSubscriptionsCSV(subscriptions)}
             accent="blue"
           />
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Download payment history"
-            description="Export all past payments as CSV"
+            title={t("settings_export_history") || "Download payment history"}
+            description={t("settings_export_history_desc") || "Export all past payments as CSV"}
             // premium
             glow
             accent="blue"
@@ -361,8 +385,8 @@ export default function Settings({ setActiveSheet }) {
           />
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Download annual summary"
-            description="Yearly totals per subscription"
+            title={t("settings_export_summary") || "Download annual summary"}
+            description={t("settings_export_summary_desc") || "Yearly totals per subscription"}
             // premium
             glow
             accent="blue"
@@ -370,11 +394,11 @@ export default function Settings({ setActiveSheet }) {
           />
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Full data export"
+            title={t("settings_export_all") || "Download full data"}
             accent="blue"
             // premium
             glow
-            description="Download everything (JSON)"
+            description={t("settings_export_all_desc") || "All your subscriptions, payments and settings as JSON"}
             onClick={() =>
               exportFullJSON({
                 user,
@@ -388,9 +412,37 @@ export default function Settings({ setActiveSheet }) {
             }
           />
           <SettingsRow
+            icon={<TrashIcon className="w-6 h-6" />}
+            title={t("settings_delete_all_subs")}
+            description={t("settings_delete_all_subs_desc") || "Permanently delete all your subscriptions"}
+            accent="red"
+            glow
+            onClick={async () => {
+              if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
+
+              const token = localStorage.getItem("token");
+
+              await fetch("/api/subscriptions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  action: "save",
+                  subscriptions: [],
+                }),
+              });
+
+              setSubscriptions([]);
+              alert("✅ " + (t("settings_delete_all_subs_success") || "All subscriptions deleted successfully."));
+            }}
+          />
+
+          <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title="Import subscriptions"
-            description="Upload CSV with subscriptions"
+            title={t("settings_import_subs") || "Import subscriptions"}
+            description={t("settings_import_subs_desc") || "Upload CSV with subscriptions"}
             glow
             accent="blue"
             onClick={() => fileInputRef.current?.click()}
@@ -409,30 +461,30 @@ export default function Settings({ setActiveSheet }) {
       {/* ===================== PRIVACY & SECURITY ===================== */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Privacy & Security
+          {t("settings_section_privacy") || "Privacy & Security"}
         </h2>
 
         <Card className="space-y-1">
           <SettingsRow
             icon={<ShieldCheckIcon className="w-6 h-6" />}
-            title="Privacy Policy"
+            title={t("settings_privacy_policy") || "Privacy Policy"}
             glow
-            description="How we collect, process and protect your data (GDPR)"
+            description={t("settings_privacy_desc") || "How we collect, process and protect your data (GDPR)"}
             to="/datenschutz"
             accent="green" />
 
           <SettingsRow
             icon={<BuildingOfficeIcon className="w-6 h-6" />}
-            title="Legal Notice (Impressum)"
-            description="Company information and legal disclosure"
+            title={t("settings_impressum") || "Legal Notice (Impressum)"}
+            description={t("settings_impressum_desc") || "Company information and legal disclosure"}
             to="/impressum"
             glow
             accent="green" />
 
           <SettingsRow
             icon={<DocumentTextIcon className="w-6 h-6" />}
-            title="Terms & Conditions (AGB)"
-            description="Legal terms for using Trakio"
+            title={t("settings_terms") || "Terms & Conditions (AGB)"}
+            description={t("settings_terms_desc") || "Legal terms for using Trakio"}
             to="/agb"
             glow
             accent="green"
@@ -452,14 +504,14 @@ export default function Settings({ setActiveSheet }) {
       {/* ===================== HELP & SUPPORT ===================== */}
       <section>
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          Help & Support
+          {t("settings_section_support") || "Help & Support"}
         </h2>
         {/* Intro */}
         <Card className="space-y-1">
           <SettingsRow
             icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
-            title="Help & Support"
-            description="FAQs and contact support"
+            title={t("settings_section_support") || "Help & Support"}
+            description={t("settings_help_desc") || "FAQs and contact support"}
             accent="purple"
             glow
             onClick={() => {
@@ -471,8 +523,8 @@ export default function Settings({ setActiveSheet }) {
 
           <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
-            title="Rate Trakio"
-            description="Help us improve by leaving a review"
+            title={t("settings_rate") || "Rate Trakio"}
+            description={t("settings_rate_desc") || "Help us improve by leaving a review"}
             onClick={handleRate}
             accent="purple"
             glow
@@ -480,8 +532,8 @@ export default function Settings({ setActiveSheet }) {
 
           <SettingsRow
             icon={<ShareIcon className="w-6 h-6" />}
-            title="Share Trakio"
-            description="Share Trakio with friends and family"
+            title={t("settings_share") || "Share Trakio"}
+            description={t("settings_share_desc") || "Share Trakio with friends and family"}
             onClick={handleShare}
             accent="purple"
             glow
@@ -510,36 +562,66 @@ export default function Settings({ setActiveSheet }) {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
             <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
-              Import CSV Preview
+              {t("import_preview_title")}
             </h3>
             <div className="text-sm space-y-1 mb-3 text-gray-700 dark:text-gray-300">
-              <div>Subscriptions: <b>{importPreview.subscriptions}</b></div>
-              <div>Payments: <b>{importPreview.payments}</b></div>
+              <div>{t("import_preview_subscriptions")}: <b>{importPreview.subscriptions}</b></div>
+              <div>{t("import_preview_payments")}: <b>{importPreview.payments}</b></div>
               {importPreview.duplicates > 0 && (
                 <div className="text-orange-600 dark:text-orange-400">
-                  Duplicates skipped: <b>{importPreview.duplicates}</b>
+                  {t("import_preview_duplicates")}: <b>{importPreview.duplicates}</b>
                 </div>
               )}
             </div>
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+
+                  try {
+                    // 1. Combine existing + imported subscriptions
+                    const merged = [...subscriptions, ...importFile];
+
+                    // 2. Save to backend
+                    await fetch("/api/subscriptions", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({
+                        action: "save",
+                        subscriptions: merged,
+                      }),
+                    });
+
+                    // 3. Update local UI
+                    setSubscriptions(merged);
+
+                    // 4. Notify
+                    alert("✅ t('import_success_message') || 'Import successful!'");
+                  } catch (err) {
+                    console.error(t("import_failed_message"), err);
+                    alert("❌ t('import_failed_message') || 'Import failed. Please try again.'");
+                  }
+
                   setImportPreview(null);
                   setImportFile(null);
                 }}
+
                 className="px-3 py-1 rounded border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                Cancel
+                {t("cancel") || "Cancel"}
               </button>
               <button
                 onClick={() => {
-                  alert("✅ File imported. (Save to backend not implemented yet)");
+                  alert("✅ t('import_confirmed_message') || 'Import confirmed!'");
                   setImportPreview(null);
                   setImportFile(null);
                 }}
                 className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
               >
-                Confirm Import
+                {t("confirm_import") || "Confirm Import"}
               </button>
             </div>
           </div>
