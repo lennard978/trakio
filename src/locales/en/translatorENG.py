@@ -4,7 +4,7 @@ from deep_translator import GoogleTranslator
 
 # CONFIGURATION
 INPUT_FILE = "translation.json"
-OUTPUT_FILE = "de_strings.json"
+OUTPUT_FILE = "translation_DE.json"
 BATCH_SIZE = 50  # Number of items to translate per batch
 DELAY_BETWEEN_BATCHES = 2  # seconds
 

@@ -1,4 +1,3 @@
-// src/components/insights/InsightsSummary.jsx
 import React, { useMemo, useEffect } from "react";
 import {
   motion,
@@ -139,7 +138,7 @@ function ConfidenceSparkline({ trends, color }) {
 // === Main Component ===
 export default function InsightsSummary({ data, currency }) {
   const { summaryLines, status, confidence } = useMemo(() => {
-    if (!data || !data.trends?.length) {
+    if (!data) {
       return {
         summaryLines: ["📊 Not enough data to generate insights yet."],
         status: { label: "No Data", color: COLORS.gray, emoji: "⚪", value: 0 },
@@ -147,18 +146,29 @@ export default function InsightsSummary({ data, currency }) {
       };
     }
 
-    const trends = data.trends;
+    // ✅ Ensure trends exist before use
+    const trends = data.trends || [];
+
     const lastMonth = trends.at(-2)?.total ?? 0;
-    const thisMonth = trends.at(-1)?.total ?? 0;
+    const thisMonth = data.totalThisMonth ?? trends.at(-1)?.total ?? 0;
     const growth = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
     const forecast = data.forecast ?? thisMonth * 1.08;
 
+    // ✅ Unified Budget Logic (same as BudgetOverviewChart)
+    const monthlyBudget = Number(localStorage.getItem("monthly_budget")) || 0;
+    const overBudget = monthlyBudget > 0 && thisMonth > monthlyBudget;
+    const percentUsed = monthlyBudget
+      ? ((thisMonth / monthlyBudget) * 100).toFixed(1)
+      : "0.0";
+
+    // --- Volatility ---
     const volatility =
       trends.length > 3
         ? trends
           .map((t) => t.total)
           .reduce((acc, val, _, arr) => {
-            const mean = arr.reduce((s, n) => s + n, 0) / arr.length || 0;
+            const mean =
+              arr.reduce((s, n) => s + n, 0) / arr.length || 0;
             return acc + Math.pow(val - mean, 2);
           }, 0) / trends.length
         : 0;
@@ -170,33 +180,74 @@ export default function InsightsSummary({ data, currency }) {
       value: 90,
     };
     if (volatility > thisMonth * 0.5)
-      confidenceLevel = { label: "Uncertain", color: COLORS.red, emoji: "🔴", value: 40 };
+      confidenceLevel = {
+        label: "Uncertain",
+        color: COLORS.red,
+        emoji: "🔴",
+        value: 40,
+      };
     else if (volatility > thisMonth * 0.25)
-      confidenceLevel = { label: "Volatile", color: COLORS.orange, emoji: "🟠", value: 65 };
+      confidenceLevel = {
+        label: "Volatile",
+        color: COLORS.orange,
+        emoji: "🟠",
+        value: 65,
+      };
 
+    // --- Categories ---
     const categories = Object.entries(data.categories || {});
     const topCategory = categories.sort((a, b) => b[1] - a[1])[0];
     const totalSpending = categories.reduce((s, [, v]) => s + v, 0);
-    const topPercent = topCategory ? (topCategory[1] / totalSpending) * 100 : 0;
+    const topPercent = topCategory
+      ? (topCategory[1] / totalSpending) * 100
+      : 0;
 
+    // --- Spending Status ---
     let status = {
       label: "Balanced",
       color: COLORS.green,
       emoji: "🟢",
       value: Math.abs(growth),
     };
-    if (growth > 15 || topPercent > 45)
-      status = { label: "Over Budget", color: COLORS.red, emoji: "🔴", value: Math.min(growth, 100) };
-    else if ((growth > 5 && growth <= 15) || topPercent > 35)
-      status = { label: "Active Spending", color: COLORS.orange, emoji: "🟠", value: Math.min(growth, 100) };
-    else if (growth < -5)
-      status = { label: "Improving", color: COLORS.green, emoji: "🟢", value: Math.abs(growth) };
 
-    const fmt = (num) => (isFinite(num) ? num : 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    if (overBudget) {
+      status = {
+        label: "Over Budget",
+        color: COLORS.red,
+        emoji: "🔴",
+        value: Math.min(Number(percentUsed), 100),
+      };
+    } else if (growth > 15 || topPercent > 45) {
+      status = {
+        label: "High Spending",
+        color: COLORS.orange,
+        emoji: "🟠",
+        value: Math.min(growth, 100),
+      };
+    } else if (growth > 5 && growth <= 15) {
+      status = {
+        label: "Active Spending",
+        color: COLORS.orange,
+        emoji: "🟠",
+        value: Math.min(growth, 100),
+      };
+    } else if (growth < -5) {
+      status = {
+        label: "Improving",
+        color: COLORS.green,
+        emoji: "🟢",
+        value: Math.abs(growth),
+      };
+    }
 
+    // --- Format helper ---
+    const fmt = (num) =>
+      (isFinite(num) ? num : 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+    // --- Summary Lines ---
     const summaryLines = [
       growth > 10
         ? `📈 You spent ${growth.toFixed(1)}% more than last month.`
@@ -207,14 +258,23 @@ export default function InsightsSummary({ data, currency }) {
 
     if (topCategory)
       summaryLines.push(
-        `🏷️ Top category: **${topCategory[0]}**, ${currency} ${fmt(topCategory[1])} (${topPercent.toFixed(1)}%).`
+        `🏷️ Top category: **${topCategory[0]}**, ${currency} ${fmt(
+          topCategory[1]
+        )} (${topPercent.toFixed(1)}%).`
       );
 
     summaryLines.push(
       `💰 Total spent this month: ${currency} ${fmt(thisMonth)}.`,
+      monthlyBudget
+        ? `📊 Budget used: ${percentUsed}% of your ${currency} ${fmt(
+          monthlyBudget
+        )} budget.`
+        : `📊 No budget set for this month.`,
       `🔮 Forecast for next month: ${currency} ${fmt(forecast)}.`,
       topPercent > 40
-        ? `⚠️ ${topPercent.toFixed(0)}% of spending is in **${topCategory[0]}** — consider balancing.`
+        ? `⚠️ ${topPercent.toFixed(
+          0
+        )}% of spending is in **${topCategory[0]}** — consider balancing.`
         : `🎯 Your spending is well distributed across categories.`,
       `💡 Keep tracking — consistency builds better results.`
     );
@@ -231,21 +291,18 @@ export default function InsightsSummary({ data, currency }) {
       border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
       hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300 p-4"
     >
-      {/* Header + Badges */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           Financial Insights
         </h3>
         <div className="flex gap-2">
-          <StatusBadge {...status} />
+          {/* <StatusBadge {...status} /> */}
           <StatusBadge {...confidence} />
         </div>
       </div>
 
-      {/* Animated Sparkline */}
-      <ConfidenceSparkline trends={data.trends} color={confidence.color} />
+      {/* <ConfidenceSparkline trends={data.trends} color={confidence.color} /> */}
 
-      {/* Multiline Summary */}
       <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed mt-3">
         {summaryLines.map((line, i) => (
           <p key={i} className="whitespace-pre-wrap">

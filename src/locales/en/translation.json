@@ -405,5 +405,40 @@
 	"budget_premium_required": "Upgrade to Premium to set a budget",
 	"budget_auto_reset": "Auto-reset budget monthly",
 
-	"tooltip_monthly_estimate": "Estimated recurring cost per month"
+	"tooltip_monthly_estimate": "Estimated recurring cost per month",
+
+	"section_overview": "Overview",
+	"avg_per_subscription": "Avg per Sub",
+	"growth_rate": "Growth Rate",
+	"top_category": "Top Category",
+	"total_subs": "Total Subs",
+	"budget_usage": "Budget usage",
+
+	"spending_overview": "Spending Overview ({{currency}})",
+	"projection_for_range": "Projection for the last {{range}}",
+	"spending_projection_description": "💡 These bars estimate your spending pattern based on current subscriptions. They dynamically project monthly costs to help visualize trends.",
+	"spending_over_time": "Spending Over Time",
+
+	"avg_monthly_payment": "Average monthly payment",
+	"expected_yearly_cost": "Expected yearly cost (this year)",
+	"due_this_month": "Due payments this month",
+	"due_this_year": "Due payments this year",
+	"paid_this_month": "Paid this month",
+	"paid_this_year": "Paid this year",
+	"total_this_month": "Total this month",
+	"total_this_year": "Total this year",
+
+	"range_1M": "1M",
+	"range_3M": "3M",
+	"range_6M": "6M",
+	"range_12M": "12M",
+
+	"tab_general": "General",
+	"tab_categories": "Categories",
+	"tab_frequency": "Frequency",
+	"tab_payment_methods": "Payment Methods",
+	"tab_trends": "Trends",
+	"tab_forecast": "Forecast",
+
+	"currency_symbol": "{{currency}}"
 }

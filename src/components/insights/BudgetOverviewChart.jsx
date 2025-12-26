@@ -19,6 +19,9 @@ import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
 import AchievementsCard from "./InsightsAchievements";
 import InsightsSummary from "./InsightsSummary";
+import { TagIcon, ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, AcademicCapIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
+import { getCurrencyFlag } from "../../utils/currencyFlags";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
@@ -45,19 +48,24 @@ const Stat = ({ label, value }) => (
   </div>
 );
 
+
 // ✨ Glossy gradient section container with light/dark mode
-const Section = ({ title, children }) => (
-  <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
+const Section = ({ title, children }) => {
+  const { t } = useTranslation(); // ✅ Fix: bring t into this scope
+
+  return (
+    <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
   border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
   transition-all duration-300 hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60 p-4 mb-4">
-    {title && (
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
-        {title}
-      </h3>
-    )}
-    {children}
-  </div>
-);
+      {title && (
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
+          {t("section_overview")}
+        </h3>
+      )}
+      {children}
+    </div>
+  );
+};
 
 function PieCenterLabel({ viewBox, title, value }) {
   const { cx, cy } = viewBox;
@@ -99,6 +107,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
   const [activeRange, setActiveRange] = useState("6M");
   const { currency } = useCurrency();
+  const { t } = useTranslation();
+
   const convert = convertUtil;
 
   const [budget, setBudget] = useState(() => {
@@ -272,11 +282,52 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   return (
     <div className="space-y-4">
       {/* Overview */}
-      <Section title="Overview">
+      <Section title={t("overview")}>
         <motion.div variants={cardContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           {[
+            // === Summary metrics ===
             {
-              label: "Growth Rate",
+              label: t("monthly_spend"),
+              value: (
+                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
+                  {`${currency} ${(data.totalThisMonth ?? 0).toFixed(2)}`}
+                </span>
+              ),
+              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-purple-500" />,
+            },
+            {
+              label: t("annual_cost"),
+              value: (
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {`${currency} ${(data.totalThisYear ?? 0).toFixed(2)}`}
+                </span>
+              ),
+              icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
+            },
+            {
+              label: t("active_subscriptions"),
+              value: (
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {subscriptions?.length ?? 0}
+                </span>
+              ),
+              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
+            },
+            {
+              label: t("avg_per_subscription"),
+              value: (
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {currency} {(Number(avgPerSub) || 0).toFixed(2)}
+                </span>
+              ),
+              icon: <TagIcon className="w-5 h-5 text-orange-600" />,
+            },
+
+            // === Existing Overview metrics ===
+            {
+              label: t("growth_rate"),
+              icon: <ChartBarIcon className="w-5 h-5 text-blue-600" />,
               value: (() => {
                 const hasTrend = data.trends?.length > 1;
                 const growth = Number(data?.growthRate) || 0;
@@ -292,7 +343,14 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                     <div className="h-5 w-16">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data.trends}>
-                          <Line type="monotone" dataKey="total" stroke={data.isIncrease ? "#ED7014" : "#22c55e"} strokeWidth={2} dot={false} animationDuration={600} />
+                          <Line
+                            type="monotone"
+                            dataKey="total"
+                            stroke={data.isIncrease ? "#ED7014" : "#22c55e"}
+                            strokeWidth={2}
+                            dot={false}
+                            animationDuration={600}
+                          />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -301,15 +359,19 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               })(),
             },
             {
-              label: "Top Category",
+              label: t("top_category"),
+              icon: <StarIcon className="w-5 h-5 text-green-600" />,
               value: (
                 <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {topCategory ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})` : "—"}
+                  {topCategory
+                    ? `${topCategory[0]} (${currency} ${(Number(topCategory[1]) || 0).toFixed(2)})`
+                    : "—"}
                 </span>
               ),
             },
             {
-              label: "Avg / Subscription",
+              label: t("avg_per_sub"),
+              icon: <AdjustmentsVerticalIcon className="w-5 h-5 text-pink-600" />,
               value: (
                 <AnimatedNumber
                   value={Number(avgPerSub) || 0}
@@ -319,7 +381,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               ),
             },
             {
-              label: "Total Subs",
+              label: t("total_subs"),
+              icon: <AcademicCapIcon className="w-5 h-5 text-purple-600" />,
               value: (
                 <span className="font-bold text-gray-900 dark:text-gray-100">
                   {subscriptions?.length ?? 0}
@@ -331,21 +394,25 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               key={idx}
               variants={cardItem}
               className="flex flex-col justify-between p-3 rounded-lg 
-              bg-gradient-to-b from-white to-gray-100 dark:from-[#1a1f2a] dark:to-[#0e1420]
-              border border-gray-300 dark:border-gray-800/70 hover:border-[#ed7014]/60 
-              shadow-sm dark:shadow-inner dark:shadow-[#141824] transition-all duration-300 
-              h-full min-h-[88px]"
+    bg-gradient-to-b from-white to-gray-100 dark:from-[#1a1f2a] dark:to-[#0e1420]
+    border border-gray-300 dark:border-gray-800/70 hover:border-[#ed7014]/60 
+    shadow-sm dark:shadow-inner dark:shadow-[#141824] transition-all duration-300 
+    h-full min-h-[88px]"
             >
-              <div className="text-gray-700 dark:text-gray-400">{item.label}</div>
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-400">
+                {item.icon && <span>{item.icon}</span>}
+                {item.label}
+              </div>
               {item.value}
             </motion.div>
           ))}
+
         </motion.div>
 
         {/* Budget usage */}
         <div className="mt-4">
           <div className="flex justify-between text-xs text-gray-700 dark:text-gray-400 mb-1">
-            <span>Budget usage</span>
+            <span>{t("budget_usage")}</span>
             <span>{percentUsed}%</span>
           </div>
           <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
@@ -360,7 +427,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       </Section>
 
       {/* === Charts & Forecast === */}
-      <Section title={`Spending Overview (${currency})`}>
+      <Section title={t("spending_overview", { currency })}>
         <div className="flex flex-wrap justify-center mb-3 space-x-2">
           {TABS.map((tab) => (
             <button
@@ -438,20 +505,20 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <Stat label="Average monthly payment" value={`${(Number(data?.avgMonthly) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Expected yearly cost (this year)" value={`${(Number(data?.avgYearly) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Due payments this month" value={`${(Number(data?.dueThisMonth) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Due payments this year" value={`${(Number(data?.dueThisYear) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Paid this month" value={`${(Number(data?.paidThisMonth) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Paid this year" value={`${(Number(data?.paidThisYear) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Total this month" value={`${(Number(data?.totalThisMonth) || 0).toFixed(2)} ${currency}`} />
-            <Stat label="Total this year" value={`${(Number(data?.totalThisYear) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("avg_monthly_payment")} value={`${(Number(data?.avgMonthly) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("expected_yearly_cost")} value={`${(Number(data?.avgYearly) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("due_this_month")} value={`${(Number(data?.dueThisMonth) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("due_this_year")} value={`${(Number(data?.dueThisYear) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("paid_this_month")} value={`${(Number(data?.paidThisMonth) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("paid_this_year")} value={`${(Number(data?.paidThisYear) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("total_this_month")} value={`${(Number(data?.totalThisMonth) || 0).toFixed(2)} ${currency}`} />
+            <Stat label={t("total_this_year")} value={`${(Number(data?.totalThisYear) || 0).toFixed(2)} ${currency}`} />
           </motion.div>
         )}
       </Section>
 
       {/* Spending Over Time */}
-      <Section title="Spending Over Time">
+      <Section title={t("spending_over_time")}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -459,10 +526,9 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           className="flex flex-col md:flex-row md:items-center md:justify-between mb-3"
         >
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Projection for the last {activeRange}</h4>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("projection_for_range", { range: activeRange })}</h4>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 max-w-md">
-              💡 These bars estimate your spending pattern based on current subscriptions.<br />
-              They dynamically project monthly costs to help visualize trends.
+              💡 {t("spending_projection_description")}
             </p>
           </div>
 

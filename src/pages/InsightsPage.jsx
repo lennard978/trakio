@@ -1,15 +1,9 @@
 // src/pages/InsightsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  TagIcon,
-  ArrowTrendingUpIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { forecastSpend } from "../utils/forecast";
 import useBudgetAlerts from "../hooks/useBudgetAlerts";
-import { getCurrencyFlag } from "../utils/currencyFlags";
 
 import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
@@ -79,18 +73,6 @@ export default function InsightsPage() {
     })();
   }, [email]);
 
-  const monthlyCost = (s) => {
-    const cfg = FREQ[s.frequency] || FREQ.monthly;
-    const base = s.currency || "EUR";
-    const converted = rates ? convert(s.price, base, currency, rates) : s.price;
-    return converted * cfg.monthlyFactor;
-  };
-
-  const totalMonthly = subscriptions.reduce(
-    (sum, s) => sum + monthlyCost(s),
-    0
-  );
-
   const now = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -113,42 +95,6 @@ export default function InsightsPage() {
     isPremium: premium.isPremium,
   });
 
-  const categoryTotals = subscriptions.reduce((acc, s) => {
-    acc[s.category] = (acc[s.category] || 0) + monthlyCost(s);
-    return acc;
-  }, {});
-
-  const topCategory =
-    Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-    t("none");
-
-  const highestSub = useMemo(() => {
-    if (!subscriptions.length) return null;
-    return subscriptions.reduce((a, b) =>
-      monthlyCost(b) > monthlyCost(a) ? b : a
-    );
-  }, [subscriptions, rates, currency]);
-
-  const highestSubMonthly = highestSub ? monthlyCost(highestSub) : 0;
-
-  const freqCount = subscriptions.reduce((acc, s) => {
-    acc[s.frequency] = (acc[s.frequency] || 0) + 1;
-    return acc;
-  }, {});
-
-  const mostCommonFreq =
-    Object.entries(freqCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
-
-  const totalAnnual = useMemo(() => {
-    return totalMonthly * 12;
-  }, [totalMonthly]);
-
-  const activeSubs = subscriptions.length;
-
-  const avgPerSub = useMemo(() => {
-    if (!activeSubs) return 0;
-    return totalMonthly / activeSubs;
-  }, [totalMonthly, activeSubs]);
 
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
@@ -165,57 +111,9 @@ export default function InsightsPage() {
           </div>
         )}
 
-      {/* Summary Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 mb-1 sm:col-span-2 lg:col-span-4">
-          {[
-            {
-              icon: getCurrencyFlag(currency),
-              value: `${currency} ${totalMonthly.toFixed(2)}`,
-              label: t("monthly_spend"),
-              sub: `${t("active_subscriptions")} (${currency})`,
-              bg: "bg-purple-100",
-            },
-            {
-              icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
-              value: `${currency} ${totalAnnual.toFixed(2)}`,
-              label: t("annual_cost"),
-              sub: `${t("projected_yearly")} (${currency})`,
-              bg: "bg-pink-100",
-            },
-            {
-              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
-              value: activeSubs,
-              label: t("active_subs"),
-              sub: t("of_total", { count: activeSubs }),
-              bg: "bg-green-100",
-            },
-            {
-              icon: <TagIcon className="w-5 h-5 text-orange-600" />,
-              value: `${currency} ${avgPerSub.toFixed(2)}`,
-              label: t("avg_per_sub"),
-              sub: `${t("monthly_average")} (${currency})`,
-              bg: "bg-orange-100",
-            },
-          ].map((item, idx) => (
-            <Card
-              key={idx}
-              className="p-4 rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
-              border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
-              hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
-                  {item.icon}
-                </div>
-              </div>
-              <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{item.value}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">{item.label}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-500">{item.sub}</div>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <PremiumGuard>
+        <BudgetOverviewChart subscriptions={subscriptions} rates={rates} />
+      </PremiumGuard>
 
       {/* Payment History */}
       <Card
@@ -281,9 +179,7 @@ export default function InsightsPage() {
         </div>
       </Card>
 
-      <PremiumGuard>
-        <BudgetOverviewChart subscriptions={subscriptions} rates={rates} />
-      </PremiumGuard>
+
 
       <button
         onClick={() => navigate("/dashboard")}
