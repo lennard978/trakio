@@ -1,7 +1,7 @@
 
 export function exportSubscriptionsCSV(subscriptions) {
   const rows = [
-    ["name", "frequency", "category", "method", "currency", "amount", "paymentDate"]
+    ["name", "frequency", "category", "method", "currency", "amount", "paymentDate", "color"]
   ];
 
   subscriptions.forEach((s) => {
@@ -15,13 +15,17 @@ export function exportSubscriptionsCSV(subscriptions) {
         s.method || "Unknown",
         p.currency || s.currency || "EUR",
         p.amount?.toFixed(2) ?? "0.00",
-        p.date || ""
+        p.date || "",
+        s.color || "" // ✅ add color field
       ]);
     });
   });
 
   downloadCSV(rows, "subscriptions.csv");
 }
+
+
+
 
 
 export function exportAnnualSummaryCSV(subscriptions) {

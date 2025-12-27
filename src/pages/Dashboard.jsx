@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../utils/api";
 
@@ -91,6 +92,7 @@ export default function Dashboard() {
               payments.push({
                 id: crypto.randomUUID(),
                 date: d,
+                color: s.color || "#ffffff", // ✅ KEEP THIS LINE
                 amount: s.price,
                 currency: s.currency || "EUR",
               });
@@ -362,27 +364,38 @@ export default function Dashboard() {
                 persist(subscriptions.filter((s) => s.id !== id))
               }
               onMarkPaid={(id, date) => {
-                const updated = subscriptions.map((s) =>
-                  s.id !== id
-                    ? s
-                    : {
-                      ...s,
-                      payments: [
-                        ...(Array.isArray(s.payments)
-                          ? s.payments
-                          : []),
-                        {
-                          id: crypto.randomUUID(),
-                          date,
-                          amount: s.price,
-                          currency: s.currency || "EUR",
-                        },
-                      ],
-                    }
-                );
+                console.log("Marking as paid", id, date); // ✅ Add this
+
+                const updated = subscriptions.map((s) => {
+                  if (s.id !== id) return s;
+
+                  const payments = Array.isArray(s.payments) ? s.payments : [];
+
+                  // ✅ Skip if same date already exists
+                  const alreadyPaid = payments.some(
+                    (p) => p.date === date
+                  );
+                  if (alreadyPaid) return s;
+
+                  return {
+                    ...s,
+                    payments: [
+                      ...payments,
+                      {
+                        id: crypto.randomUUID(),
+                        date,
+                        amount: s.price,
+                        currency: s.currency || "EUR",
+                      },
+                    ],
+                  };
+                });
 
                 persist(updated);
+                // showToast("Marked as paid!", "success");
+
               }}
+
             />
           ))}
         </div>

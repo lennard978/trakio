@@ -367,7 +367,7 @@ export default function SubscriptionForm() {
           {
             id: crypto.randomUUID(),
             name: name.trim(),
-            icon, // ✅ ADD THIS
+            icon,
             price: priceNum,
             frequency,
             category,
@@ -376,9 +376,18 @@ export default function SubscriptionForm() {
             currency,
             method: method.trim(),
             color,
-            history: [],
+            payments: [
+              {
+                id: crypto.randomUUID(),
+                date: paid,
+                amount: priceNum,
+                currency,
+              },
+            ],
+            history: [], // optional UI use only
           },
         ];
+
         showToast(t("toast_added"), "success");
       }
 

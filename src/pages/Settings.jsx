@@ -130,6 +130,7 @@ export default function Settings({ setActiveSheet }) {
           currency: row.currency || "EUR",
           category: row.category || "Uncategorized",
           method: row.method || "Unknown",
+          color: row.color || "rgba(255,255,255,0.9)", // ✅ Import color
           price: Number(row.price || row.amount || 0),
           payments: [],
         };

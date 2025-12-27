@@ -227,8 +227,11 @@ export default function SubscriptionItem({
 
               <div className="flex items-center gap-4 flex-wrap">
                 <button
-                  onClick={openCalendar}
-                  title={nextPaymentText}
+                  onClick={() => {
+                    const today = new Date().toISOString().split("T")[0]; // ✅ define 'today'
+                    openCalendar();
+                    // onMarkPaid(item.id, today); // ✅ now this works
+                  }} title={nextPaymentText}
                   className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
                 >
                   {t("paid")}
