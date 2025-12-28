@@ -160,9 +160,9 @@
 	"budget_exceeded": "⚠️ Your forecasted spend ({{spend}}) exceeds your budget ({{budget}})",
 	"monthly_spend": "Monthly Spend",
 	"annual_cost": "Annual Cost",
-	"active_subs": "Active Subscriptions",
+	"active_subs": "Active Subs",
 	"of_total": "{{count}} subscriptions",
-	"avg_per_sub": "Average per Subscription",
+	"avg_per_sub": "Avg. per Sub",
 	"monthly_average": "Monthly average",
 	"projected_yearly": "Projected yearly spend",
 	"insights_payment_history": "Payment History",
@@ -390,7 +390,7 @@
 	"delete_account": "Delete account",
 	"delete_account_confirm": "This will permanently delete your account. This action cannot be undone.",
 
-	"active_subscriptions": "Active subscriptions",
+	"active_subscriptions": "Active subs",
 
 	"upcoming_payments": "Upcoming payments",
 	"today": "Today",

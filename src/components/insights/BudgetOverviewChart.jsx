@@ -300,7 +300,11 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               value: (
                 <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
                   <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                  {`${currency} ${(data.totalThisMonth ?? 0).toFixed(2)}`}
+                  <AnimatedNumber
+                    value={Number(data.totalThisMonth ?? 0)}
+                    decimals={2}
+                    prefix={`${currency} `}
+                  />
                 </span>
               ),
               icon: <ArrowTrendingUpIcon className="w-5 h-5 text-purple-500" />,
@@ -310,7 +314,11 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               value: (
                 <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
                   <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                  {`${currency} ${(data.totalThisYear ?? 0).toFixed(2)}`}
+                  <AnimatedNumber
+                    value={Number(data.totalThisYear ?? 0)}
+                    decimals={2}
+                    prefix={`${currency} `}
+                  />
                 </span>
               ),
               icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
@@ -320,17 +328,22 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               label: t("top_category"),
               icon: <StarIcon className="w-5 h-5 text-green-600" />,
               value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {topCategory
-                    ? (
-                      <>
-                        {topCategory[0].charAt(0).toUpperCase() + topCategory[0].slice(1)} <br />
-                        <span className="text-xl">{getCurrencyFlag(currency)} </span>
-                        ({currency} {(Number(topCategory[1]) || 0).toFixed(2)})
-                      </>
-                    )
-
-                    : "—"}
+                <span className="flex flex-col mt-2 font-bold text-gray-900 dark:text-gray-100">
+                  {topCategory ? (
+                    <>
+                      <span className="truncate">{topCategory[0]}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-xl">{getCurrencyFlag(currency)}</span>
+                        <AnimatedNumber
+                          value={Number(topCategory[1]) || 0}
+                          decimals={2}
+                          prefix={`${currency} `}
+                        />
+                      </span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </span>
               ),
             },
@@ -338,11 +351,14 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               label: t("avg_per_sub"),
               icon: <AdjustmentsVerticalIcon className="w-5 h-5 text-pink-600" />,
               value: (
-                <AnimatedNumber
-                  value={Number(avgPerSub) || 0}
-                  prefix={currency + " "}
-                  decimals={2}
-                />
+                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
+                  <AnimatedNumber
+                    value={Number(avgPerSub) || 0}
+                    decimals={2}
+                    prefix={`${currency} `}
+                  />
+                </span>
               ),
             },
             {

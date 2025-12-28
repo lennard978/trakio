@@ -13,6 +13,7 @@ import { convert } from "../utils/currency";
 import Card from "../components/ui/Card";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import PremiumGuard from "../components/premium/PremiumGuard";
+import PaymentAccordion from "../components/insights/PaymentAccordion";
 
 /* ------------------------------------------------------------------ */
 const FREQ = {
@@ -121,72 +122,11 @@ export default function InsightsPage() {
         border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
         hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300"
       >
-        <h2 className="text-lg font-semibold mb-4 text-center text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-800/70 pb-2">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {t("insights_payment_history")}
         </h2>
-
-        <div className="overflow-x-auto rounded-lg border border-gray-300 dark:border-gray-800/70">
-          <table className="w-full text-xs table-auto text-gray-700 dark:text-gray-200">
-            <thead>
-              <tr className="border-b border-gray-300 dark:border-gray-700/70 bg-gray-100 dark:bg-[#141824]/60 text-gray-600 dark:text-gray-400">
-                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Subscription")}</th>
-                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Frequency")}</th>
-                <th className="py-2 px-3 text-center font-medium">{t("insights_payment_Payments")}</th>
-                <th className="py-2 px-3 text-left font-medium">{t("insights_payment_Dates")}</th>
-                <th className="py-2 px-3 text-right font-medium">{t("insights_payment_Amount")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions.map((s) => {
-                const payments = (() => {
-                  if (Array.isArray(s.payments)) return s.payments;
-                  const list = [];
-                  if (Array.isArray(s.history)) {
-                    s.history.forEach((d) =>
-                      list.push({ date: d, amount: s.price, currency: s.currency || "EUR" })
-                    );
-                  }
-                  if (s.datePaid) {
-                    list.push({ date: s.datePaid, amount: s.price, currency: s.currency || "EUR" });
-                  }
-                  return list;
-                })();
-
-                const totalPaid = payments.reduce((sum, p) => {
-                  const converted = rates ? convert(p.amount, p.currency, currency, rates) : p.amount;
-                  return sum + converted;
-                }, 0);
-
-                return (
-                  <tr
-                    key={s.id}
-                    className="border-b border-gray-200 dark:border-gray-800/70 hover:bg-orange-50 dark:hover:bg-[#ed7014]/10 transition-colors duration-200"
-                  >
-                    <td className="py-2 px-3 font-medium text-gray-900 dark:text-gray-100">{s.name}</td>
-                    <td className="py-2 px-3 text-gray-700 dark:text-gray-300">{t(`frequency_${s.frequency}`)}</td>
-                    <td className="py-2 px-3 text-center text-gray-700 dark:text-gray-300">{payments.length}</td>
-                    <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
-                      {payments.map((p) => new Date(p.date).toLocaleDateString()).join(", ")}
-                    </td>
-                    <td className="py-2 px-3 text-right text-gray-900 dark:text-gray-100">
-                      {`${currency} ${totalPaid.toFixed(2)}`}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <PaymentAccordion subscriptions={subscriptions} currency={currency} rates={rates} />
       </Card>
-
-
-
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="mt-4 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#141824]/70 hover:bg-orange-100 dark:hover:bg-[#ed7014]/30 hover:border-[#ed7014]/60 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-300"
-      >
-        ← {t("button_back")}
-      </button>
     </div>
   );
 }

@@ -63,6 +63,7 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
+  const [loading, setLoading] = useState(true); // ← Add this
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -81,6 +82,7 @@ export default function Dashboard() {
 
     (async () => {
       try {
+        setLoading(true); // Start loading
         const list = await kvGet(user.email);
 
         const migrated = list.map((s) => {
@@ -122,6 +124,8 @@ export default function Dashboard() {
       } catch (err) {
         console.error("Subscription load failed:", err);
         setSubscriptions([]);
+      } finally {
+        setLoading(false); // Done loading
       }
     })();
   }, [user?.email]);
@@ -262,14 +266,11 @@ export default function Dashboard() {
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
-      {hasSubscriptions ? (
-        <>
-        </>
-      ) : (
-        <EmptyDashboardState />
-      )}
-
-      {hasSubscriptions && (
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : hasSubscriptions ? (
         <>
           {/* ================= SUMMARY CARDS ================= */}
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 mt-2 mb-4">
@@ -332,6 +333,8 @@ export default function Dashboard() {
           {/* ================= END SUMMARY ================= */}
 
         </>
+      ) : (
+        <EmptyDashboardState />
       )}
 
       {hasSubscriptions && (
