@@ -396,7 +396,7 @@
 	"today": "Today",
 	"tomorrow": "Tomorrow",
 	"in_days": "In {{count}} days",
-
+	"import_preview_subscriptions": "Total Subscriptions",
 	"budget_input_placeholder": "Set monthly budget",
 	"budget_save": "Save",
 	"budget_spent": "Spent",

@@ -85,25 +85,16 @@ export default function SubscriptionItem({
     (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
       navigator.connection?.saveData === true);
 
-  const gradientStyle =
-    premium.isPremium && !prefersReducedMotion
-      ? {
-        background: `linear-gradient(
-            200deg,
-            ${toRgba(baseColor, intensity + 0.15)},
-            ${toRgba(baseColor, intensity)},
-            transparent
-          )`,
-        backgroundSize: "200% 200%",
-        animation: "trakioGradient 6s ease infinite",
-      }
-      : {
-        background: `linear-gradient(
-            135deg,
-            ${toRgba(baseColor, intensity)},
-            transparent
-          )`,
-      };
+  const gradientStyle = {
+    background: `linear-gradient(
+    135deg,
+    ${toRgba(baseColor, intensity)},
+    transparent
+  )`
+  };
+
+  console.log("💡 SubscriptionItem color:", item.color);
+
 
   const lastPaymentDate = useMemo(() => {
     if (!payments.length) return null;

@@ -1,3 +1,4 @@
+import { getNormalizedPayments } from "./payments";
 
 export function exportSubscriptionsCSV(subscriptions) {
   const rows = [
@@ -5,9 +6,11 @@ export function exportSubscriptionsCSV(subscriptions) {
   ];
 
   subscriptions.forEach((s) => {
-    const payments = Array.isArray(s.payments) ? s.payments : [];
+    const payments = getNormalizedPayments(s); // ✅ Use normalized & deduplicated payments
 
     payments.forEach((p) => {
+      console.log("Exporting row color value:", s.color);
+
       rows.push([
         s.name,
         s.frequency || "monthly",
@@ -16,17 +19,13 @@ export function exportSubscriptionsCSV(subscriptions) {
         p.currency || s.currency || "EUR",
         p.amount?.toFixed(2) ?? "0.00",
         p.date || "",
-        s.color || "" // ✅ add color field
+        s.color || ""
       ]);
     });
   });
 
   downloadCSV(rows, "subscriptions.csv");
 }
-
-
-
-
 
 export function exportAnnualSummaryCSV(subscriptions) {
   const rows = [["name", "annual_cost", "currency"]];
@@ -70,7 +69,20 @@ export function exportFullJSON({ user, subscriptions, settings }) {
 
 /* helper */
 function downloadCSV(rows, filename) {
-  const csv = rows.map(r => r.join(",")).join("\n");
+
+  const csv = rows.map(row =>
+    row.map(field => {
+      if (typeof field === "string") {
+        const escaped = field.replace(/"/g, '""');
+        if (escaped.includes(",") || escaped.includes('"') || escaped.includes("\n")) {
+          return `"${escaped}"`;
+        }
+        return escaped;
+      }
+      return field;
+    }).join(",")
+  ).join("\n");
+
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 
@@ -80,3 +92,5 @@ function downloadCSV(rows, filename) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+

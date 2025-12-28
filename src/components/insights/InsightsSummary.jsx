@@ -237,10 +237,10 @@ export default function InsightsSummary({ data, currency }) {
           budget: fmt(monthlyBudget),
         })
         : t("insight_line_no_budget"),
-      // t("insight_line_forecast", {
-      //   currency,
-      //   forecast: fmt(forecast),
-      // }),
+      t("insight_line_forecast", {
+        currency,
+        forecast: fmt(forecast),
+      }),
       topPercent > 40
         ? t("insight_line_top_warning", {
           percent: topPercent.toFixed(0),

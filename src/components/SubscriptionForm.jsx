@@ -60,11 +60,18 @@ const CATEGORY_INTENSITY_DEFAULT = {
 };
 
 function hexToRgba(hex, alpha = 0.85) {
+  if (!hex || typeof hex !== "string" || !hex.startsWith("#") || hex.length !== 7) {
+    // console.warn("Invalid hex color:", hex);
+    return "rgba(255,255,255,0.9)"; // fallback
+  }
+
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
+
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
 
 function toRgba(color, alpha) {
   if (!color) return `rgba(255,255,255,${alpha})`;
@@ -99,8 +106,10 @@ export default function SubscriptionForm() {
   const methodRef = React.useRef(null);
 
   const selectedMethod =
-    PAYMENT_METHODS.find((m) => m.value === method) || PAYMENT_METHODS[0];
-
+    PAYMENT_METHODS.find((m) => m.value === method) || {
+      label: "Select method", // Default label
+      icon: "💳",              // Optional: generic icon
+    };
 
   useEffect(() => {
     const handler = (e) => {

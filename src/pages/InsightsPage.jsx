@@ -67,7 +67,7 @@ export default function InsightsPage() {
           Array.isArray(data.subscriptions) ? data.subscriptions : []
         );
       } catch (err) {
-        console.error("Insights load error:", err);
+        // console.error("Insights load error:", err);
       }
     })();
   }, [email]);

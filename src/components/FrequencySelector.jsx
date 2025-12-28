@@ -97,16 +97,17 @@ export default function FrequencySelector({
               >
                 <span>{t(opt.labelKey)}</span>
 
-                {opt.premiumOnly && (
+                {opt.premiumOnly && !isPremium && (
                   <span
                     className="
-                      text-[10px] px-2 py-0.5 rounded-full
-                      bg-yellow-400/80 text-black font-semibold
-                    "
+      text-[10px] px-2 py-0.5 rounded-full
+      bg-yellow-400/80 text-black font-semibold
+    "
                   >
                     PRO
                   </span>
                 )}
+
               </button>
             );
           })}

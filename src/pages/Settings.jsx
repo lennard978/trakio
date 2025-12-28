@@ -78,7 +78,6 @@ export default function Settings({ setActiveSheet }) {
   };
 
   useEffect(() => {
-    console.log("👤 User object:", user); // <- Add this
 
     if (!user?.email) return;
 
@@ -100,60 +99,55 @@ export default function Settings({ setActiveSheet }) {
   }, [user?.email]);
 
   function parseCSV(text) {
-    const lines = text
-      .replace(/\r/g, "")
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
+    const lines = text.trim().split("\n");
 
     if (lines.length < 2) return [];
 
     const headers = lines[0].split(",").map((h) => h.trim());
-    const rows = lines.slice(1).map((row) => {
-      const values = row.split(",").map((v) => v.trim());
+
+    return lines.slice(1).map((line) => {
+      const values = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const next = line[i + 1];
+
+        if (char === '"' && inQuotes && next === '"') {
+          current += '"'; // Escaped quote
+          i++; // Skip next quote
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          values.push(current);
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+
+      values.push(current); // Last value
+
       const obj = {};
       headers.forEach((h, i) => {
-        obj[h] = values[i] ?? "";
+        obj[h] = values[i]?.trim().replace(/^"|"$/g, ""); // Remove surrounding quotes
       });
+
+      // Normalize data
+      obj.payments = [{
+        id: crypto.randomUUID(),
+        amount: parseFloat(obj.amount) || 0,
+        date: obj.paymentDate,
+        currency: obj.currency || "EUR"
+      }];
+      obj.price = parseFloat(obj.amount) || 0;
+      obj.color = obj.color || "rgba(255,255,255,0.9)";
+
       return obj;
     });
-
-    const subsMap = {};
-
-    rows.forEach((row) => {
-      const name = row.name || "Imported subscription";
-      if (!subsMap[name]) {
-        subsMap[name] = {
-          id: crypto.randomUUID(),
-          name,
-          frequency: row.frequency || "monthly",
-          currency: row.currency || "EUR",
-          category: row.category || "Uncategorized",
-          method: row.method || "Unknown",
-          color: row.color || "rgba(255,255,255,0.9)", // ✅ Import color
-          price: Number(row.price || row.amount || 0),
-          payments: [],
-        };
-      }
-      if (row.paymentDate || row.datePaid) {
-        console.log("📄 Raw row:", row);
-
-        const date = row.paymentDate || row.datePaid;
-        const amount = Number(row.amount || row.price || 0);
-        subsMap[name].payments.push({
-          id: crypto.randomUUID(),
-          date,
-          amount,
-          currency: row.currency || subsMap[name].currency,
-        });
-        subsMap[name].price = amount;
-      }
-    });
-
-    return Array.isArray(Object.values(subsMap))
-      ? Object.values(subsMap)
-      : [];
   }
+
 
   const handleImportCSV = async (file) => {
     if (!file) return;
@@ -305,7 +299,7 @@ export default function Settings({ setActiveSheet }) {
         window.location.href = data.url;
       }
     } catch (err) {
-      console.error("Customer portal error:", err);
+      // console.error("Customer portal error:", err);
       alert("Unable to open customer portal.");
     }
   };
@@ -468,7 +462,7 @@ export default function Settings({ setActiveSheet }) {
             glow
             onClick={async () => {
               if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
-              console.log(importFile)
+              // console.log(importFile)
               const token = localStorage.getItem("token");
 
               await fetch("/api/subscriptions", {
@@ -592,13 +586,6 @@ export default function Settings({ setActiveSheet }) {
           <SettingButton variant="danger" onClick={logout}>
             {t("settings_logout") || "Log Out"}
           </SettingButton>
-
-          <SettingButton
-            variant="neutral"
-            onClick={() => navigate("/dashboard")}
-          >
-            {t("settings_back_to_dashboard") || "Back to Dashboard"}
-          </SettingButton>
         </div>
       </Card>
 
@@ -650,7 +637,7 @@ export default function Settings({ setActiveSheet }) {
 
                     alert(t("import_success_message") === "import_success_message" ? "Import successful!" : t("import_success_message"));
                   } catch (err) {
-                    console.error("Import failed", err);
+                    // console.error("Import failed", err);
                     alert(t("import_failed_message") || "Import failed. Please try again.");
                   }
 
