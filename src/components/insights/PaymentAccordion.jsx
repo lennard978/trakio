@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { convert as convertUtil } from "../../utils/currency";
+import { getNormalizedPayments } from "../../utils/payments";
+import { getCurrentMonthSpending } from "../../utils/budget";
 
-export default function PaymentAccordion({ subscriptions = [], currency = "EUR", rates }) {
+export default function PaymentAccordion({ subscriptions = [], currency = "EUR", rates, convert }) {
   const { t } = useTranslation();
 
   // ✅ One state to track open/closed by subscription ID
@@ -20,20 +22,7 @@ export default function PaymentAccordion({ subscriptions = [], currency = "EUR",
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
       {subscriptions.map((s) => {
-        const payments = (() => {
-          if (Array.isArray(s.payments)) return s.payments;
-          const list = [];
-          if (Array.isArray(s.history)) {
-            s.history.forEach((d) =>
-              list.push({ date: d, amount: s.price, currency: s.currency || "EUR" })
-            );
-          }
-          if (s.datePaid) {
-            list.push({ date: s.datePaid, amount: s.price, currency: s.currency || "EUR" });
-          }
-          return list;
-        })();
-
+        const payments = getNormalizedPayments(s, currency, rates, convert);
         const totalPaid = payments.reduce((sum, p) => {
           const converted = rates ? convertUtil(p.amount, p.currency, currency, rates) : p.amount;
           return sum + converted;

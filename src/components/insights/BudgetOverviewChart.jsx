@@ -14,6 +14,13 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import {
+  getCurrentMonthSpending,
+  getCurrentYearSpending,
+  getCurrentMonthDue,
+  getCurrentYearDue,
+} from "../../utils/budget";
+
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
@@ -22,23 +29,13 @@ import InsightsSummary from "./InsightsSummary";
 import { TagIcon, ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, AcademicCapIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
+import { MONTHLY_FACTOR } from "../../utils/frequency";
+import { getNormalizedPayments } from "../../utils/payments";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
 ];
-
-const MONTHLY_FACTOR = {
-  weekly: 4.345,
-  biweekly: 2.1725,
-  monthly: 1,
-  quarterly: 1 / 3,
-  semiannual: 1 / 6,
-  yearly: 1 / 12,
-  biennial: 1 / 24,
-  triennial: 1 / 36,
-};
-
 
 const Stat = ({ label, value }) => (
   <div className="flex justify-between text-sm py-1 border-b border-gray-300 dark:border-gray-800/60">
@@ -124,75 +121,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     { key: "Forecast", label: t("tab_forecast") },
   ], [t]);
 
-
-  // === MAIN DATA ===
-  const data = useMemo(() => {
-    if (!subscriptions?.length) return {};
-    const now = new Date();
-    const month = now.getMonth();
-    const year = now.getFullYear();
-
-    let paidThisMonth = 0, paidThisYear = 0, dueThisMonth = 0, dueThisYear = 0;
-    const categoryMap = {}, freqMap = {}, methodMap = {}, trends = [];
-
-    for (const sub of subscriptions) {
-      const {
-        price = 0,
-        datePaid,
-        frequency = "monthly",
-        category = "Uncategorized",
-        method = "Unknown",
-        currency: subCurrency = "EUR"
-      } = sub;
-
-      const factor = MONTHLY_FACTOR[frequency] || 1;
-      const convertedPrice = convert ? convert(price, subCurrency, currency, rates) : price;
-      const normalizedMonthly = convertedPrice * factor;
-
-      const paidDate = new Date(datePaid);
-      const isPaidThisMonth = paidDate.getMonth() === month && paidDate.getFullYear() === year;
-      const isPaidThisYear = paidDate.getFullYear() === year;
-
-      if (isPaidThisMonth) paidThisMonth += convertedPrice;
-      if (isPaidThisYear) paidThisYear += convertedPrice;
-      if (!datePaid) {
-        dueThisMonth += normalizedMonthly;
-        dueThisYear += normalizedMonthly * 12;
-      }
-
-      categoryMap[category] = (categoryMap[category] || 0) + normalizedMonthly;
-      freqMap[frequency] = (freqMap[frequency] || 0) + normalizedMonthly;
-      methodMap[method] = (methodMap[method] || 0) + convertedPrice;
-
-      if (!isNaN(paidDate.getTime())) {
-        const label = paidDate.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
-        const existing = trends.find(t => t.label === label);
-        existing ? (existing.total += convertedPrice) : trends.push({ label, total: convertedPrice });
-      }
-    }
-
-    trends.sort((a, b) => new Date("1 " + a.label) - new Date("1 " + b.label));
-
-    const lastMonth = trends.at(-2)?.total ?? 0;
-    const thisMonth = trends.at(-1)?.total ?? 0;
-    const growthRate = lastMonth ? ((thisMonth - lastMonth) / lastMonth) * 100 : 0;
-    const isIncrease = growthRate > 0;
-    const forecast = thisMonth * 1.08;
-
-    return {
-      paidThisMonth, paidThisYear, dueThisMonth, dueThisYear,
-      avgYearly: paidThisYear + dueThisYear,
-      avgMonthly: (paidThisYear + dueThisYear) / 12,
-      totalThisMonth: paidThisMonth + dueThisMonth,
-      totalThisYear: paidThisYear + dueThisYear,
-      categories: categoryMap,
-      frequencies: freqMap,
-      methods: methodMap,
-      isIncrease,
-      trends, growthRate, forecast
-    };
-  }, [subscriptions, currency, rates, convert]);
-
   // === Spending Over Time ===
   const spendingData = useMemo(() => {
     if (!subscriptions?.length) return [];
@@ -203,37 +131,110 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const now = new Date();
     const months = Array.from({ length: limit }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (limit - 1 - i), 1);
-      return { key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleString("default", { month: "short" }), total: 0 };
+      return {
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: d.toLocaleString("default", { month: "short" }),
+        total: 0,
+      };
     });
 
     subscriptions.forEach((sub) => {
-      const { frequency = "monthly", price = 0, payments = [], datePaid } = sub;
-
-      if (payments?.length) {
-        payments.forEach((p) => {
-          const date = new Date(p.date);
-          const key = `${date.getFullYear()}-${date.getMonth()}`;
-          const match = months.find((m) => m.key === key);
-          if (match) match.total += p.amount;
-        });
-      } else if (datePaid) {
-        const date = new Date(datePaid);
-        const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const normalizedPayments = getNormalizedPayments(sub);
+      normalizedPayments.forEach((p) => {
+        const d = new Date(p.date);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
         const match = months.find((m) => m.key === key);
-        if (match) match.total += price;
-      } else {
-        months.forEach((m) => (m.total += price * (MONTHLY_FACTOR[frequency] || 1)));
-      }
+        if (match) {
+          const converted = convert(p.amount, p.currency, currency, rates);
+          match.total += converted;
+        }
+      });
     });
 
+    // Optional: Forecast
     const totals = months.map((m) => m.total);
     const last = totals.at(-1) || 0;
     const prev = totals.at(-2) || last;
-    const growthRate = prev ? (last - prev) / prev : 0;
+    const growthRate = prev > 0 ? (last - prev) / prev : 0;
     const forecast = Math.max(last * (1 + growthRate), 0);
 
-    return [...months.map((m) => ({ month: m.label, value: m.total })), { month: "Next (Forecast)", value: forecast }];
-  }, [subscriptions, activeRange]);
+    return [
+      ...months.map((m) => ({ month: m.label, value: m.total })),
+      { month: "Next (Forecast)", value: forecast }
+    ];
+  }, [subscriptions, activeRange, currency, rates]);
+
+
+
+  const trends = spendingData.map(d => ({ label: d.month, total: d.value }));
+  const prev = trends[trends.length - 2]?.total ?? 0;
+  const curr = trends[trends.length - 1]?.total ?? 0;
+  const growthRate = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+
+
+  const frequencies = {};
+  const methods = {};
+
+  subscriptions.forEach((sub) => {
+    const { frequency = "unknown", method = "unknown", price = 0, currency: subCurrency } = sub;
+    const amount = convert(price, subCurrency, currency, rates);
+
+    frequencies[frequency] = (frequencies[frequency] || 0) + amount;
+    methods[method] = (methods[method] || 0) + amount;
+  });
+
+
+  // === MAIN DATA ===
+  const data = useMemo(() => {
+    const paidThisMonth = getCurrentMonthSpending(subscriptions, currency, rates, convert);
+    const paidThisYear = getCurrentYearSpending(subscriptions, currency, rates, convert);
+    const dueThisMonth = getCurrentMonthDue(subscriptions, currency, rates, convert);
+    const dueThisYear = getCurrentYearDue(subscriptions, currency, rates, convert); // Optional
+    const categories = getCategoryTotals(subscriptions, currency, rates, convert);
+
+    const frequencies = {};
+    const methods = {};
+
+    subscriptions.forEach((sub) => {
+      const { frequency = "unknown", method = "unknown", price = 0, currency: subCurrency } = sub;
+      const amount = convert(price, subCurrency, currency, rates);
+
+      frequencies[frequency] = (frequencies[frequency] || 0) + amount;
+      methods[method] = (methods[method] || 0) + amount;
+    });
+
+    const trends = spendingData.map(d => ({ label: d.month, total: d.value }));
+    const prev = trends[trends.length - 2]?.total ?? 0;
+    const curr = trends[trends.length - 1]?.total ?? 0;
+    const growthRate = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+
+    return {
+      paidThisMonth,
+      paidThisYear,
+      dueThisMonth,
+      dueThisYear,
+      totalThisMonth: paidThisMonth + dueThisMonth,
+      totalThisYear: paidThisYear + dueThisYear,
+      avgMonthly: (paidThisYear + dueThisYear) / 12,
+      avgYearly: paidThisYear + dueThisYear,
+      categories, // ✅ added
+      frequencies, // ✅ add this
+      methods,     // ✅ add this
+      trends,
+      growthRate,
+      isIncrease: growthRate > 0,
+    };
+  }, [subscriptions, currency, rates]);
+
+  function getCategoryTotals(subs, currency, rates, convert) {
+    const result = {};
+    for (const sub of subs) {
+      const category = sub.category || "Uncategorized";
+      const amount = convert(sub.price || 0, sub.currency, currency, rates);
+      result[category] = (result[category] || 0) + amount;
+    }
+    return result;
+  }
 
   const [animatedData, setAnimatedData] = useState([]);
 
@@ -490,12 +491,16 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             ) : (
               <PieChart>
                 <Pie
+                  key={activeTab} // 🔁 This is the key trick to remount and animate
                   data={chartData}
                   dataKey="value"
                   nameKey="name"
                   innerRadius="62%"
                   outerRadius="82%"
                   paddingAngle={2}
+                  isAnimationActive={true} // 👈 Make sure this is set
+                  animationDuration={1400} // Optional: control speed
+                  animationEasing="ease-out"
                 >
                   <Label
                     content={

@@ -3,15 +3,14 @@ import { usePremium } from "../hooks/usePremium";
 import { useTranslation } from "react-i18next";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import { useToast } from "../context/ToastContext";
+import { MONTHLY_FACTOR } from "../utils/frequency";
+import {
+  getCurrentMonthSpending,
+  getCurrentYearSpending,
+  getCurrentMonthDue,
+  getCurrentYearDue,
+} from "../utils/budget";
 
-const MONTHLY_FACTOR = {
-  weekly: 4.345,
-  biweekly: 2.1725,
-  monthly: 1,
-  quarterly: 1 / 3,
-  semiannual: 1 / 6,
-  yearly: 1 / 12,
-};
 
 export default function MonthlyBudget({
   subscriptions,
@@ -34,20 +33,7 @@ export default function MonthlyBudget({
   });
 
   const spent = useMemo(() => {
-    if (!Array.isArray(subscriptions)) return 0;
-
-    return subscriptions.reduce((sum, s) => {
-      if (!s.price || !s.frequency) return sum;
-
-      const factor = MONTHLY_FACTOR[s.frequency] ?? 1;
-
-      const priceInCurrency =
-        s.currency && rates
-          ? convert(s.price, s.currency, currency, rates)
-          : s.price;
-
-      return sum + priceInCurrency * factor;
-    }, 0);
+    return getCurrentMonthSpending(subscriptions, currency, rates, convert);
   }, [subscriptions, currency, rates, convert]);
 
   const remaining = budget != null ? budget - spent : null;

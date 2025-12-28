@@ -14,20 +14,13 @@ import Card from "../components/ui/Card";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import PremiumGuard from "../components/premium/PremiumGuard";
 import PaymentAccordion from "../components/insights/PaymentAccordion";
-
-/* ------------------------------------------------------------------ */
-const FREQ = {
-  weekly: { monthlyFactor: 4.345 },
-  biweekly: { monthlyFactor: 2.1725 },
-  monthly: { monthlyFactor: 1 },
-  quarterly: { monthlyFactor: 1 / 3 },
-  semiannual: { monthlyFactor: 1 / 6 },
-  nine_months: { monthlyFactor: 1 / 9 },
-  yearly: { monthlyFactor: 1 / 12 },
-  biennial: { monthlyFactor: 1 / 24 },
-  triennial: { monthlyFactor: 1 / 36 },
-};
-/* ------------------------------------------------------------------ */
+import { MONTHLY_FACTOR } from "../utils/frequency";
+import {
+  getCurrentMonthSpending,
+  getCurrentYearSpending,
+  getCurrentMonthDue,
+  getCurrentYearDue,
+} from "../utils/budget";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -39,6 +32,11 @@ export default function InsightsPage() {
 
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
+
+  // ✅ Now it's safe to use them in hooks
+  const actualSpent = useMemo(() => {
+    return getCurrentMonthSpending(subscriptions, currency, rates, convert);
+  }, [subscriptions, currency, rates, convert]);
 
   const monthlyBudget = Number(localStorage.getItem("monthly_budget"));
 
@@ -100,22 +98,20 @@ export default function InsightsPage() {
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
       {/* Budget Warning */}
-      {premium.isPremium &&
-        forecast30 &&
+      {/* {premium.isPremium &&
         monthlyBudget &&
-        forecast30.total > monthlyBudget && (
+        actualSpent > monthlyBudget && (
           <div className="p-3 rounded-lg bg-red-100 dark:bg-[#2b0b0b]/80 border border-red-300 dark:border-red-800/50 text-red-700 dark:text-red-300 text-sm text-center shadow-inner dark:shadow-red-900/30">
             {t("budget_exceeded", {
-              spend: forecast30.total.toFixed(2),
+              spend: actualSpent.toFixed(2),
               budget: monthlyBudget.toFixed(2),
             })}
           </div>
-        )}
+        )} */}
 
       <PremiumGuard>
         <BudgetOverviewChart subscriptions={subscriptions} rates={rates} />
       </PremiumGuard>
-
       {/* Payment History */}
       <Card
         className="mt-6 p-5 rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
@@ -125,7 +121,7 @@ export default function InsightsPage() {
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {t("insights_payment_history")}
         </h2>
-        <PaymentAccordion subscriptions={subscriptions} currency={currency} rates={rates} />
+        <PaymentAccordion subscriptions={subscriptions} currency={currency} rates={rates} convert={convert} />
       </Card>
     </div>
   );

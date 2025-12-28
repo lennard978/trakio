@@ -15,21 +15,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
-
-/* ------------------------------------------------------------------ */
-/* Frequency normalization (shared logic with Insights) */
-/* ------------------------------------------------------------------ */
-const MONTHLY_FACTOR = {
-  weekly: 4.345,
-  biweekly: 2.1725,
-  monthly: 1,
-  quarterly: 1 / 3,
-  semiannual: 1 / 6,
-  nine_months: 1 / 9,
-  yearly: 1 / 12,
-  biennial: 1 / 24,
-  triennial: 1 / 36,
-};
+import { MONTHLY_FACTOR } from "../utils/frequency";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -88,13 +74,13 @@ export default function Dashboard() {
         const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-          // Legacy migration (one-time)
+          // Legacy migration
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
                 id: crypto.randomUUID(),
                 date: d,
-                color: s.color || "#ffffff", // ✅ KEEP THIS LINE
+                color: s.color || "#ffffff",
                 amount: s.price,
                 currency: s.currency || "EUR",
               });
@@ -110,15 +96,25 @@ export default function Dashboard() {
             });
           }
 
+          // ✅ Remove duplicate dates
+          const seen = new Set();
+          payments = payments.filter((p) => {
+            const key = new Date(p.date).toISOString().slice(0, 10); // date only
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
           return {
             ...s,
             id: s.id || crypto.randomUUID(),
             payments,
-            color: s.color || "#ffffff", // ✅ ensure it's carried forward
+            color: s.color || "#ffffff",
             history: undefined,
             datePaid: undefined,
           };
         });
+
 
         setSubscriptions(migrated);
       } catch (err) {
@@ -168,12 +164,30 @@ export default function Dashboard() {
 
 
   const totalMonthly = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     return subscriptions.reduce((sum, s) => {
-      const factor = MONTHLY_FACTOR[s.frequency] || 1;
-      const price = Number(s.price) || 0;
-      return sum + price * factor;
+      if (!Array.isArray(s.payments)) return sum;
+
+      const monthlyPayments = s.payments.filter((p) => {
+        const date = new Date(p.date);
+        return (
+          date.getMonth() === currentMonth &&
+          date.getFullYear() === currentYear
+        );
+      });
+
+      const total = monthlyPayments.reduce((subSum, p) => subSum + Number(p.amount || 0), 0);
+
+      return sum + total;
     }, 0);
   }, [subscriptions]);
+
+
+
+
   /* ---------------- Totals (Monthly / Annual) ---------------- */
   const monthlyChange = useMemo(() => {
     if (!previousMonthTotal || previousMonthTotal === 0) return null;

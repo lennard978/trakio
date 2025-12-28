@@ -8,6 +8,7 @@ import {
 import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useTranslation } from "react-i18next";
 
+
 const COLORS = {
   green: "#22C55E",
   orange: "#ED7014",
