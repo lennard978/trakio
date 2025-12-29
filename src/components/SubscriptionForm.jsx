@@ -14,6 +14,7 @@ import SettingButton from "../components/ui/SettingButton";
 import PaymentMethodIcon from "./icons/PaymentMethodIcons";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
+import { addPending, isOnline, syncPending } from "../utils/syncManager";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -401,8 +402,17 @@ export default function SubscriptionForm() {
       }
 
 
-      await kvSave(updated);
+
+      if (isOnline()) {
+        await kvSave(updated);
+        await syncPending(email, token);
+      } else {
+        addPending(updated.find(s => !s.id || s.id === id)); // Save only the new/edited one
+        showToast("Saved offline. Will sync when online.", "info");
+      }
+
       navigate("/dashboard");
+
     } catch (err) {
       console.error("Save failed:", err);
       showToast(err.message || "Failed to save subscription", "error");
@@ -477,7 +487,12 @@ export default function SubscriptionForm() {
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("form_name")}
               </label>
-
+              {/* ✅ Place the message here */}
+              {!navigator.onLine && (
+                <div className="text-sm text-orange-600 mt-2">
+                  You’re offline — changes will sync automatically when online.
+                </div>
+              )}
               <input
                 value={name}
                 onChange={(e) => {

@@ -121,6 +121,7 @@ export default function InsightsPage() {
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {t("insights_payment_history")}
         </h2>
+
         <PaymentAccordion subscriptions={subscriptions} currency={currency} rates={rates} convert={convert} />
       </Card>
     </div>

@@ -31,6 +31,9 @@ import { useTranslation } from "react-i18next";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
 import { MONTHLY_FACTOR } from "../../utils/frequency";
 import { getNormalizedPayments } from "../../utils/payments";
+import SmartForecastCard from "./SmartForecastCard";
+import DynamicAchievements from "./DynamicAchievements"; // ✅ new
+import SubscriptionOptimizer from "./SubscriptionOptimizer";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
@@ -125,6 +128,9 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   const spendingData = useMemo(() => {
     if (!subscriptions?.length) return [];
 
+    // Allow rendering even if rates not yet loaded
+    const safeRates = rates && Object.keys(rates).length ? rates : { [currency]: 1 };
+
     const rangeMap = { "1M": 1, "3M": 3, "6M": 6, "12M": 12 };
     const limit = rangeMap[activeRange] ?? 6;
 
@@ -145,7 +151,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         const key = `${d.getFullYear()}-${d.getMonth()}`;
         const match = months.find((m) => m.key === key);
         if (match) {
-          const converted = convert(p.amount, p.currency, currency, rates);
+          const converted = convert(p.amount, p.currency, currency, safeRates);
           match.total += converted;
         }
       });
@@ -160,9 +166,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
     return [
       ...months.map((m) => ({ month: m.label, value: m.total })),
-      { month: "Next (Forecast)", value: forecast }
+      { month: "Next (Forecast)", value: forecast },
     ];
-  }, [subscriptions, activeRange, currency, rates]);
+  }, [subscriptions, activeRange, currency, rates]); // ✅ <-- safeRates REMOVED
+
 
 
 
@@ -287,7 +294,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
-
 
   return (
     <div className="space-y-4">
@@ -623,8 +629,16 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       </Section>
 
       {/* Achievements + Summary */}
+      {/* 3️⃣ Behavioral & motivational feedback */}
       <AchievementsCard data={data} />
+      <DynamicAchievements
+        data={data}
+        currency={currency}
+      />
+      <SmartForecastCard data={data} currency={currency} />  {/* ← NEW */}
+      <SubscriptionOptimizer subscriptions={subscriptions} currency={currency} rates={rates} />
       <InsightsSummary data={data} currency={currency} />
+
     </div>
   );
 }

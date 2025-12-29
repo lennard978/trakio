@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import {
   Routes,
   Route,
@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 // import LanguageSwitcher from "./components/LanguageSwitcher";
 import AnimatedPage from "./components/AnimatedPage";
 import FloatingTabBar from "./components/FloatingTabBar";
-import LogoIcon from "./icons/icon-192.png";
+// import LogoIcon from "./icons/icon-192.png";
 import CurrencyPickerSheet from "./components/settings/CurrencyPickerSheet";
 import LanguagePickerSheet from "./components/settings/LanguagePickerSheet";
 
@@ -23,6 +23,7 @@ import { Toaster } from "react-hot-toast";
 import { useTheme } from "./hooks/useTheme";
 import { AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { syncPending } from "./utils/syncManager";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -80,6 +81,18 @@ export default function App() {
   const [activeSheet, setActiveSheet] = useState(null);
   const location = useLocation();
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+    const email = savedUser ? JSON.parse(savedUser)?.email : null;
+
+    const handleOnline = () => {
+      syncPending(email, token);
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
 
   /* Currency */
   const { currency, setCurrency } = useCurrency();

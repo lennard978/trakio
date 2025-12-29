@@ -49,7 +49,6 @@ export default function SubscriptionItem({
   onDelete,
   onMarkPaid
 }) {
-  console.log("SubscriptionItem render");
   const navigate = useNavigate();
   const { t } = useTranslation();
   const premium = usePremium();
@@ -92,9 +91,6 @@ export default function SubscriptionItem({
     transparent
   )`
   };
-
-  console.log("💡 SubscriptionItem color:", item.color);
-
 
   const lastPaymentDate = useMemo(() => {
     if (!payments.length) return null;

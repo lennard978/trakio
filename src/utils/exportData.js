@@ -9,7 +9,6 @@ export function exportSubscriptionsCSV(subscriptions) {
     const payments = getNormalizedPayments(s); // ✅ Use normalized & deduplicated payments
 
     payments.forEach((p) => {
-      console.log("Exporting row color value:", s.color);
 
       rows.push([
         s.name,

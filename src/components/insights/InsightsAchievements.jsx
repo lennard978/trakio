@@ -1,71 +1,93 @@
 // src/components/insights/InsightsAchievements.jsx
 import React from "react";
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 
-export default function InsightsAchievements({ data }) {
-  const { t } = useTranslation();
-  const achievements = [];
+export default function AchievementsCard({ data = {} }) {
+  const total = data?.totalThisMonth ?? 0;
+  const growth = data?.growthRate ?? 0;
+  const monthsTracked = data?.trends?.length ?? 0;
 
-  if (data.growthRate < 0)
-    achievements.push({
-      icon: "💰",
-      title: t("achievements_under_budget_title"),
-      desc: t("achievements_under_budget_desc"),
-    });
-
-  if (data.totalThisMonth < 100)
-    achievements.push({
-      icon: "🪙",
-      title: t("achievements_saver_mode_title"),
-      desc: t("achievements_saver_mode_desc"),
-    });
-
-  if (data.topCategory && data.topCategory?.[1] > 50)
-    achievements.push({
-      icon: "🎬",
-      title: t("achievements_streaming_fan_title"),
-      desc: t("achievements_streaming_fan_desc"),
-    });
-
-  if ((data.trends?.length ?? 0) > 6)
-    achievements.push({
+  // === Achievement logic ===
+  const achievements = [
+    {
+      id: 1,
+      icon: "🏦",
+      title: "Saver Mode",
+      description: "Great job staying frugal this month.",
+      color: "#22c55e",
+      earned: total < (data?.avgMonthly ?? 10), // spent less than your avg
+    },
+    {
+      id: 2,
       icon: "📈",
-      title: t("achievements_consistent_tracker_title"),
-      desc: t("achievements_consistent_tracker_desc"),
-    });
+      title: "Consistent Tracker",
+      description: "6+ months of tracking activity!",
+      color: "#3b82f6",
+      earned: monthsTracked >= 6, // user has at least 6 months tracked
+    },
+    {
+      id: 3,
+      icon: "🔥",
+      title: "High Roller",
+      description: "You hit a new spending peak this year.",
+      color: "#f59e0b",
+      earned: growth > 15, // big increase in monthly spend
+    },
+  ];
 
-  if (!achievements.length)
-    achievements.push({
-      icon: "🌟",
-      title: t("achievements_explorer_title"),
-      desc: t("achievements_explorer_desc"),
-    });
+  const earnedCount = achievements.filter((a) => a.earned).length;
 
   return (
     <div
-      className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
-      border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
-      hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300 p-4"
+      className="rounded-xl bg-gradient-to-b from-white/5 to-gray-900/40 
+      dark:from-[#0e1420] dark:to-[#1a1f2a] border border-gray-700/50 
+      shadow-lg shadow-black/20 backdrop-blur-sm p-4 mt-2"
     >
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
-        {t("achievements_title")}
+      <h3 className="text-sm font-semibold text-gray-100 border-b border-gray-700/60 pb-2 mb-3">
+        Achievements
       </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {achievements.map((a, i) => (
+
+      {earnedCount === 0 ? (
+        <p className="text-xs text-gray-400 italic px-1">
+          🌱 Keep tracking — achievements unlock as you build your data!
+        </p>
+      ) : null}
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        {achievements.map((ach) => (
           <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.15, duration: 0.4 }}
-            className="flex items-start gap-3 bg-gray-200/70 dark:bg-gray-800/50 p-3 rounded-lg 
-            hover:border-[#ed7014]/40 hover:shadow-md hover:shadow-[#ed7014]/10 border border-transparent transition-all"
+            key={ach.id}
+            whileHover={{ scale: 1.03 }}
+            transition={{ type: "spring", stiffness: 250, damping: 18 }}
+            className={`relative flex items-center gap-3 p-4 rounded-lg border transition-all duration-300
+              ${ach.earned
+                ? "bg-gradient-to-br from-gray-800/50 to-gray-900/60 border-gray-700/60 hover:border-[#ed7014]/60"
+                : "bg-gradient-to-br from-gray-900/40 to-gray-900/20 border-gray-800/40 opacity-60"
+              }`}
           >
-            <div className="text-2xl">{a.icon}</div>
-            <div>
-              <div className="text-gray-900 dark:text-gray-100 font-medium">{a.title}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">{a.desc}</div>
+            {/* Icon */}
+            <div
+              className="flex-shrink-0 relative w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 shadow-inner"
+            >
+              <div
+                className="absolute inset-0 blur-md opacity-40 rounded-full"
+                style={{ backgroundColor: ach.color }}
+              />
+              <span className="relative text-xl">{ach.icon}</span>
             </div>
+
+            {/* Text */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-100">{ach.title}</h4>
+              <p className="text-xs text-gray-400 mt-0.5">{ach.description}</p>
+            </div>
+
+            {/* Badge */}
+            {ach.earned && (
+              <div className="absolute right-3 top-3 text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-600/30">
+                ✓ Earned
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
