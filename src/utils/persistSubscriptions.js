@@ -1,4 +1,10 @@
 // persistAndSyncSubscriptions.js
+import {
+  saveSubscriptionsLocal,
+  queueSyncJob
+} from "./db";
+import { apiFetch } from "./api";
+import { saveToIndexedDB } from "./indexedDB"; // ✅ import your IndexedDB method
 
 import {
   saveSubscriptionsLocal,
@@ -69,10 +75,19 @@ export async function syncPending(email, token) {
 }
 
 // 🧠 Persist logic
-export async function persistSubscriptions(subscriptions) {
-  // Save to local storage / IndexedDB
+export async function persistSubscriptions(subscriptions, email = "offline-mode") {
+  // ✅ Save to IndexedDB (for offline load)
+  try {
+    await saveToIndexedDB(email, subscriptions);
+    console.log("📦 Saved to IndexedDB");
+  } catch (err) {
+    console.warn("❌ Failed to save to IndexedDB:", err);
+  }
+
+  // (Optional) Save to localStorage as backup
   await saveSubscriptionsLocal(subscriptions);
 
+  // ✅ Try backend save
   try {
     await apiFetch("/api/subscriptions", {
       method: "POST",
@@ -89,7 +104,7 @@ export async function persistSubscriptions(subscriptions) {
       timestamp: Date.now(),
     });
 
-    // Add to offline queue for retry
+    // ✅ Add to retry queue
     subscriptions.forEach(addPending);
   }
 }
@@ -108,3 +123,4 @@ if (typeof window !== "undefined") {
     }
   });
 }
+

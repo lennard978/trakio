@@ -63,67 +63,64 @@ export default function Dashboard() {
   /* ---------------- Sorting (MUST be before useMemo) ---------------- */
   const [sortBy, setSortBy] = useState("next"); // next | price | name | progress
 
-  /* ---------------- Load & migrate ---------------- */
-  useEffect(() => {
-    const email = user?.email || "offline-mode";
 
-    (async () => {
+  useEffect(() => {
+    const handleOnline = async () => {
+      console.log("🌐 Back online — syncing to remote");
+
+      const email = user?.email;
+      if (!email) return;
+
+      try {
+        const localSubs = await getFromIndexedDB(email);
+        if (localSubs.length > 0) {
+          await kvSave(localSubs);
+          console.log("✅ Synced local changes to remote");
+        }
+      } catch (err) {
+        console.error("❌ Sync failed:", err);
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user?.email]);
+
+  /* ---------------- Load & migrate ---------------- */
+
+  useEffect(() => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const list = await kvGet(email); // use fallback key
-        const migrated = Array.isArray(list)
-          ? list.map((s) => {
-            let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-            if (Array.isArray(s.history)) {
-              s.history.forEach((d) => {
-                payments.push({
-                  id: crypto.randomUUID(),
-                  date: d,
-                  color: s.color || "#ffffff",
-                  amount: s.price,
-                  currency: s.currency || "EUR",
-                });
-              });
-            }
+        const email = user?.email;
 
-            if (s.datePaid) {
-              payments.push({
-                id: crypto.randomUUID(),
-                date: s.datePaid,
-                amount: s.price,
-                currency: s.currency || "EUR",
-              });
-            }
+        // ✅ 1. Load from IndexedDB if offline or no user
+        if (!navigator.onLine || !email) {
+          const localSubs = await getFromIndexedDB(email || "offline-mode");
+          console.log("📦 Loaded from IndexedDB:", localSubs);
+          setSubscriptions(localSubs);
+          return;
+        }
 
-            const seen = new Set();
-            payments = payments.filter((p) => {
-              const key = new Date(p.date).toISOString().slice(0, 10);
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
+        // ✅ 2. Load from remote if online and logged in
+        const list = await kvGet(email);
 
-            return {
-              ...s,
-              id: s.id || crypto.randomUUID(),
-              payments,
-              color: s.color || "#ffffff",
-              history: undefined,
-              datePaid: undefined,
-            };
-          })
-          : [];
+        // Optional: save to local for offline use
+        await saveToIndexedDB(email, list);
 
-        setSubscriptions(migrated);
+        setSubscriptions(list);
       } catch (err) {
-        console.error("Failed to load subs from IndexedDB:", err);
+        console.error("❌ Failed to load subs:", err);
         setSubscriptions([]);
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    loadData();
   }, [user?.email]);
+
 
 
   /* ---------------- Notifications ---------------- */
