@@ -65,67 +65,66 @@ export default function Dashboard() {
 
   /* ---------------- Load & migrate ---------------- */
   useEffect(() => {
-    if (!user?.email) return;
+    const email = user?.email || "offline-mode";
 
     (async () => {
       try {
-        setLoading(true); // Start loading
-        const list = await kvGet(user.email);
+        setLoading(true);
+        const list = await kvGet(email); // use fallback key
+        const migrated = Array.isArray(list)
+          ? list.map((s) => {
+            let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-        const migrated = list.map((s) => {
-          let payments = Array.isArray(s.payments) ? [...s.payments] : [];
+            if (Array.isArray(s.history)) {
+              s.history.forEach((d) => {
+                payments.push({
+                  id: crypto.randomUUID(),
+                  date: d,
+                  color: s.color || "#ffffff",
+                  amount: s.price,
+                  currency: s.currency || "EUR",
+                });
+              });
+            }
 
-          // Legacy migration
-          if (Array.isArray(s.history)) {
-            s.history.forEach((d) => {
+            if (s.datePaid) {
               payments.push({
                 id: crypto.randomUUID(),
-                date: d,
-                color: s.color || "#ffffff",
+                date: s.datePaid,
                 amount: s.price,
                 currency: s.currency || "EUR",
               });
+            }
+
+            const seen = new Set();
+            payments = payments.filter((p) => {
+              const key = new Date(p.date).toISOString().slice(0, 10);
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
             });
-          }
 
-          if (s.datePaid) {
-            payments.push({
-              id: crypto.randomUUID(),
-              date: s.datePaid,
-              amount: s.price,
-              currency: s.currency || "EUR",
-            });
-          }
-
-          // ✅ Remove duplicate dates
-          const seen = new Set();
-          payments = payments.filter((p) => {
-            const key = new Date(p.date).toISOString().slice(0, 10); // date only
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-
-          return {
-            ...s,
-            id: s.id || crypto.randomUUID(),
-            payments,
-            color: s.color || "#ffffff",
-            history: undefined,
-            datePaid: undefined,
-          };
-        });
-
+            return {
+              ...s,
+              id: s.id || crypto.randomUUID(),
+              payments,
+              color: s.color || "#ffffff",
+              history: undefined,
+              datePaid: undefined,
+            };
+          })
+          : [];
 
         setSubscriptions(migrated);
       } catch (err) {
-        console.error("Subscription load failed:", err);
+        console.error("Failed to load subs from IndexedDB:", err);
         setSubscriptions([]);
       } finally {
-        setLoading(false); // Done loading
+        setLoading(false);
       }
     })();
   }, [user?.email]);
+
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
