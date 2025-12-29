@@ -52,10 +52,9 @@ export default defineConfig({
             urlPattern: ({ request }) => request.mode === "navigate",
             handler: "NetworkFirst",
             options: {
-              cacheName: "pages",
-              expiration: {
-                maxEntries: 20,
-              },
+              cacheName: 'pages',
+              networkTimeoutSeconds: 3,
+              fallback: '/offline.html',
             },
           },
         ],

@@ -16,6 +16,7 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { MONTHLY_FACTOR } from "../utils/frequency";
+import SyncTestPage from "./SyncTestPage";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -288,7 +289,7 @@ export default function Dashboard() {
         <>
           {/* ================= SUMMARY CARDS ================= */}
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 mt-2 mb-4">
-
+            <SyncTestPage />
             {/* Monthly Total */}
             <div
               className="

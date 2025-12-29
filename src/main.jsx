@@ -26,6 +26,13 @@ import { registerSW } from "virtual:pwa-register";
 
 registerSW({ immediate: true });
 
+const updateSW = registerSW({
+  onNeedRefresh() { },
+  onOfflineReady() {
+    console.log('✅ App is ready to work offline');
+  },
+});
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ThemeProvider>
