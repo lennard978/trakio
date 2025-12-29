@@ -5,12 +5,6 @@ function getAuthUser(req) {
   const auth = req.headers.authorization || "";
   const match = auth.match(/^Bearer\s+(.+)$/);
   if (!match) return null;
-  const token = match[1];
-
-  // 🔓 Development override
-  if (token === "dummy-token") {
-    return { userId: "test@example.com" }; // fake user
-  }
 
   return verifyToken(match[1]);
 }
