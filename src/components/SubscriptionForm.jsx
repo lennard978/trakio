@@ -208,7 +208,9 @@ export default function SubscriptionForm() {
 
   /* ------------------ Load Data ------------------ */
   useEffect(() => {
-    if (!email) return;
+    if (!email) {
+      return
+    };
     let cancelled = false;
 
     const load = async () => {
@@ -261,7 +263,9 @@ export default function SubscriptionForm() {
 
   /* ------------------ Load + MIGRATION ------------------ */
   useEffect(() => {
-    if (!email) return;
+    if (!email) {
+      return
+    };
     let cancelled = false;
 
     const load = async () => {
@@ -454,24 +458,13 @@ export default function SubscriptionForm() {
       </div>
     );
   }
-  if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
-        <Card className="relative overflow-hidden">
-          <div className="py-8 text-center text-sm text-gray-600 dark:text-gray-300">
-            Loading…
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
-  function hexToRgba(hex, alpha = 0.85) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
+  // function hexToRgba(hex, alpha = 0.85) {
+  //   const r = parseInt(hex.slice(1, 3), 16);
+  //   const g = parseInt(hex.slice(3, 5), 16);
+  //   const b = parseInt(hex.slice(5, 7), 16);
+  //   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  // }
 
   useEffect(() => {
     const handleOnline = async () => {
