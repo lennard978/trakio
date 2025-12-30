@@ -64,12 +64,11 @@ export default function Dashboard() {
 
   /* ---------------- Load & migrate ---------------- */
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!user?.email || !token) return;
+    if (!user?.email) return;
 
     (async () => {
       try {
-        setLoading(true);
+        setLoading(true); // Start loading
         const list = await kvGet(user.email);
 
         const migrated = list.map((s) => {
@@ -119,12 +118,8 @@ export default function Dashboard() {
 
         setSubscriptions(migrated);
       } catch (err) {
-        if (err.message === "Unauthorized") {
-          console.warn("User is not authorized. Please login again.");
-          // You could redirect or trigger logout here
-        } else {
-          console.error("Subscription load failed:", err);
-        } setSubscriptions([]);
+        console.error("Subscription load failed:", err);
+        setSubscriptions([]);
       } finally {
         setLoading(false); // Done loading
       }
