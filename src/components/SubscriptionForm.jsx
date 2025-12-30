@@ -13,7 +13,7 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
-import { addPending, isOnline, syncPending } from "../utils/mainDB";
+import { addPending, isOnline, syncPending, saveSubscriptionsLocal, loadSubscriptionsLocal } from "../utils/mainDB";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -22,18 +22,6 @@ function normalizeDateString(d) {
   if (Number.isNaN(dt.getTime())) return null;
   return dt.toISOString().slice(0, 10);
 }
-
-const MONTHLY_FACTOR = {
-  weekly: 4.345,
-  biweekly: 2.1725,
-  monthly: 1,
-  quarterly: 1 / 3,
-  semiannual: 1 / 6,
-  nine_months: 1 / 9,
-  yearly: 1 / 12,
-  biennial: 1 / 24,
-  triennial: 1 / 36,
-};
 
 function uniqDates(list) {
   const out = [];
@@ -226,7 +214,15 @@ export default function SubscriptionForm() {
     const load = async () => {
       setLoading(true);
       try {
-        const list = await kvGet();
+        let list = [];
+
+        if (isOnline()) {
+          list = await kvGet();
+          await saveSubscriptionsLocal(list);
+        } else {
+          console.info("🔌 Offline mode – loading from IndexedDB");
+          list = await loadSubscriptionsLocal();
+        }
         if (cancelled) return;
 
         setSubscriptions(list);
@@ -271,7 +267,15 @@ export default function SubscriptionForm() {
     const load = async () => {
       setLoading(true);
       try {
-        const list = await kvGet();
+        let list = [];
+
+        if (isOnline()) {
+          list = await kvGet();
+          await saveSubscriptionsLocal(list);
+        } else {
+          console.info("🔌 Offline mode – loading from IndexedDB");
+          list = await loadSubscriptionsLocal();
+        }
         if (cancelled) return;
         /* 🔹 ADD: migrate old subscriptions */
         const migrated = list.map((s) => ({
@@ -400,15 +404,17 @@ export default function SubscriptionForm() {
         showToast(t("toast_added"), "success");
       }
 
-
-
       if (isOnline()) {
         await kvSave(updated);
+        await saveSubscriptionsLocal(updated);
         await syncPending(email, token);
       } else {
-        addPending(updated.find(s => !s.id || s.id === id)); // Save only the new/edited one
+        const pendingItem = updated.find(s => !s.id || s.id === id);
+        addPending(pendingItem);
+        await saveSubscriptionsLocal(updated);
         showToast("Saved offline. Will sync when online.", "info");
       }
+
 
       navigate("/dashboard");
 
