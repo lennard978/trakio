@@ -1,5 +1,7 @@
+import { kv } from "@vercel/kv";
 import { getPremiumRecord, setPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
+// <== Add this line
 
 /* ------------------------------------------------------------------ */
 /* Auth helper                                                         */
@@ -27,30 +29,43 @@ export default async function handler(req, res) {
   }
 
   const authUser = getAuthUser(req);
-  const userId = authUser?.email || authUser?.userId;
-
-  if (!userId) {
+  if (!authUser?.userId) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
+  const userId = authUser.userId;
+
   try {
     /* -------------------------------------------------------------- */
-    /* GET PREMIUM STATUS                                              */
+    /* GET PREMIUM STATUS (Stripe truth passthrough)                  */
     /* -------------------------------------------------------------- */
+
     if (action === "get-status") {
       const record = await getPremiumRecord(userId);
 
+      // 🔑 ALWAYS RETURN A STATUS
+      if (!record) {
+        return res.status(200).json({
+          status: "canceled",
+          currentPeriodEnd: null,
+          trialEnds: null,
+          cancelAtPeriodEnd: false,
+        });
+      }
+
       return res.status(200).json({
-        status: record?.status ?? "canceled",
-        currentPeriodEnd: record?.currentPeriodEnd ?? null,
-        trialEnds: record?.trialEnds ?? null,
-        cancelAtPeriodEnd: !!record?.cancelAtPeriodEnd,
+        status: record.status || "canceled",
+        currentPeriodEnd: record.currentPeriodEnd || null,
+        trialEnds: record.trialEnds || null,
+        cancelAtPeriodEnd: !!record.cancelAtPeriodEnd,
       });
     }
 
+
     /* -------------------------------------------------------------- */
-    /* START TRIAL                                                     */
+    /* START LOCAL TRIAL (NO STRIPE YET)                               */
     /* -------------------------------------------------------------- */
+
     if (action === "start-trial") {
       const existing = (await getPremiumRecord(userId)) || {};
 
@@ -58,18 +73,16 @@ export default async function handler(req, res) {
         existing.status === "active" ||
         existing.status === "trialing"
       ) {
-        return res
-          .status(400)
-          .json({ error: "Already premium or trialing" });
+        return res.status(400).json({ error: "Already premium or trialing" });
       }
 
       if (existing.trialEnds) {
-        return res
-          .status(400)
-          .json({ error: "Trial already used" });
+        return res.status(400).json({ error: "Trial already used" });
       }
 
-      const trialEnds = Math.floor(Date.now() / 1000) + 7 * 86400;
+      // 7-day trial (unix seconds)
+      const trialEnds =
+        Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
 
       await setPremiumRecord(userId, {
         status: "trialing",
@@ -85,15 +98,14 @@ export default async function handler(req, res) {
     }
 
     /* -------------------------------------------------------------- */
-    /* CANCEL TRIAL                                                    */
+    /* CANCEL LOCAL TRIAL                                              */
     /* -------------------------------------------------------------- */
+
     if (action === "cancel-trial") {
       const existing = (await getPremiumRecord(userId)) || {};
 
       if (existing.status !== "trialing") {
-        return res
-          .status(400)
-          .json({ error: "No active trial" });
+        return res.status(400).json({ error: "No active trial" });
       }
 
       await setPremiumRecord(userId, {
@@ -111,12 +123,7 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: "Invalid action" });
   } catch (err) {
-    console.error("Subscriptions API error:", err);
-    return res.status(500).json({
-      error: "Internal server error",
-      message: err.message,
-      stack: err.stack, // add this
-    });
+    console.error("USER API ERROR:", err);
+    return res.status(500).json({ error: "Server error" });
   }
-
 }

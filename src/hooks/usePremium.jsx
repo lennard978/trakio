@@ -1,99 +1,83 @@
-import { useState, useEffect } from "react";
-import { isOnline } from "../utils/mainDB";
+import { useMemo } from "react";
+import { usePremiumContext } from "../context/PremiumContext";
 
+/**
+ * Authoritative premium resolver.
+ * Frontend MUST NOT trust raw flags alone.
+ */
 export function usePremium() {
-  const [status, setStatus] = useState({
-    isPremium: false,
-    trialEndDate: null,
-    hasActiveTrial: false,
-    trialExpired: false,
-    noTrial: false,
-    trialDaysLeft: 0,
-  });
+  const ctx = usePremiumContext();
 
-  const [loading, setLoading] = useState(false); // add loading state
+  const {
+    status,
+    currentPeriodEnd,
+    trialEnds,
+    loading,
+  } = ctx;
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+  const premiumState = useMemo(() => {
+    const now = Date.now();
 
-      try {
-        if (isOnline()) {
-          const res = await fetch("/api/user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ action: "get-status" }),
-          });
+    const periodEndMs =
+      typeof currentPeriodEnd === "number"
+        ? currentPeriodEnd * 1000
+        : null;
 
-          const data = await res.json();
+    const trialEndMs =
+      typeof trialEnds === "number"
+        ? trialEnds * 1000
+        : null;
 
-          if (res.ok) {
-            localStorage.setItem("premium_status", JSON.stringify(data));
-            updateState(data);
-          }
-        } else {
-          const cached = localStorage.getItem("premium_status");
-          if (cached) {
-            updateState(JSON.parse(cached));
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch premium status", err);
-      }
-    };
+    const hasActiveTrial =
+      status === "trialing" &&
+      trialEndMs &&
+      trialEndMs > now;
 
-    const updateState = (data) => {
-      const now = Date.now() / 1000;
-      const trialEnds = data.trialEnds ?? 0;
-      const trialDaysLeft = Math.max(0, Math.ceil((trialEnds - now) / 86400));
+    const isPremium =
+      status === "active" &&
+      periodEndMs &&
+      periodEndMs > now;
 
-      setStatus({
-        isPremium: data.status === "active" || data.status === "trialing",
-        trialEndDate: data.trialEnds,
-        hasActiveTrial: data.status === "trialing",
-        trialExpired: data.status === "canceled" && !!data.trialEnds,
-        noTrial: !data.trialEnds,
-        trialDaysLeft,
-      });
-    };
 
-    fetchStatus();
-  }, []);
+    const trialExpired =
+      !!trialEndMs &&
+      trialEndMs <= now &&
+      status !== "active";
 
-  const startCheckout = async (plan) => {
-    try {
-      const token = localStorage.getItem("token");
+    const noTrial =
+      !trialEndMs &&
+      !hasActiveTrial &&
+      !isPremium;
 
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: "checkout", plan }), // ✅ FIXED
-      });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.url) {
-        throw new Error("Checkout failed");
-      }
-
-      window.location.href = data.url;
-    } catch (err) {
-      console.error("Checkout error:", err);
-      alert("Failed to start checkout. Please try again.");
+    let trialDaysLeft = null;
+    if (hasActiveTrial) {
+      const diffMs = trialEndMs - now;
+      trialDaysLeft = Math.max(
+        0,
+        Math.ceil(diffMs / 86400000)
+      );
     }
-  };
 
+    return {
+      isPremium,
+      hasActiveTrial,
+      trialExpired,
+      noTrial,
+      trialDaysLeft,
+      premiumEndsAt: periodEndMs
+        ? new Date(periodEndMs).toISOString()
+        : null,
+      trialEndsAt: trialEndMs
+        ? new Date(trialEndMs).toISOString()
+        : null,
+    };
+
+  }, [status, currentPeriodEnd, trialEnds]);
 
   return {
-    ...status,
+    ...ctx,
+    ...premiumState,
     loading,
-    startCheckout,
   };
 }

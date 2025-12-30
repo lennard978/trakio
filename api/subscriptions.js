@@ -1,5 +1,6 @@
-import { redis } from "../../src/lib/redis"; // ✅ make sure the path is correct
-import { verifyToken } from "../../api/utils/jwt"; // ✅ adjust based on new file location
+// /api/subscriptions.js
+import { kv } from "@vercel/kv";
+import { verifyToken } from "./utils/jwt.js";
 
 function getAuthUser(req) {
   const auth = req.headers.authorization || "";
@@ -13,10 +14,8 @@ function key(userId) {
 }
 
 export default async function handler(req, res) {
-  console.log("HIT /api/subscriptions"); // add this
-
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" }); // ← this is why you're getting 405
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const authUser = getAuthUser(req);
@@ -28,19 +27,23 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
+      // 🔹 Fetch subscriptions
       case "get": {
-        const data = await redis.get(key(authUser.userId));
+        const data = await kv.get(key(authUser.userId));
         return res.status(200).json({
           subscriptions: Array.isArray(data) ? data : [],
         });
       }
 
+      // 🔹 Save subscriptions (overwrite)
       case "save": {
         if (!Array.isArray(subscriptions)) {
-          return res.status(400).json({ error: "Invalid subscriptions payload" });
+          return res
+            .status(400)
+            .json({ error: "Invalid subscriptions payload" });
         }
 
-        await redis.set(key(authUser.userId), subscriptions);
+        await kv.set(key(authUser.userId), subscriptions);
         return res.status(200).json({ ok: true });
       }
 
@@ -49,9 +52,6 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error("Subscriptions API error:", err);
-    return res.status(500).json({
-      error: "Internal server error",
-      message: err.message,
-    });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

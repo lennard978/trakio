@@ -56,7 +56,6 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   const [loading, setLoading] = useState(true); // ← Add this
-  const [syncStatus, setSyncStatus] = useState("");
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -151,33 +150,15 @@ export default function Dashboard() {
       if (isOnline() && user?.email && localStorage.getItem("token")) {
         console.log("📡 Reconnected — syncing pending data...");
         await syncPending(user.email, localStorage.getItem("token"));
+        // Optionally: reload or refresh state
         const refreshed = await kvGet(user.email);
-
-        if (Array.isArray(refreshed) && refreshed.length > 0) {
-          await saveSubscriptionsLocal(refreshed);
-          setSubscriptions(refreshed);
-        } else {
-          console.warn("⚠️ Backend returned empty list. Keeping local data.");
-        }
+        await saveSubscriptionsLocal(refreshed);
+        setSubscriptions(refreshed);
       }
     };
 
     window.addEventListener("online", syncOnReconnect);
     return () => window.removeEventListener("online", syncOnReconnect);
-  }, [user?.email]);
-
-  useEffect(() => {
-    const handleOnline = async () => {
-      if (user?.email) {
-        setSyncStatus("Syncing...");
-        await syncPending(user.email, localStorage.getItem("token"));
-        setSyncStatus("Synced!");
-        setTimeout(() => setSyncStatus(""), 2000);
-      }
-    };
-
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
   }, [user?.email]);
 
 
@@ -345,12 +326,6 @@ export default function Dashboard() {
           You’re currently offline. Changes will be saved locally and synced later.
         </div>
       )}
-      {syncStatus && (
-        <div className="text-green-600 text-sm text-center mb-2">
-          {syncStatus}
-        </div>
-      )}
-
       {!isOnline() && (
         <button
           onClick={syncNow}
