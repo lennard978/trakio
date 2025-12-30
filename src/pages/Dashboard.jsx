@@ -16,6 +16,12 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { MONTHLY_FACTOR } from "../utils/frequency";
+import {
+  isOnline,
+  loadSubscriptionsLocal,
+  saveSubscriptionsLocal,
+  syncPending
+} from "../utils/mainDB"; // update the path if needed
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -68,13 +74,27 @@ export default function Dashboard() {
 
     (async () => {
       try {
-        setLoading(true); // Start loading
-        const list = await kvGet(user.email);
+        setLoading(true);
 
+        let list = [];
+
+        if (isOnline()) {
+          // Fetch from API
+          list = await kvGet(user.email);
+
+          // Save to IndexedDB
+          await saveSubscriptionsLocal(list);
+        } else {
+          // Load from IndexedDB
+          console.log("🌀 Loading from IndexedDB (offline mode)");
+          list = await loadSubscriptionsLocal();
+        }
+
+        // Migrate legacy data
         const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-          // Legacy migration
+          // Legacy migration logic
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
@@ -96,10 +116,10 @@ export default function Dashboard() {
             });
           }
 
-          // ✅ Remove duplicate dates
+          // Remove duplicates
           const seen = new Set();
           payments = payments.filter((p) => {
-            const key = new Date(p.date).toISOString().slice(0, 10); // date only
+            const key = new Date(p.date).toISOString().slice(0, 10);
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
@@ -115,16 +135,16 @@ export default function Dashboard() {
           };
         });
 
-
         setSubscriptions(migrated);
       } catch (err) {
         console.error("Subscription load failed:", err);
         setSubscriptions([]);
       } finally {
-        setLoading(false); // Done loading
+        setLoading(false);
       }
     })();
   }, [user?.email]);
+
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -269,20 +289,46 @@ export default function Dashboard() {
   const persist = async (nextSubs) => {
     setSubscriptions(nextSubs);
     try {
-      await kvSave(nextSubs);
+      await kvSave(nextSubs); // Save to backend
+      await saveSubscriptionsLocal(nextSubs); // Save to IndexedDB
     } catch (err) {
       console.error("KV save failed:", err);
     }
   };
 
+  // Inside the component
+  const syncNow = async () => {
+    if (user?.email && localStorage.getItem("token")) {
+      await syncPending(user.email, localStorage.getItem("token"));
+      // Optionally reload after syncing
+      window.location.reload();
+    }
+  };
 
   /* ---------------- Render ---------------- */
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
+      {!isOnline() && (
+        <div className="bg-yellow-100 text-yellow-800 text-sm p-3 rounded mb-3 text-center">
+          You’re currently offline. Changes will be saved locally and synced later.
+        </div>
+      )}
+      {!isOnline() && (
+        <button
+          onClick={syncNow}
+          className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+        >
+          Sync Offline Data
+        </button>
+      )}
+
       {loading ? (
-        <div className="flex justify-center items-center h-40">
+        <div className="flex flex-col justify-center items-center h-40">
           <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          {!isOnline() && (
+            <p className="mt-2 text-sm text-gray-500">Offline mode: Loading from local storage…</p>
+          )}
         </div>
       ) : hasSubscriptions ? (
         <>
