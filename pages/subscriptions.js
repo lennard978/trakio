@@ -1,5 +1,5 @@
 import { redis } from "../src/lib/redis.js"; // <-- Make sure this is correct!
-import { verifyToken } from "./utils/jwt.js";
+import { verifyToken } from "../api/utils/jwt.js";
 
 function getAuthUser(req) {
 
