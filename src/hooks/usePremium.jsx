@@ -11,6 +11,8 @@ export function usePremium() {
     trialDaysLeft: 0,
   });
 
+  const [loading, setLoading] = useState(false); // add loading state
+
   useEffect(() => {
     const fetchStatus = async () => {
       const token = localStorage.getItem("token");
@@ -30,12 +32,10 @@ export function usePremium() {
           const data = await res.json();
 
           if (res.ok) {
-            // ✅ Save to localStorage
             localStorage.setItem("premium_status", JSON.stringify(data));
             updateState(data);
           }
         } else {
-          // Offline? Load cached status
           const cached = localStorage.getItem("premium_status");
           if (cached) {
             updateState(JSON.parse(cached));
@@ -49,7 +49,6 @@ export function usePremium() {
     const updateState = (data) => {
       const now = Date.now() / 1000;
       const trialEnds = data.trialEnds ?? 0;
-
       const trialDaysLeft = Math.max(0, Math.ceil((trialEnds - now) / 86400));
 
       setStatus({
@@ -65,5 +64,39 @@ export function usePremium() {
     fetchStatus();
   }, []);
 
-  return status;
+  const startCheckout = async (plan) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data?.url) {
+        window.location.href = data.url; // redirect to Stripe checkout
+      } else {
+        console.error("Checkout failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    ...status,
+    loading,
+    startCheckout,
+  };
 }
