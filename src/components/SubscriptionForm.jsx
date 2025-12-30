@@ -208,9 +208,8 @@ export default function SubscriptionForm() {
 
   /* ------------------ Load Data ------------------ */
   useEffect(() => {
-    if (!email) {
-      return
-    };
+    if (!email) return;
+
     let cancelled = false;
 
     const load = async () => {
@@ -225,18 +224,29 @@ export default function SubscriptionForm() {
           console.info("🔌 Offline mode – loading from IndexedDB");
           list = await loadSubscriptionsLocal();
         }
+
         if (cancelled) return;
 
-        setSubscriptions(list);
+        // 🔁 MIGRATION
+        const migrated = list.map((s) => ({
+          ...s,
+          gradientIntensity:
+            typeof s.gradientIntensity === "number"
+              ? s.gradientIntensity
+              : CATEGORY_INTENSITY_DEFAULT[s.category] ?? CATEGORY_INTENSITY_DEFAULT.other,
+        }));
+
+        setSubscriptions(migrated);
 
         if (id) {
-          const existing = list.find((s) => String(s.id) === String(id));
+          const existing = migrated.find((s) => String(s.id) === String(id));
           if (!existing) {
             showToast("Subscription not found", "error");
             navigate("/dashboard");
             return;
           }
 
+          // ⬇️ Set state safely here
           setName(existing.name || "");
           setPrice(String(existing.price || ""));
           setFrequency(existing.frequency || "monthly");
@@ -245,6 +255,8 @@ export default function SubscriptionForm() {
           setNotify(existing.notify !== false);
           setCurrency(existing.currency || "EUR");
           setMethod(existing.method || "");
+          setColor(existing.color || getRandomColor());
+          setGradientIntensity(existing.gradientIntensity);
         }
       } catch (err) {
         console.error("SubscriptionForm load error:", err);
@@ -261,70 +273,6 @@ export default function SubscriptionForm() {
   }, [email, id, navigate, showToast]);
 
 
-  /* ------------------ Load + MIGRATION ------------------ */
-  useEffect(() => {
-    if (!email) {
-      return
-    };
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      try {
-        let list = [];
-
-        if (isOnline()) {
-          list = await kvGet();
-          await saveSubscriptionsLocal(list);
-        } else {
-          console.info("🔌 Offline mode – loading from IndexedDB");
-          list = await loadSubscriptionsLocal();
-        }
-        if (cancelled) return;
-        /* 🔹 ADD: migrate old subscriptions */
-        const migrated = list.map((s) => ({
-          ...s,
-          gradientIntensity:
-            typeof s.gradientIntensity === "number"
-              ? s.gradientIntensity
-              : CATEGORY_INTENSITY_DEFAULT[s.category] ??
-              CATEGORY_INTENSITY_DEFAULT.other,
-        }));
-
-        setSubscriptions(migrated);
-
-        if (id) {
-          const existing = migrated.find((s) => String(s.id) === String(id));
-          if (!existing) {
-            showToast("Subscription not found", "error");
-            navigate("/dashboard");
-            return;
-          }
-
-          setName(existing.name || "");
-          setPrice(String(existing.price || ""));
-          setFrequency(existing.frequency || "monthly");
-          setCategory(existing.category || "other");
-          setDatePaid(existing.datePaid || "");
-          setNotify(existing.notify !== false);
-          setCurrency(existing.currency || "EUR");
-          setMethod(existing.method || "");
-          setColor(existing.color || getRandomColor());
-          setGradientIntensity(existing.gradientIntensity);
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to load subscription data", "error");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [email, id, navigate, showToast]);
   /* ------------------ Submit ------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
