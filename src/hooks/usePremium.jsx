@@ -65,34 +65,31 @@ export function usePremium() {
   }, []);
 
   const startCheckout = async (plan) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    setLoading(true);
-
     try {
+      const token = localStorage.getItem("token");
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ action: "checkout", plan }), // ✅ FIXED
       });
 
       const data = await res.json();
 
-      if (res.ok && data?.url) {
-        window.location.href = data.url; // redirect to Stripe checkout
-      } else {
-        console.error("Checkout failed:", data.error);
+      if (!res.ok || !data.url) {
+        throw new Error("Checkout failed");
       }
+
+      window.location.href = data.url;
     } catch (err) {
       console.error("Checkout error:", err);
-    } finally {
-      setLoading(false);
+      alert("Failed to start checkout. Please try again.");
     }
   };
+
 
   return {
     ...status,
