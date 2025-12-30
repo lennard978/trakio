@@ -1,6 +1,6 @@
 // src/components/SubscriptionItem.jsx
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +17,13 @@ import { getCategoryStyles } from "../utils/CategoryStyles";
 import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
 import { useTheme } from "../hooks/useTheme";
+import {
+  isOnline,
+  addPending,
+  syncPending,
+  saveSubscriptionsLocal,
+  getPending,
+} from "../utils/mainDB.js"; // Adjust path if needed
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
@@ -47,7 +54,10 @@ export default function SubscriptionItem({
   rates,
   convert,
   onDelete,
-  onMarkPaid
+  onMarkPaid,
+  subscriptions,
+  setSubscriptions,
+  user,
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -135,6 +145,62 @@ export default function SubscriptionItem({
     input?.click?.();
   };
 
+  const markPaid = async (id, date) => {
+    const updated = subscriptions.map((s) => {
+      if (s.id !== id) return s;
+
+      const payments = Array.isArray(s.payments) ? s.payments : [];
+
+      // Skip if already paid
+      const alreadyPaid = payments.some((p) => p.date === date);
+      if (alreadyPaid) return s;
+
+      return {
+        ...s,
+        payments: [
+          ...payments,
+          {
+            id: crypto.randomUUID(),
+            date,
+            amount: s.price,
+            currency: s.currency || "EUR",
+          },
+        ],
+      };
+    });
+
+    setSubscriptions(updated);
+    await saveSubscriptionsLocal(updated);
+
+    if (isOnline()) {
+      try {
+        const res = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            action: "save",
+            email: user.email,
+            subscriptions: updated,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to sync");
+
+        await syncPending(user.email, localStorage.getItem("token"));
+      } catch (err) {
+        console.warn("Online sync failed", err);
+      }
+    } else {
+      const justUpdated = updated.find((s) => s.id === id);
+      addPending(justUpdated);
+      console.info("Saved payment offline – will sync later.");
+    }
+  };
+
+
   return (
     <SwipeToDeleteWrapper
       onDelete={() => onDelete(item.id)}
@@ -146,6 +212,17 @@ export default function SubscriptionItem({
           isSwiping,
           isLightCard,
         });
+
+        useEffect(() => {
+          const handleOnline = async () => {
+            if (user?.email) {
+              await syncPending(user.email, localStorage.getItem("token"));
+            }
+          };
+
+          window.addEventListener("online", handleOnline);
+          return () => window.removeEventListener("online", handleOnline);
+        }, [user?.email]);
 
 
         return (
@@ -216,7 +293,7 @@ export default function SubscriptionItem({
                 <button
                   onClick={() => {
                     const today = new Date().toISOString().split("T")[0]; // ✅ define 'today'
-                    openCalendar();
+                    openCalendar(); // shows native calendar
                     // onMarkPaid(item.id, today); // ✅ now this works
                   }} title={nextPaymentText}
                   className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
@@ -242,7 +319,7 @@ export default function SubscriptionItem({
                 ref={dateInputRef}
                 type="date"
                 className="hidden"
-                onChange={(e) => onMarkPaid(item.id, e.target.value)}
+                onChange={(e) => markPaid(item.id, e.target.value)}
               />
             </div>
           </div>

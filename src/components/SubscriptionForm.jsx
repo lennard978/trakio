@@ -473,6 +473,23 @@ export default function SubscriptionForm() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (email && token) {
+        console.info("🔁 Back online – syncing pending subscriptions...");
+        await syncPending(email, token);
+        showToast("Offline data synced!", "success");
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [email, token]);
+
+
   /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto pb-2">

@@ -15,6 +15,13 @@ import SettingButton from "../components/ui/SettingButton";
 import SettingsRow from "../components/ui/SettingsRow";
 import languages from "../utils/languages";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import {
+  isOnline,
+  syncPending,
+  addPending,
+  saveSubscriptionsLocal,
+  loadSubscriptionsLocal
+} from "../utils/mainDB"; // adjust path if needed
 
 
 import {
@@ -45,6 +52,18 @@ export default function Settings({ setActiveSheet }) {
   const [importPreview, setImportPreview] = useState(null);
   const [importFile, setImportFile] = useState(null);
   const fileInputRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (user?.email) {
+        console.info("🔁 Back online – syncing subscriptions...");
+        await syncPending(user.email, localStorage.getItem("token"));
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user?.email]);
 
   if (loading) {
     return (
@@ -83,19 +102,29 @@ export default function Settings({ setActiveSheet }) {
 
     (async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: "get", email: user.email }),
-      });
+      let list = [];
 
-      const data = await res.json();
+      if (isOnline()) {
+        const res = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ action: "get", email: user.email }),
+        });
+        const data = await res.json();
+        list = Array.isArray(data.subscriptions) ? data.subscriptions : [];
 
-      setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
+        await saveSubscriptionsLocal(list);
+      } else {
+        console.info("📴 Offline – loading from IndexedDB");
+        list = await loadSubscriptionsLocal();
+      }
+
+      setSubscriptions(list);
     })();
+
   }, [user?.email]);
 
   function parseCSV(text) {
@@ -329,6 +358,17 @@ export default function Settings({ setActiveSheet }) {
             accent="indigo"
             glow
           />
+          <SettingsRow
+            icon={<ShieldCheckIcon className="w-6 h-6" />}
+            title="Sync Now"
+            description="Manually sync any pending offline changes"
+            accent="green"
+            onClick={async () => {
+              await syncPending(user.email, localStorage.getItem("token"));
+              alert("✅ Synced successfully.");
+            }}
+          />
+
         </Card>
       </section>
 
