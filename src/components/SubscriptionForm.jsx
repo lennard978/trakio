@@ -146,6 +146,15 @@ export default function SubscriptionForm() {
     CATEGORY_INTENSITY_DEFAULT.other
   );
 
+  if (!email) {
+    return (
+      <div className="text-center py-10">
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+
   /* 🔹 ADD: low-power detection */
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === "undefined") return false;
