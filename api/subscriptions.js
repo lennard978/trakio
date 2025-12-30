@@ -1,3 +1,4 @@
+// /api/subscriptions.js
 import { kv } from "@vercel/kv";
 import { verifyToken } from "./utils/jwt.js";
 
@@ -5,7 +6,6 @@ function getAuthUser(req) {
   const auth = req.headers.authorization || "";
   const match = auth.match(/^Bearer\s+(.+)$/);
   if (!match) return null;
-
   return verifyToken(match[1]);
 }
 
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         });
       }
 
-      // 🔹 Overwrite subscriptions
+      // 🔹 Save subscriptions (overwrite)
       case "save": {
         if (!Array.isArray(subscriptions)) {
           return res
@@ -45,30 +45,6 @@ export default async function handler(req, res) {
 
         await kv.set(key(authUser.userId), subscriptions);
         return res.status(200).json({ ok: true });
-      }
-
-      // 🔹 Merge synced subscriptions
-      case "sync": {
-        if (!Array.isArray(subscriptions)) {
-          return res
-            .status(400)
-            .json({ error: "Invalid subscriptions payload" });
-        }
-
-        const existing = (await kv.get(key(authUser.userId))) || [];
-
-        // Merge: Prevent duplicates by 'id'
-        const merged = [
-          ...existing,
-          ...subscriptions.filter(
-            (newSub) =>
-              !existing.some((existingSub) => existingSub.id === newSub.id)
-          ),
-        ];
-
-        await kv.set(key(authUser.userId), merged);
-
-        return res.status(200).json({ ok: true, mergedCount: merged.length });
       }
 
       default:
