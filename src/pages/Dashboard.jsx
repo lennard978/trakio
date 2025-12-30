@@ -27,7 +27,7 @@ import {
 /* KV helpers */
 /* ------------------------------------------------------------------ */
 async function kvGet(email) {
-  const data = await apiFetch("/api/subscriptions", {
+  const data = await apiFetch("pages/api/subscriptions", {
     method: "POST",
     body: JSON.stringify({ action: "get", email }),
   });
@@ -36,7 +36,7 @@ async function kvGet(email) {
 }
 
 async function kvSave(subscriptions) {
-  await apiFetch("/api/subscriptions", {
+  await apiFetch("pages/api/subscriptions", {
     method: "POST",
     body: JSON.stringify({
       action: "save",
