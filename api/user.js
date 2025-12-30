@@ -127,27 +127,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Server error" });
   }
 }
-
-async function syncPending(email, token) {
-  const pending = await getPending();
-
-  if (!pending.length) return;
-
-  try {
-    const res = await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ action: "save", subscriptions: pending }),
-    });
-
-    if (!res.ok) throw new Error("Sync failed");
-
-    await clearPending(); // Clear after successful sync
-    await kvSave(pending); // Optional: save merged to server KV
-  } catch (err) {
-    console.error("Sync failed", err);
-  }
-}

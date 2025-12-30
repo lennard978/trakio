@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../utils/api";
 
@@ -14,13 +15,13 @@ import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
+import { MONTHLY_FACTOR } from "../utils/frequency";
 import {
   isOnline,
   loadSubscriptionsLocal,
   saveSubscriptionsLocal,
   syncPending
 } from "../utils/mainDB"; // update the path if needed
-import { mergeSubscriptions, getPending } from "../utils/mainDB";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -56,7 +57,6 @@ export default function Dashboard() {
   const isDarkMode = theme === "dark";
   const [loading, setLoading] = useState(true); // ← Add this
 
-
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
     year: "",
@@ -76,17 +76,25 @@ export default function Dashboard() {
       try {
         setLoading(true);
 
-        const serverSubs = isOnline() ? await kvGet(user.email) : [];
-        const localSubs = await loadSubscriptionsLocal();
-        const pendingSubs = await getPending();
+        let list = [];
 
-        const merged = mergeSubscriptions([...serverSubs, ...localSubs, ...pendingSubs]);
+        if (isOnline()) {
+          // Fetch from API
+          list = await kvGet(user.email);
 
-        // 🔧 Migration logic (still needed)
-        const migrated = merged.map((s) => {
+          // Save to IndexedDB
+          await saveSubscriptionsLocal(list);
+        } else {
+          // Load from IndexedDB
+          console.log("🌀 Loading from IndexedDB (offline mode)");
+          list = await loadSubscriptionsLocal();
+        }
+
+        // Migrate legacy data
+        const migrated = list.map((s) => {
           let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-          // Legacy history migration
+          // Legacy migration logic
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
@@ -136,7 +144,6 @@ export default function Dashboard() {
       }
     })();
   }, [user?.email]);
-
 
   useEffect(() => {
     const syncOnReconnect = async () => {
