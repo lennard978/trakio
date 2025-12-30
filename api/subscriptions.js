@@ -1,8 +1,8 @@
-// /api/subscriptions.js
-import { kv } from "@vercel/kv";
+import { redis } from "../src/lib/redis.js"; // <-- Make sure this is correct!
 import { verifyToken } from "./utils/jwt.js";
 
 function getAuthUser(req) {
+
   const auth = req.headers.authorization || "";
   const match = auth.match(/^Bearer\s+(.+)$/);
   if (!match) return null;
@@ -27,15 +27,13 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
-      // 🔹 Fetch subscriptions
       case "get": {
-        const data = await kv.get(key(authUser.userId));
+        const data = await redis.get(key(authUser.userId)); // <--- likely line 30
         return res.status(200).json({
           subscriptions: Array.isArray(data) ? data : [],
         });
       }
 
-      // 🔹 Save subscriptions (overwrite)
       case "save": {
         if (!Array.isArray(subscriptions)) {
           return res
@@ -43,7 +41,7 @@ export default async function handler(req, res) {
             .json({ error: "Invalid subscriptions payload" });
         }
 
-        await kv.set(key(authUser.userId), subscriptions);
+        await redis.set(key(authUser.userId), subscriptions);
         return res.status(200).json({ ok: true });
       }
 
@@ -52,6 +50,11 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error("Subscriptions API error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+      stack: err.stack, // add this
+    });
   }
+
 }

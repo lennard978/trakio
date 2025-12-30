@@ -1,83 +1,69 @@
-import { useMemo } from "react";
-import { usePremiumContext } from "../context/PremiumContext";
+import { useState, useEffect } from "react";
+import { isOnline } from "../utils/mainDB";
 
-/**
- * Authoritative premium resolver.
- * Frontend MUST NOT trust raw flags alone.
- */
 export function usePremium() {
-  const ctx = usePremiumContext();
+  const [status, setStatus] = useState({
+    isPremium: false,
+    trialEndDate: null,
+    hasActiveTrial: false,
+    trialExpired: false,
+    noTrial: false,
+    trialDaysLeft: 0,
+  });
 
-  const {
-    status,
-    currentPeriodEnd,
-    trialEnds,
-    loading,
-  } = ctx;
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-  const premiumState = useMemo(() => {
-    const now = Date.now();
+      try {
+        if (isOnline()) {
+          const res = await fetch("/api/user", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ action: "get-status" }),
+          });
 
-    const periodEndMs =
-      typeof currentPeriodEnd === "number"
-        ? currentPeriodEnd * 1000
-        : null;
+          const data = await res.json();
 
-    const trialEndMs =
-      typeof trialEnds === "number"
-        ? trialEnds * 1000
-        : null;
-
-    const hasActiveTrial =
-      status === "trialing" &&
-      trialEndMs &&
-      trialEndMs > now;
-
-    const isPremium =
-      status === "active" &&
-      periodEndMs &&
-      periodEndMs > now;
-
-
-    const trialExpired =
-      !!trialEndMs &&
-      trialEndMs <= now &&
-      status !== "active";
-
-    const noTrial =
-      !trialEndMs &&
-      !hasActiveTrial &&
-      !isPremium;
-
-
-    let trialDaysLeft = null;
-    if (hasActiveTrial) {
-      const diffMs = trialEndMs - now;
-      trialDaysLeft = Math.max(
-        0,
-        Math.ceil(diffMs / 86400000)
-      );
-    }
-
-    return {
-      isPremium,
-      hasActiveTrial,
-      trialExpired,
-      noTrial,
-      trialDaysLeft,
-      premiumEndsAt: periodEndMs
-        ? new Date(periodEndMs).toISOString()
-        : null,
-      trialEndsAt: trialEndMs
-        ? new Date(trialEndMs).toISOString()
-        : null,
+          if (res.ok) {
+            // ✅ Save to localStorage
+            localStorage.setItem("premium_status", JSON.stringify(data));
+            updateState(data);
+          }
+        } else {
+          // Offline? Load cached status
+          const cached = localStorage.getItem("premium_status");
+          if (cached) {
+            updateState(JSON.parse(cached));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch premium status", err);
+      }
     };
 
-  }, [status, currentPeriodEnd, trialEnds]);
+    const updateState = (data) => {
+      const now = Date.now() / 1000;
+      const trialEnds = data.trialEnds ?? 0;
 
-  return {
-    ...ctx,
-    ...premiumState,
-    loading,
-  };
+      const trialDaysLeft = Math.max(0, Math.ceil((trialEnds - now) / 86400));
+
+      setStatus({
+        isPremium: data.status === "active" || data.status === "trialing",
+        trialEndDate: data.trialEnds,
+        hasActiveTrial: data.status === "trialing",
+        trialExpired: data.status === "canceled" && !!data.trialEnds,
+        noTrial: !data.trialEnds,
+        trialDaysLeft,
+      });
+    };
+
+    fetchStatus();
+  }, []);
+
+  return status;
 }

@@ -7,8 +7,6 @@ import { setPremiumRecord } from './api/utils/premiumStore.js';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-console.log("✅ Stripe initialized");
-
 const server = createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/stripe/webhook') {
     try {
@@ -33,7 +31,7 @@ const server = createServer(async (req, res) => {
         const subscriptionId = session.subscription;
         const sub = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
 
-        await setPremiumRecord(userId, {
+        await setPremiumRecord(email, {
           isPremium: true,
           status: 'active',
           stripeCustomerId: sub?.customer || session.customer,

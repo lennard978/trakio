@@ -9,30 +9,42 @@ import { useAuth } from "../hooks/useAuth";
 
 const PremiumContext = createContext(null);
 
+const STORAGE_KEY = "premiumStatus"; // 🔄 Cache key
+
 export function PremiumProvider({ children }) {
   const { user, token } = useAuth();
   const isLoggedIn = !!user && !!token;
 
-  /* ------------------------------------------------------------------ */
-  /* Raw Stripe-backed state (DO NOT DERIVE LOGIC HERE)                  */
-  /* ------------------------------------------------------------------ */
-
-  const [status, setStatus] = useState(null); // active | trialing | past_due | canceled
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null); // unix seconds
-  const [trialEnds, setTrialEnds] = useState(null); // unix seconds
+  const [status, setStatus] = useState(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null);
+  const [trialEnds, setTrialEnds] = useState(null);
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  /* ------------------------------------------------------------------ */
-  /* Reset on logout                                                     */
-  /* ------------------------------------------------------------------ */
+  // 🔄 Load from localStorage on mount
+  useEffect(() => {
+    const cache = localStorage.getItem(STORAGE_KEY);
+    if (cache) {
+      try {
+        const parsed = JSON.parse(cache);
+        setStatus(parsed.status ?? null);
+        setCurrentPeriodEnd(parsed.currentPeriodEnd ?? null);
+        setTrialEnds(parsed.trialEnds ?? null);
+        setCancelAtPeriodEnd(!!parsed.cancelAtPeriodEnd);
+      } catch (err) {
+        console.warn("Invalid premium cache:", err);
+      }
+    }
+  }, []);
 
+  // 🔄 Reset cache + state on logout
   useEffect(() => {
     if (!isLoggedIn) {
       setStatus(null);
       setCurrentPeriodEnd(null);
       setTrialEnds(null);
       setCancelAtPeriodEnd(false);
+      localStorage.removeItem(STORAGE_KEY);
     }
   }, [isLoggedIn]);
 
@@ -42,7 +54,6 @@ export function PremiumProvider({ children }) {
     }
   }, [status]);
 
-
   const authHeaders = useCallback(
     () => ({
       Authorization: `Bearer ${token}`,
@@ -51,9 +62,7 @@ export function PremiumProvider({ children }) {
     [token]
   );
 
-  /* ------------------------------------------------------------------ */
-  /* Refresh premium from backend (Stripe truth)                         */
-  /* ------------------------------------------------------------------ */
+  // ✅ Refresh from server + update localStorage
   const refreshPremiumStatus = useCallback(async () => {
     if (!isLoggedIn) return null;
 
@@ -74,44 +83,31 @@ export function PremiumProvider({ children }) {
       const data = await res.json();
 
       setStatus(data.status ?? null);
-      setCurrentPeriodEnd(
-        typeof data.currentPeriodEnd === "number"
-          ? data.currentPeriodEnd
-          : null
-      );
-      setTrialEnds(
-        typeof data.trialEnds === "number"
-          ? data.trialEnds
-          : null
-      );
+      setCurrentPeriodEnd(typeof data.currentPeriodEnd === "number" ? data.currentPeriodEnd : null);
+      setTrialEnds(typeof data.trialEnds === "number" ? data.trialEnds : null);
       setCancelAtPeriodEnd(!!data.cancelAtPeriodEnd);
 
-      setLoading(false);
+      // ✅ Cache in localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
       return data;
     } catch (err) {
       console.error("Premium refresh failed:", err);
-      setLoading(false);
       return null;
+    } finally {
+      setLoading(false);
     }
   }, [isLoggedIn, authHeaders]);
 
-  /* ------------------------------------------------------------------ */
-  /* Auto refresh every 5 minutes                                        */
-  /* ------------------------------------------------------------------ */
-
+  // ⏱️ Refresh every 5 minutes
   useEffect(() => {
     refreshPremiumStatus();
     const id = setInterval(refreshPremiumStatus, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, [refreshPremiumStatus]);
 
-  /* ------------------------------------------------------------------ */
-  /* Trial handling (still backend-authoritative)                        */
-  /* ------------------------------------------------------------------ */
-
   const startTrial = async () => {
     if (!isLoggedIn) return false;
-
     try {
       setLoading(true);
       const res = await fetch("/api/user", {
@@ -125,6 +121,13 @@ export function PremiumProvider({ children }) {
       const data = await res.json();
       setTrialEnds(data.trialEnds || null);
       setStatus("trialing");
+
+      // ✅ Cache updated trial state
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        status: "trialing",
+        trialEnds: data.trialEnds,
+        currentPeriodEnd: data.currentPeriodEnd ?? data.trialEnds,
+      }));
 
       return true;
     } finally {
@@ -147,19 +150,22 @@ export function PremiumProvider({ children }) {
 
       setTrialEnds(null);
       setStatus("canceled");
+
+      // ✅ Update local cache
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        status: "canceled",
+        trialEnds: null,
+        currentPeriodEnd: null,
+      }));
+
       return true;
     } finally {
       setLoading(false);
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Stripe checkout                                                     */
-  /* ------------------------------------------------------------------ */
-
   const startCheckout = async (plan) => {
     if (!isLoggedIn) return;
-
     try {
       setLoading(true);
       const res = await fetch("/api/stripe", {
@@ -177,18 +183,13 @@ export function PremiumProvider({ children }) {
     }
   };
 
-  /* ------------------------------------------------------------------ */
-
   return (
     <PremiumContext.Provider
       value={{
-        // RAW STRIPE STATE
         status,
         currentPeriodEnd,
         trialEnds,
         cancelAtPeriodEnd,
-
-        // ACTIONS
         loading,
         startTrial,
         cancelTrial,
