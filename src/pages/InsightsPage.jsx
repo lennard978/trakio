@@ -14,7 +14,6 @@ import Card from "../components/ui/Card";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import PremiumGuard from "../components/premium/PremiumGuard";
 import PaymentAccordion from "../components/insights/PaymentAccordion";
-import { MONTHLY_FACTOR } from "../utils/frequency";
 import {
   getCurrentMonthSpending,
   getCurrentYearSpending,

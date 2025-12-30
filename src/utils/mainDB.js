@@ -105,6 +105,7 @@ async function syncPending(email, token) {
   }
 }
 
+
 /* ---------------- Public API ---------------- */
 export {
   isOnline,
@@ -117,3 +118,21 @@ export {
   queueSyncJob,
   flushQueue,
 };
+
+
+export function mergeSubscriptions(list) {
+  const map = new Map();
+
+  for (const sub of list) {
+    const existing = map.get(sub.id);
+
+    if (!sub.id) continue; // skip invalid
+
+    // Use the newer one if available
+    if (!existing || new Date(sub.updatedAt || 0) > new Date(existing.updatedAt || 0)) {
+      map.set(sub.id, sub);
+    }
+  }
+
+  return Array.from(map.values());
+}
