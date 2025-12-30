@@ -23,7 +23,6 @@ import { Toaster } from "react-hot-toast";
 import { useTheme } from "./hooks/useTheme";
 import { AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { syncPending } from "./utils/syncManager";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -41,7 +40,6 @@ const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Premium = lazy(() => import("./pages/Premium"));
 const Widerrufsbelehrung = lazy(() => import("./pages/Widerrufsbelehrung"));
 const HelpSupportSheet = lazy(() => import("./components/help/HelpSupportSheet"));
-import SyncTestPage from "./pages/SyncTestPage";
 
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
@@ -108,11 +106,6 @@ export default function App() {
     >
       <Toaster position="top-center" />
       <Analytics />
-      {!navigator.onLine && (
-        <div className="text-sm text-orange-600 mt-2 text-center">
-          ⚠️ You’re offline — changes will sync automatically when online.
-        </div>
-      )}
 
       {/* MAIN */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
@@ -136,7 +129,6 @@ export default function App() {
               <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
               <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
               <Route path="/widerruf" element={<Widerrufsbelehrung />} />
-              <Route path="/sync-test" element={<SyncTestPage />} />
 
               <Route
                 path="/login"

@@ -16,7 +16,6 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { MONTHLY_FACTOR } from "../utils/frequency";
-import SyncTestPage from "./SyncTestPage";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -63,65 +62,69 @@ export default function Dashboard() {
   /* ---------------- Sorting (MUST be before useMemo) ---------------- */
   const [sortBy, setSortBy] = useState("next"); // next | price | name | progress
 
-
-  useEffect(() => {
-    const handleOnline = async () => {
-      console.log("🌐 Back online — syncing to remote");
-
-      const email = user?.email;
-      if (!email) return;
-
-      try {
-        const localSubs = await getFromIndexedDB(email);
-        if (localSubs.length > 0) {
-          await kvSave(localSubs);
-          console.log("✅ Synced local changes to remote");
-        }
-      } catch (err) {
-        console.error("❌ Sync failed:", err);
-      }
-    };
-
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
-  }, [user?.email]);
-
   /* ---------------- Load & migrate ---------------- */
-
   useEffect(() => {
-    const loadData = async () => {
+    if (!user?.email) return;
+
+    (async () => {
       try {
-        setLoading(true);
+        setLoading(true); // Start loading
+        const list = await kvGet(user.email);
 
-        const email = user?.email;
+        const migrated = list.map((s) => {
+          let payments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-        // ✅ 1. Load from IndexedDB if offline or no user
-        if (!navigator.onLine || !email) {
-          const localSubs = await getFromIndexedDB(email || "offline-mode");
-          console.log("📦 Loaded from IndexedDB:", localSubs);
-          setSubscriptions(localSubs);
-          return;
-        }
+          // Legacy migration
+          if (Array.isArray(s.history)) {
+            s.history.forEach((d) => {
+              payments.push({
+                id: crypto.randomUUID(),
+                date: d,
+                color: s.color || "#ffffff",
+                amount: s.price,
+                currency: s.currency || "EUR",
+              });
+            });
+          }
 
-        // ✅ 2. Load from remote if online and logged in
-        const list = await kvGet(email);
+          if (s.datePaid) {
+            payments.push({
+              id: crypto.randomUUID(),
+              date: s.datePaid,
+              amount: s.price,
+              currency: s.currency || "EUR",
+            });
+          }
 
-        // Optional: save to local for offline use
-        await saveToIndexedDB(email, list);
+          // ✅ Remove duplicate dates
+          const seen = new Set();
+          payments = payments.filter((p) => {
+            const key = new Date(p.date).toISOString().slice(0, 10); // date only
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
 
-        setSubscriptions(list);
+          return {
+            ...s,
+            id: s.id || crypto.randomUUID(),
+            payments,
+            color: s.color || "#ffffff",
+            history: undefined,
+            datePaid: undefined,
+          };
+        });
+
+
+        setSubscriptions(migrated);
       } catch (err) {
-        console.error("❌ Failed to load subs:", err);
+        console.error("Subscription load failed:", err);
         setSubscriptions([]);
       } finally {
-        setLoading(false);
+        setLoading(false); // Done loading
       }
-    };
-
-    loadData();
+    })();
   }, [user?.email]);
-
-
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -285,7 +288,7 @@ export default function Dashboard() {
         <>
           {/* ================= SUMMARY CARDS ================= */}
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 mt-2 mb-4">
-            <SyncTestPage />
+
             {/* Monthly Total */}
             <div
               className="

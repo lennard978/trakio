@@ -11,10 +11,9 @@ import CategorySelector from "../components/CategorySelector";
 import FrequencySelector from "../components/FrequencySelector";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
-import PaymentMethodIcon from "./icons/PaymentMethodIcons";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
-import { addPending, isOnline, syncPending } from "../utils/syncManager";
+import { addPending, isOnline, syncPending } from "../utils/mainDB";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
