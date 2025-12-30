@@ -145,6 +145,23 @@ export default function Dashboard() {
     })();
   }, [user?.email]);
 
+  useEffect(() => {
+    const syncOnReconnect = async () => {
+      if (isOnline() && user?.email && localStorage.getItem("token")) {
+        console.log("📡 Reconnected — syncing pending data...");
+        await syncPending(user.email, localStorage.getItem("token"));
+        // Optionally: reload or refresh state
+        const refreshed = await kvGet(user.email);
+        await saveSubscriptionsLocal(refreshed);
+        setSubscriptions(refreshed);
+      }
+    };
+
+    window.addEventListener("online", syncOnReconnect);
+    return () => window.removeEventListener("online", syncOnReconnect);
+  }, [user?.email]);
+
+
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -182,7 +199,6 @@ export default function Dashboard() {
     }, 0);
   }, [subscriptions]);
 
-
   const totalMonthly = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -205,15 +221,11 @@ export default function Dashboard() {
     }, 0);
   }, [subscriptions]);
 
-
-
-
   /* ---------------- Totals (Monthly / Annual) ---------------- */
   const monthlyChange = useMemo(() => {
     if (!previousMonthTotal || previousMonthTotal === 0) return null;
     return ((totalMonthly - previousMonthTotal) / previousMonthTotal) * 100;
   }, [totalMonthly, previousMonthTotal]);
-
 
   const totalAnnual = useMemo(() => {
     return totalMonthly * 12;

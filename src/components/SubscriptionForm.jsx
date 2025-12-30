@@ -47,6 +47,20 @@ const CATEGORY_INTENSITY_DEFAULT = {
   other: 0.25,
 };
 
+const PRESET_COLORS = [
+  "rgba(248, 113, 113, 0.75)", // red
+  "rgba(250, 204, 21, 0.75)",  // yellow
+  "rgba(74, 222, 128, 0.75)",  // green
+  "rgba(96, 165, 250, 0.75)",  // blue
+  "rgba(167, 139, 250, 0.75)", // purple
+  "rgba(244, 114, 182, 0.75)", // pink
+  "rgba(52, 211, 153, 0.75)",  // teal
+  "rgba(249, 115, 22, 0.75)",  // orange
+];
+
+const getRandomColor = () =>
+  PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+
 function hexToRgba(hex, alpha = 0.85) {
   if (!hex || typeof hex !== "string" || !hex.startsWith("#") || hex.length !== 7) {
     // console.warn("Invalid hex color:", hex);
@@ -59,7 +73,6 @@ function hexToRgba(hex, alpha = 0.85) {
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-
 
 function toRgba(color, alpha) {
   if (!color) return `rgba(255,255,255,${alpha})`;
@@ -81,7 +94,38 @@ export default function SubscriptionForm() {
   const { currency: mainCurrency } = useCurrency();
   const [method, setMethod] = useState("");
   const [methodOpen, setMethodOpen] = useState(false);
+  const email = user?.email;
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [frequency, setFrequency] = useState("monthly");
+  const [category, setCategory] = useState("other");
+  const [datePaid, setDatePaid] = useState("");
+  const [notify, setNotify] = useState(true);
+  const [currency, setCurrency] = useState("EUR");
+  const [color, setColor] = useState(getRandomColor());
+  const [icon, setIcon] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
+
+
+  /* 🔹 ADD: low-power detection */
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
+      navigator.connection?.saveData === true
+    );
+  }, []);
+  const advancedFrequencies = useMemo(
+    () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
+    []
+  );
+
+  const limitReached = !id && !premium.isPremium && subscriptions.length >= 5;
+  const requiresPremiumInterval = !premium.isPremium && advancedFrequencies.includes(frequency);
+  const token = localStorage.getItem("token");
 
   const PAYMENT_METHODS = [
     { value: "visa", label: "Visa", icon: "💳", logo: "/icons/visa.svg" },
@@ -99,6 +143,16 @@ export default function SubscriptionForm() {
       icon: "💳",              // Optional: generic icon
     };
 
+  const suggestions = useMemo(() => {
+    if (!name.trim()) return [];
+    const q = name.toLowerCase();
+    return subscriptionCatalog
+      .filter(s => s.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [name]);
+
+
+
   useEffect(() => {
     const handler = (e) => {
       if (methodRef.current && !methodRef.current.contains(e.target)) {
@@ -109,69 +163,10 @@ export default function SubscriptionForm() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-
-
-  const PRESET_COLORS = [
-    "rgba(248, 113, 113, 0.75)", // red
-    "rgba(250, 204, 21, 0.75)",  // yellow
-    "rgba(74, 222, 128, 0.75)",  // green
-    "rgba(96, 165, 250, 0.75)",  // blue
-    "rgba(167, 139, 250, 0.75)", // purple
-    "rgba(244, 114, 182, 0.75)", // pink
-    "rgba(52, 211, 153, 0.75)",  // teal
-    "rgba(249, 115, 22, 0.75)",  // orange
-  ];
-
-
-  const getRandomColor = () =>
-    PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
-
-  const email = user?.email;
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [frequency, setFrequency] = useState("monthly");
-  const [category, setCategory] = useState("other");
-  const [datePaid, setDatePaid] = useState("");
-  const [notify, setNotify] = useState(true);
-  const [currency, setCurrency] = useState("EUR");
-  const [color, setColor] = useState(getRandomColor());
-  const [icon, setIcon] = useState(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
   /* 🔹 ADD: gradient intensity */
   const [gradientIntensity, setGradientIntensity] = useState(
     CATEGORY_INTENSITY_DEFAULT.other
   );
-
-  if (!email) {
-    return (
-      <div className="text-center py-10">
-        <span>Loading...</span>
-      </div>
-    );
-  }
-
-
-  /* 🔹 ADD: low-power detection */
-  const prefersReducedMotion = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return (
-      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
-      navigator.connection?.saveData === true
-    );
-  }, []);
-
-  const advancedFrequencies = useMemo(
-    () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
-    []
-  );
-
-  const limitReached = !id && !premium.isPremium && subscriptions.length >= 5;
-  const requiresPremiumInterval = !premium.isPremium && advancedFrequencies.includes(frequency);
-  const token = localStorage.getItem("token");
 
   /* ------------------ Load Subscriptions ------------------ */
   const kvGet = async () => {
@@ -207,18 +202,9 @@ export default function SubscriptionForm() {
     }
   };
 
-  const suggestions = useMemo(() => {
-    if (!name.trim()) return [];
-    const q = name.toLowerCase();
-    return subscriptionCatalog
-      .filter(s => s.name.toLowerCase().includes(q))
-      .slice(0, 6);
-  }, [name]);
-
   /* ------------------ Load Data ------------------ */
   useEffect(() => {
     if (!email) return;
-
     let cancelled = false;
 
     const load = async () => {
@@ -236,7 +222,7 @@ export default function SubscriptionForm() {
 
         if (cancelled) return;
 
-        // 🔁 MIGRATION
+        // 🛠 Migrate subscriptions (adds missing gradientIntensity)
         const migrated = list.map((s) => ({
           ...s,
           gradientIntensity:
@@ -255,7 +241,6 @@ export default function SubscriptionForm() {
             return;
           }
 
-          // ⬇️ Set state safely here
           setName(existing.name || "");
           setPrice(String(existing.price || ""));
           setFrequency(existing.frequency || "monthly");
@@ -267,6 +252,7 @@ export default function SubscriptionForm() {
           setColor(existing.color || getRandomColor());
           setGradientIntensity(existing.gradientIntensity);
         }
+
       } catch (err) {
         console.error("SubscriptionForm load error:", err);
         showToast("Failed to load subscription data", "error");
@@ -280,6 +266,18 @@ export default function SubscriptionForm() {
       cancelled = true;
     };
   }, [email, id, navigate, showToast]);
+
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (user?.email && isOnline() && token) {
+        console.log("📡 Online — syncing subscription form changes");
+        await syncPending(user.email, token);
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [user?.email, token]);
 
 
   /* ------------------ Submit ------------------ */
@@ -416,33 +414,29 @@ export default function SubscriptionForm() {
     );
   }
 
-  // function hexToRgba(hex, alpha = 0.85) {
-  //   const r = parseInt(hex.slice(1, 3), 16);
-  //   const g = parseInt(hex.slice(3, 5), 16);
-  //   const b = parseInt(hex.slice(5, 7), 16);
-  //   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  // }
-
-  useEffect(() => {
-    const handleOnline = async () => {
-      if (email && token) {
-        console.info("🔁 Back online – syncing pending subscriptions...");
-        await syncPending(email, token);
-        showToast("Offline data synced!", "success");
-        window.location.reload();
-      }
-    };
-
-    window.addEventListener("online", handleOnline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-    };
-  }, [email, token]);
-
+  function hexToRgba(hex, alpha = 0.85) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
 
   /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto pb-2">
+      {!isOnline() && (
+        <button
+          type="button"
+          onClick={async () => {
+            await syncPending(user.email, token);
+            showToast("Synced pending changes.", "success");
+          }}
+          className="mt-2 px-4 py-1.5 text-sm bg-blue-500 text-white rounded"
+        >
+          Sync Now
+        </button>
+      )}
+
       <Card className="relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
