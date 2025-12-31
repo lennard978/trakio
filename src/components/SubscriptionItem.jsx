@@ -292,10 +292,11 @@ export default function SubscriptionItem({
               <div className="flex items-center gap-4 flex-wrap">
                 <button
                   onClick={() => {
-                    const today = new Date().toISOString().split("T")[0]; // ✅ define 'today'
-                    openCalendar(); // shows native calendar
-                    // onMarkPaid(item.id, today); // ✅ now this works
-                  }} title={nextPaymentText}
+                    const today = new Date().toISOString().split("T")[0];
+                    //onMarkPaid(item.id, today);  // ✅ UNCOMMENT THIS LINE
+                    openCalendar();
+                  }}
+                  title={nextPaymentText}
                   className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
                 >
                   {t("paid")}
@@ -319,7 +320,7 @@ export default function SubscriptionItem({
                 ref={dateInputRef}
                 type="date"
                 className="hidden"
-                onChange={(e) => markPaid(item.id, e.target.value)}
+                onChange={(e) => onMarkPaid(item.id, e.target.value)} // ✅ Use parent callback
               />
             </div>
           </div>
