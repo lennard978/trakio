@@ -16,7 +16,6 @@ import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
-import { readPendingQueue } from "../utils/offlineQueue";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -75,8 +74,6 @@ export default function Dashboard() {
         try {
           remote = await kvGet(user.email);
         } catch { }
-
-        const pending = await readPendingQueue();
 
         list = [...remote];
 
