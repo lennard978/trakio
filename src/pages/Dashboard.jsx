@@ -16,7 +16,7 @@ import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
 import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
-import { flushQueue } from "../utils/offlineQueue";
+import { persistSubscriptions } from "../utils/persistSubscriptions";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -46,6 +46,10 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   const [loading, setLoading] = useState(true); // ← Add this
+  const uuid = () =>
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -129,17 +133,6 @@ export default function Dashboard() {
         setLoading(false);
       }
     })();
-  }, [user?.email]);
-
-  useEffect(() => {
-    const onOnline = () => {
-      const token = localStorage.getItem("token");
-      if (user?.email && token) {
-        flushQueue(token);
-      }
-    };
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
   }, [user?.email]);
 
   /* ---------------- Notifications ---------------- */
