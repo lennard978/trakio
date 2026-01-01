@@ -9,33 +9,30 @@ export async function persistSubscriptions({ email, token, subscriptions }) {
   // 1️⃣ ALWAYS persist local truth first
   await saveSubscriptionsLocal(subscriptions);
 
-  // 2️⃣ Offline → queue snapshot
+  // 2️⃣ OFFLINE → queue snapshot
   if (!navigator.onLine) {
     await enqueueSave(email, subscriptions);
     return;
   }
 
-  // 3️⃣ Online attempt
-  try {
-    const res = await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify({
-        action: "save",
-        email,
-        subscriptions,
-      }),
-    });
+  // 3️⃣ ONLINE → try server
+  const res = await fetch("/api/subscriptions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      action: "save",
+      email,
+      subscriptions,
+    }),
+  });
 
-    // 4️⃣ Backend rejected → queue snapshot
-    if (!res.ok) {
-      throw new Error("Backend rejected save");
-    }
-  } catch (err) {
-    // 5️⃣ Network / auth / server failure → queue snapshot
+  // 4️⃣ FAILURE → queue snapshot
+  if (!res.ok) {
     await enqueueSave(email, subscriptions);
+    throw new Error("Persist failed, queued");
   }
 }
+
