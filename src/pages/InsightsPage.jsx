@@ -19,6 +19,7 @@ import {
 } from "../utils/budget";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 import { loadSubscriptionsLocal } from "../utils/mainDB";
+import { saveSubscriptionsLocal } from "../utils/mainDB";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -38,8 +39,13 @@ export default function InsightsPage() {
         : s
     );
 
+    // 1️⃣ Update UI
     setSubscriptions(updated);
 
+    // 2️⃣ Persist local truth (CRITICAL)
+    await saveSubscriptionsLocal(updated);
+
+    // 3️⃣ Trigger sync (online or queued)
     await persistSubscriptions({
       email,
       token: localStorage.getItem("token"),

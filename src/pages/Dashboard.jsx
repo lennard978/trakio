@@ -243,7 +243,12 @@ export default function Dashboard() {
 
   /* ---------------- Persist helper ---------------- */
   const persist = async (nextSubs) => {
+    // 1️⃣ Update UI
     setSubscriptions(nextSubs);
+
+    // 2️⃣ Persist local truth (CRITICAL)
+    await saveSubscriptionsLocal(nextSubs);
+    // 3️⃣ Sync or queue
     try {
       await persistSubscriptions({
         email: user.email,
