@@ -77,26 +77,13 @@ export default function App() {
   const { currency, setCurrency } = useCurrency();
 
   useEffect(() => {
-    if (!user?.email) return;
-
-    const tryFlush = async () => {
-      if (!navigator.onLine) return;
-
-      try {
-        await flushQueue();
-      } catch (err) {
-        console.warn("Queue flush failed", err);
-      }
+    const onOnline = async () => {
+      await flushQueue(); // 1️⃣ push local → server
     };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
-    // 🔁 Flush on app start (important!)
-    tryFlush();
-
-    // 🔁 Flush when connection restored
-    window.addEventListener("online", tryFlush);
-
-    return () => window.removeEventListener("online", tryFlush);
-  }, [user?.email]);
 
 
 

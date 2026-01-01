@@ -598,16 +598,11 @@ export default function Settings({ setActiveSheet }) {
 
 
                     // Refresh UI after import
-                    const res = await fetch("/api/subscriptions", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ action: "get", email: user.email }),
-                    });
-                    const data = await res.json();
-                    setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
+                    if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
+                      setSubscriptions(data.subscriptions);
+                    } else {
+                      console.warn("Settings: remote empty, keeping local");
+                    }
 
                     alert(t("import_success_message") === "import_success_message" ? "Import successful!" : t("import_success_message"));
                   } catch (err) {

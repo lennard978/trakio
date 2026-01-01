@@ -80,14 +80,24 @@ export default function Dashboard() {
 
       // 2️⃣ Try backend sync
       if (navigator.onLine) {
+
         try {
+          await flushQueue(); // ⬅️ ADD THIS FIRST
+
           const remote = await kvGet(user.email);
-          setSubscriptions(remote);
-          await saveSubscriptionsLocal(remote);
+
+          // 🛑 DO NOT overwrite local with empty remote
+          if (Array.isArray(remote) && remote.length > 0) {
+            setSubscriptions(remote);
+            await saveSubscriptionsLocal(remote);
+          } else {
+            console.warn("Remote empty — keeping local data");
+          }
         } catch (err) {
           console.warn("Backend fetch failed, using local cache");
         }
       }
+
 
       setLoading(false);
     })();
