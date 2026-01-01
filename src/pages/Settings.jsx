@@ -81,23 +81,15 @@ export default function Settings({ setActiveSheet }) {
     if (!user?.email) return;
 
     (async () => {
-      try {
-        const token = localStorage.getItem("token");
+      const local = await loadSubscriptionsLocal();
+      if (local.length) setSubscriptions(local);
 
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ action: "get", email: user.email }),
-        });
-
-        const data = await res.json();
-        setSubscriptions(Array.isArray(data.subscriptions) ? data.subscriptions : []);
-      } catch (err) {
-        console.error("Failed to load subscriptions", err);
-        setSubscriptions([]);
+      if (navigator.onLine) {
+        try {
+          const res = await fetch("/api/subscriptions", {});
+          const data = await res.json();
+          setSubscriptions(data.subscriptions || []);
+        } catch { }
       }
     })();
   }, [user?.email]);

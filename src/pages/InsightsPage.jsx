@@ -18,6 +18,7 @@ import {
   getCurrentMonthSpending,
 } from "../utils/budget";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -63,24 +64,27 @@ export default function InsightsPage() {
     if (!email) return;
 
     (async () => {
-      try {
-        const token = localStorage.getItem("token");
+      // 1️⃣ local first
+      const local = await loadSubscriptionsLocal();
+      if (local.length) setSubscriptions(local);
 
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ action: "get", email }),
-        });
+      // 2️⃣ backend if online
+      if (navigator.onLine) {
+        try {
+          const res = await fetch("/api/subscriptions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ action: "get", email }),
+          });
 
-        const data = await res.json();
-        setSubscriptions(
-          Array.isArray(data.subscriptions) ? data.subscriptions : []
-        );
-      } catch (err) {
-        // console.error("Insights load error:", err);
+          const data = await res.json();
+          if (Array.isArray(data.subscriptions)) {
+            setSubscriptions(data.subscriptions);
+          }
+        } catch { }
       }
     })();
   }, [email]);

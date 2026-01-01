@@ -1,6 +1,10 @@
+import { saveSubscriptionsLocal } from "./mainDB";
 import { enqueueSave } from "./offlineQueue";
 
 export async function persistSubscriptions({ email, token, subscriptions }) {
+  // ✅ ALWAYS write locally first
+  await saveSubscriptionsLocal(subscriptions);
+
   if (!navigator.onLine) {
     await enqueueSave(email, subscriptions);
     return;
@@ -20,8 +24,7 @@ export async function persistSubscriptions({ email, token, subscriptions }) {
   });
 
   if (!res.ok) {
-    // network or server failure → enqueue
     await enqueueSave(email, subscriptions);
-    throw new Error("Persist failed, queued for retry");
+    throw new Error("Persist failed, queued");
   }
 }

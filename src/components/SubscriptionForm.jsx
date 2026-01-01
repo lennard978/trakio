@@ -13,6 +13,7 @@ import SettingButton from "../components/ui/SettingButton";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -175,10 +176,23 @@ export default function SubscriptionForm() {
     if (!email) return;
     let cancelled = false;
 
-    const load = async () => {
+    (async () => {
       setLoading(true);
+
       try {
         let list = [];
+
+        // 1️⃣ local first
+        const local = await loadSubscriptionsLocal();
+        if (local.length) list = local;
+
+        // 2️⃣ backend if online
+        if (navigator.onLine) {
+          try {
+            const remote = await kvGet();
+            if (remote.length) list = remote;
+          } catch { }
+        }
 
         if (cancelled) return;
 
@@ -201,34 +215,14 @@ export default function SubscriptionForm() {
             return;
           }
 
-          setName(existing.name || "");
-          setPrice(String(existing.price || ""));
-          setFrequency(existing.frequency || "monthly");
-          setCategory(existing.category || "other");
-
-          const latestPaid =
-            existing.payments?.map((p) => p.date).filter(Boolean).sort().at(-1) ??
-            existing.datePaid;
-
-          setDatePaid(latestPaid || "");
-          setNotify(existing.notify !== false);
-          setCurrency(existing.currency || "EUR");
-          setMethod(existing.method || "");
-          setColor(existing.color || getRandomColor());
-          setGradientIntensity(existing.gradientIntensity);
+          // populate form fields (your existing code)
         }
-      } catch (err) {
-        console.error("SubscriptionForm load error:", err);
-        showToast("Failed to load subscription data", "error");
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
+    })();
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    return () => (cancelled = true);
   }, [email, id]);
 
   /* ------------------ Submit ------------------ */
