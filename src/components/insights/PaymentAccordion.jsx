@@ -4,9 +4,17 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { convert as convertUtil } from "../../utils/currency";
 import { getNormalizedPayments } from "../../utils/payments";
-import { getCurrentMonthSpending } from "../../utils/budget";
 
-export default function PaymentAccordion({ subscriptions = [], currency = "EUR", rates, convert }) {
+
+
+
+export default function PaymentAccordion({
+  subscriptions = [],
+  currency = "EUR",
+  rates,
+  convert,
+  onDeletePayment, // 👈 new
+}) {
   const { t } = useTranslation();
 
   // ✅ One state to track open/closed by subscription ID
@@ -18,6 +26,7 @@ export default function PaymentAccordion({ subscriptions = [], currency = "EUR",
       [id]: !prev[id],
     }));
   };
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
@@ -69,19 +78,35 @@ export default function PaymentAccordion({ subscriptions = [], currency = "EUR",
                   className="overflow-hidden"
                 >
                   <div className="p-3 pt-0 text-xs text-gray-700 dark:text-gray-300 space-y-1">
-                    {payments.map((p, i) => (
+                    {payments.map((p) => (
                       <div
-                        key={i}
-                        className="flex justify-between border-b border-gray-200 dark:border-gray-700 py-1"
+                        key={p.id}
+                        className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 py-1"
                       >
                         <span>{new Date(p.date).toLocaleDateString()}</span>
-                        <span>
-                          {`${currency} ${(
-                            rates ? convertUtil(p.amount, p.currency, currency, rates) : p.amount
-                          ).toFixed(2)}`}
-                        </span>
+
+                        <div className="flex items-center gap-3">
+                          <span>
+                            {`${currency} ${(
+                              rates ? convertUtil(p.amount, p.currency, currency, rates) : p.amount
+                            ).toFixed(2)}`}
+                          </span>
+
+                          <button
+                            onClick={() => {
+                              if (confirm(t("confirm_delete_payment") || "Delete this payment?")) {
+                                onDeletePayment?.(s.id, p.id);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                            title={t("delete")}
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     ))}
+
                   </div>
                 </motion.div>
               )}

@@ -15,7 +15,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
-import { MONTHLY_FACTOR } from "../utils/frequency";
+import { getAnnualCost } from "../utils/annualCost";
+
 import {
   isOnline,
   loadSubscriptionsLocal,
@@ -29,33 +30,50 @@ import {
 async function kvGet(email) {
   const data = await apiFetch("/api/subscriptions", {
     method: "POST",
-    body: JSON.stringify({ action: "get", email }),
+    body: {
+      action: "get",
+      email,
+    },
   });
 
   return Array.isArray(data.subscriptions) ? data.subscriptions : [];
 }
 
-async function kvSave(subscriptions) {
+
+async function kvSave(email, subscriptions) {
   await apiFetch("/api/subscriptions", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       action: "save",
+      email,
       subscriptions,
-    }),
+    },
   });
 }
+
 
 /* ------------------------------------------------------------------ */
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+
+  const pendingCount = useMemo(() => {
+    try {
+      const key = `pending_subscriptions:${String(user?.email || "anon").toLowerCase()}`;
+      return JSON.parse(localStorage.getItem(key) || "[]").length;
+    } catch {
+      return 0;
+    }
+  }, [user?.email]);
   const premium = usePremium();
   const { currency } = useCurrency();
   const [subscriptions, setSubscriptions] = useState([]);
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   const [loading, setLoading] = useState(true); // ← Add this
+  const uuid = () =>
+    globalThis.uuid?.() ?? `${Date.now()}-${Math.random()}`;
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -98,7 +116,7 @@ export default function Dashboard() {
           if (Array.isArray(s.history)) {
             s.history.forEach((d) => {
               payments.push({
-                id: crypto.randomUUID(),
+                id: uuid(),
                 date: d,
                 color: s.color || "#ffffff",
                 amount: s.price,
@@ -109,7 +127,7 @@ export default function Dashboard() {
 
           if (s.datePaid) {
             payments.push({
-              id: crypto.randomUUID(),
+              id: uuid(),
               date: s.datePaid,
               amount: s.price,
               currency: s.currency || "EUR",
@@ -127,7 +145,7 @@ export default function Dashboard() {
 
           return {
             ...s,
-            id: s.id || crypto.randomUUID(),
+            id: s.id || uuid(),
             payments,
             color: s.color || "#ffffff",
             history: undefined,
@@ -221,6 +239,11 @@ export default function Dashboard() {
     }, 0);
   }, [subscriptions]);
 
+  const annualCost = useMemo(() => {
+    return getAnnualCost(subscriptions);
+  }, [subscriptions]);
+
+
   /* ---------------- Totals (Monthly / Annual) ---------------- */
   const monthlyChange = useMemo(() => {
     if (!previousMonthTotal || previousMonthTotal === 0) return null;
@@ -246,7 +269,7 @@ export default function Dashboard() {
         (!filters.year || paidYear === filters.year) &&
         (!filters.category || s.category === filters.category) &&
         (!filters.paymentMethod ||
-          s.paymentMethod === filters.paymentMethod) &&
+          s.method === filters.paymentMethod) &&
         (!filters.currency || s.currency === filters.currency)
       );
     });
@@ -268,8 +291,17 @@ export default function Dashboard() {
           if (!nextA) return 1;
           if (!nextB) return -1;
 
-          const lastA = Math.max(...a.payments.map((p) => new Date(p.date).getTime()));
-          const lastB = Math.max(...b.payments.map((p) => new Date(p.date).getTime()));
+          const lastA =
+            a.payments?.length
+              ? Math.max(...a.payments.map((p) => new Date(p.date).getTime()))
+              : null;
+
+          const lastB =
+            b.payments?.length
+              ? Math.max(...b.payments.map((p) => new Date(p.date).getTime()))
+              : null;
+
+          if (lastA == null || lastB == null) return 0;
 
           const totalA = nextA.getTime() - lastA;
           const totalB = nextB.getTime() - lastB;
@@ -301,12 +333,15 @@ export default function Dashboard() {
   const persist = async (nextSubs) => {
     setSubscriptions(nextSubs);
     try {
-      await kvSave(nextSubs); // Save to backend
-      await saveSubscriptionsLocal(nextSubs); // Save to IndexedDB
+      if (user?.email) {
+        await kvSave(user.email, nextSubs);
+      }
+      await saveSubscriptionsLocal(nextSubs);
     } catch (err) {
       console.error("KV save failed:", err);
     }
   };
+
 
   // Inside the component
   const syncNow = async () => {
@@ -326,12 +361,9 @@ export default function Dashboard() {
           You’re currently offline. Changes will be saved locally and synced later.
         </div>
       )}
-      {!isOnline() && (
-        <button
-          onClick={syncNow}
-          className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-        >
-          Sync Offline Data
+      {isOnline() && pendingCount > 0 && (
+        <button onClick={syncNow} className="text-xs text-indigo-600 underline">
+          Sync pending changes ({pendingCount})
         </button>
       )}
 
@@ -397,7 +429,7 @@ export default function Dashboard() {
                 {t("dashboard_total_annual")}
               </div>
               <div className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white">
-                {preferredCurrency} {totalAnnual.toFixed(2)}
+                {preferredCurrency} {annualCost.toFixed(2)}
               </div>
             </div>
           </div>
@@ -457,7 +489,7 @@ export default function Dashboard() {
                     payments: [
                       ...payments,
                       {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         date,
                         amount: s.price,
                         currency: s.currency || "EUR",

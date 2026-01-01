@@ -2,7 +2,7 @@
 import { openDB } from "idb";
 
 /* ---------------- Constants ---------------- */
-const PENDING_KEY = "pending_subscriptions";
+const pendingKey = (email) => `pending_subscriptions:${String(email || "anon").toLowerCase()}`;
 
 /* ---------------- LocalStorage Fallback ---------------- */
 function isOnline() {
@@ -18,8 +18,8 @@ function getPending() {
   }
 }
 
-function addPending(sub) {
-  const queue = getPending();
+function addPending(email, sub) {
+  const queue = getPending(email);
   queue.push(sub);
   localStorage.setItem(PENDING_KEY, JSON.stringify(queue));
 }
@@ -79,7 +79,7 @@ async function flushQueue(handler) {
 
 /* ---------------- Backend Sync ---------------- */
 async function syncPending(email, token) {
-  const queue = getPending();
+  const queue = getPending(email);
   if (!queue.length || !email || !token || !isOnline()) return;
 
   try {
@@ -98,7 +98,7 @@ async function syncPending(email, token) {
 
     if (!res.ok) throw new Error("Sync failed");
 
-    clearPending();
+    clearPending(email);
     console.log("✅ Synced offline subscriptions");
   } catch (err) {
     console.warn("❌ Sync failed. Will retry later.", err);

@@ -17,7 +17,10 @@ export function forecastSpend({
   subscriptions.forEach((s) => {
     if (!s?.datePaid || !s?.price) return;
 
-    let next = computeNextRenewal(s.datePaid, s.frequency);
+    let next = computeNextRenewal(
+      Array.isArray(s.payments) && s.payments.length ? s.payments : s.datePaid,
+      s.frequency
+    );
     if (!next) return;
 
     while (next <= toDate) {

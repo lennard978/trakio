@@ -1,53 +1,19 @@
-import { computeNextRenewal } from "./renewal";
+export function getForgottenSubscriptions(subscriptions, thresholdDays = 30) {
+  const now = Date.now();
 
-const GRACE_BY_FREQUENCY = {
-  weekly: 30,
-  biweekly: 30,
-  monthly: 60,
-  quarterly: 60,
-  semiannual: 90,
-  nine_months: 90,
-  yearly: 120,
-  biennial: 180,
-  triennial: 240,
-};
-
-export function getForgottenSubscriptions(subscriptions) {
-  const now = new Date();
-
-  return subscriptions
+  return (subscriptions || [])
     .map((s) => {
-      const payments = [
-        ...(s.history || []),
-        s.datePaid,
-      ].filter(Boolean);
+      const paymentDates = Array.isArray(s.payments)
+        ? s.payments.map((p) => p?.date)
+        : [...(s.history || []), s.datePaid];
 
-      if (payments.length === 0) return null;
+      const valid = paymentDates.filter(Boolean);
+      if (!valid.length) return null;
 
-      const lastPaid = payments
-        .map((d) => new Date(d))
-        .filter((d) => !isNaN(d))
-        .sort((a, b) => b - a)[0];
+      const lastPaidTs = Math.max(...valid.map((d) => new Date(d).getTime()));
+      const overdueDays = Math.floor((now - lastPaidTs) / (1000 * 60 * 60 * 24));
 
-      const nextExpected = computeNextRenewal(lastPaid, s.frequency);
-      if (!nextExpected) return null;
-
-      const grace =
-        GRACE_BY_FREQUENCY[s.frequency] ?? 60;
-
-      const diffDays = Math.ceil(
-        (now - nextExpected) / 86400000
-      );
-
-      if (diffDays > grace) {
-        return {
-          ...s,
-          lastPaid,
-          overdueDays: diffDays,
-        };
-      }
-
-      return null;
+      return overdueDays > thresholdDays ? { ...s, overdueDays } : null;
     })
     .filter(Boolean);
 }

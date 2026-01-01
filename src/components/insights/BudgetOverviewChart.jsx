@@ -34,7 +34,7 @@ import { getNormalizedPayments } from "../../utils/payments";
 import SmartForecastCard from "./SmartForecastCard";
 import DynamicAchievements from "./DynamicAchievements"; // ✅ new
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
-
+import { getAnnualCost } from '../../utils/annualCost'
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
@@ -114,6 +114,11 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     const v = localStorage.getItem("monthly_budget");
     return v ? Number(v) : null;
   });
+
+  const annualCost = useMemo(() => {
+    return getAnnualCost(subscriptions, currency, rates, convert);
+  }, [subscriptions, currency, rates]);
+
 
   const TABS = useMemo(() => [
     { key: "General", label: t("tab_general") },
@@ -322,7 +327,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                 <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
                   <span className="text-xl">{getCurrencyFlag(currency)}</span>
                   <AnimatedNumber
-                    value={Number(data.totalThisYear ?? 0)}
+                    value={Number(annualCost ?? 0)}
                     decimals={2}
                     prefix={`${currency} `}
                   />
@@ -330,7 +335,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               ),
               icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
             },
-
             {
               label: t("top_category"),
               icon: <StarIcon className="w-5 h-5 text-green-600" />,

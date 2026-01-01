@@ -84,6 +84,8 @@ function toRgba(color, alpha) {
 }
 
 /* -------------------- Component -------------------- */
+const uuid = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+
 export default function SubscriptionForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -245,7 +247,16 @@ export default function SubscriptionForm() {
           setPrice(String(existing.price || ""));
           setFrequency(existing.frequency || "monthly");
           setCategory(existing.category || "other");
-          setDatePaid(existing.datePaid || "");
+          const latestPaid =
+        Array.isArray(existing.payments) && existing.payments.length
+          ? [...existing.payments]
+              .map((p) => p?.date)
+              .filter(Boolean)
+              .sort()
+              .at(-1)
+          : existing.datePaid;
+
+      setDatePaid(latestPaid || "");
           setNotify(existing.notify !== false);
           setCurrency(existing.currency || "EUR");
           setMethod(existing.method || "");
@@ -311,28 +322,64 @@ export default function SubscriptionForm() {
       let updated;
       if (id) {
         updated = subscriptions.map((s) => {
-          if (String(s.id) !== String(id)) return s;
-          const prevPaid = normalizeDateString(s.datePaid);
-          const nextHistory = uniqDates([
-            ...(Array.isArray(s.history) ? s.history : []),
-            ...(prevPaid && prevPaid !== paid ? [prevPaid] : []),
-          ]);
+        if (String(s.id) !== String(id)) return s;
 
-          return {
-            ...s,
-            name: name.trim(),
-            price: priceNum,
-            frequency,
-            category,
-            datePaid: paid,
-            notify,
+        const existingPayments = Array.isArray(s.payments) ? [...s.payments] : [];
+
+        const lastPaid =
+          existingPayments.length
+            ? [...existingPayments]
+                .map((p) => p?.date)
+                .filter(Boolean)
+                .sort()
+                .at(-1)
+            : s.datePaid;
+
+        const paidRaw = normalizeDateString(datePaid);
+        const today = normalizeDateString(new Date());
+        const paid = paidRaw && paidRaw > today ? today : paidRaw;
+
+        if (paid && (!lastPaid || normalizeDateString(lastPaid) !== paid)) {
+          existingPayments.push({
+            id: uuid(),
+            date: paid,
+            amount: priceNum,
             currency,
-            method: method.trim(),
-            color,
-            history: nextHistory,
-          };
-        });
-        showToast(t("toast_updated"), "success");
+          });
+        }
+
+        // De-dup by date+amount+currency
+        const uniq = new Map();
+        for (const p of existingPayments) {
+          if (!p?.date) continue;
+          const key = `${normalizeDateString(p.date)}|${Number(p.amount).toFixed(2)}|${p.currency || currency}`;
+          uniq.set(key, p);
+        }
+
+        const nextPayments = Array.from(uniq.values()).sort((a, b) =>
+          String(a.date).localeCompare(String(b.date))
+        );
+
+        return {
+          ...s,
+          name: name.trim(),
+          icon,
+          price: priceNum,
+          frequency,
+          category,
+          currency,
+          method: method.trim(),
+          notify,
+          color,
+          gradientIntensity,
+          payments: nextPayments,
+
+          // Back-compat only (optional)
+          datePaid: nextPayments.at(-1)?.date ?? paid ?? s.datePaid,
+          history: [],
+        };
+      });
+showToast(t("toast_updated"), "success");
       } else {
         updated = [
           ...subscriptions,

@@ -20,6 +20,7 @@ import {
   getCurrentMonthDue,
   getCurrentYearDue,
 } from "../utils/budget";
+import { apiFetch } from "../utils/api";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -31,6 +32,39 @@ export default function InsightsPage() {
 
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
+
+  const persist = async (nextSubs) => {
+    setSubscriptions(nextSubs);
+    try {
+      if (user?.email) {
+        await apiFetch("/api/subscriptions", {
+          method: "POST",
+          body: {
+            action: "save",
+            email: user.email,
+            subscriptions: nextSubs,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Persist failed:", err);
+    }
+  };
+
+
+  const deletePayment = (subId, paymentId) => {
+    const updated = subscriptions.map((s) => {
+      if (s.id !== subId) return s;
+
+      return {
+        ...s,
+        payments: s.payments.filter((p) => p.id !== paymentId),
+      };
+    });
+
+    persist(updated);
+  };
+
 
   // ✅ Now it's safe to use them in hooks
   const actualSpent = useMemo(() => {
@@ -121,7 +155,13 @@ export default function InsightsPage() {
           {t("insights_payment_history")}
         </h2>
 
-        <PaymentAccordion subscriptions={subscriptions} currency={currency} rates={rates} convert={convert} />
+        <PaymentAccordion
+          subscriptions={subscriptions}
+          currency={currency}
+          rates={rates}
+          convert={convert}
+          onDeletePayment={deletePayment}
+        />
       </Card>
     </div>
   );

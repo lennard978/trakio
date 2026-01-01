@@ -47,14 +47,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Invalid plan" });
       }
 
-      const priceId =
-        plan === "monthly"
-          ? process.env.STRIPE_PRICE_MONTHLY
-          : process.env.STRIPE_PRICE_YEARLY;
+      const priceId = PRICE_MAP[plan];
+
+      if (plan !== "monthly" && plan !== "yearly") {
+        return res.status(400).json({ error: "Invalid plan" });
+      }
 
       if (!priceId) {
         return res.status(500).json({ error: "Stripe price not configured" });
       }
+
+      const idempotencyKey = `${authUser.userId}:${plan}:${Date.now()}`;
 
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
@@ -70,7 +73,7 @@ export default async function handler(req, res) {
             userId: authUser.userId,
           },
         },
-      });
+      }, { idempotencyKey });
 
       return res.status(200).json({ url: session.url });
     }

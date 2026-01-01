@@ -3,11 +3,18 @@ export function getNormalizedPayments(subscription, currencyOverride, rates, con
   const seen = new Set();
   const list = [];
 
+  const makeId = (p) =>
+    p.id ??
+    `${subscription.id || "sub"}-${new Date(p.date).toISOString()}-${p.amount}-${p.currency}`;
+
   const pushUnique = (p) => {
     const key = `${new Date(p.date).toISOString()}|${p.amount}|${p.currency}`;
     if (!seen.has(key)) {
       seen.add(key);
-      list.push(p);
+      list.push({
+        ...p,
+        id: makeId(p), // ✅ GUARANTEED ID
+      });
     }
   };
 
@@ -30,10 +37,12 @@ export function getNormalizedPayments(subscription, currencyOverride, rates, con
   }
 
   if (Array.isArray(subscription.payments)) {
-    subscription.payments.forEach(pushUnique);
+    subscription.payments.forEach((p) => {
+      pushUnique(p);
+    });
   }
 
-  // Optional: apply currency conversion here if desired
+  // Optional currency conversion (preserve ID!)
   if (convert && currencyOverride && rates) {
     return list.map((p) => ({
       ...p,

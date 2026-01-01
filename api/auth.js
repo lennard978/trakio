@@ -7,6 +7,16 @@ if (!process.env.JWT_SECRET) {
   throw new Error("Missing environment variable: JWT_SECRET");
 }
 
+
+async function rateLimit({ key, limit = 10, windowSeconds = 60 }) {
+  // Sliding window is ideal, but a fixed window counter is sufficient for basic brute-force protection.
+  const count = await kv.incr(key);
+  if (count === 1) {
+    await kv.expire(key, windowSeconds);
+  }
+  return count <= limit;
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
@@ -23,6 +33,10 @@ export default async function handler(req, res) {
 
     // LOGIN
     if (action === "login") {
+      const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+      const rlKey = `rl:login:${ip}:${normalizedEmail}`;
+      const ok = await rateLimit({ key: rlKey, limit: 10, windowSeconds: 60 });
+      if (!ok) return res.status(429).json({ error: "Too many attempts. Try again later." });
       const user = await kv.get(userKey);
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
@@ -49,6 +63,10 @@ export default async function handler(req, res) {
 
     // SIGNUP
     if (action === "signup") {
+      const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+      const rlKey = `rl:signup:${ip}`;
+      const ok = await rateLimit({ key: rlKey, limit: 5, windowSeconds: 60 });
+      if (!ok) return res.status(429).json({ error: "Too many attempts. Try again later." });
       const existing = await kv.get(userKey);
       if (existing) {
         return res.status(409).json({ error: "User already exists" });
