@@ -16,11 +16,8 @@ import PremiumGuard from "../components/premium/PremiumGuard";
 import PaymentAccordion from "../components/insights/PaymentAccordion";
 import {
   getCurrentMonthSpending,
-  getCurrentYearSpending,
-  getCurrentMonthDue,
-  getCurrentYearDue,
 } from "../utils/budget";
-import { apiFetch } from "../utils/api";
+import { persistSubscriptions } from "../utils/persistSubscriptions";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -33,38 +30,21 @@ export default function InsightsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
 
-  const persist = async (nextSubs) => {
-    setSubscriptions(nextSubs);
-    try {
-      if (user?.email) {
-        await apiFetch("/api/subscriptions", {
-          method: "POST",
-          body: {
-            action: "save",
-            email: user.email,
-            subscriptions: nextSubs,
-          },
-        });
-      }
-    } catch (err) {
-      console.error("Persist failed:", err);
-    }
-  };
+  const deletePayment = async (subId, paymentId) => {
+    const updated = subscriptions.map((s) =>
+      s.id === subId
+        ? { ...s, payments: s.payments.filter((p) => p.id !== paymentId) }
+        : s
+    );
 
+    setSubscriptions(updated);
 
-  const deletePayment = (subId, paymentId) => {
-    const updated = subscriptions.map((s) => {
-      if (s.id !== subId) return s;
-
-      return {
-        ...s,
-        payments: s.payments.filter((p) => p.id !== paymentId),
-      };
+    await persistSubscriptions({
+      email,
+      token: localStorage.getItem("token"),
+      subscriptions: updated,
     });
-
-    persist(updated);
   };
-
 
   // ✅ Now it's safe to use them in hooks
   const actualSpent = useMemo(() => {

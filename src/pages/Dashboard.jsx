@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../utils/api";
 
@@ -16,13 +15,8 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
-
-import {
-  isOnline,
-  loadSubscriptionsLocal,
-  saveSubscriptionsLocal,
-  syncPending
-} from "../utils/mainDB"; // update the path if needed
+import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { isOnline, loadSubscriptionsLocal, saveSubscriptionsLocal, flushQueue } from "../utils/mainDB";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -40,32 +34,12 @@ async function kvGet(email) {
 }
 
 
-async function kvSave(email, subscriptions) {
-  await apiFetch("/api/subscriptions", {
-    method: "POST",
-    body: {
-      action: "save",
-      email,
-      subscriptions,
-    },
-  });
-}
-
-
 /* ------------------------------------------------------------------ */
 
 export default function Dashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const pendingCount = useMemo(() => {
-    try {
-      const key = `pending_subscriptions:${String(user?.email || "anon").toLowerCase()}`;
-      return JSON.parse(localStorage.getItem(key) || "[]").length;
-    } catch {
-      return 0;
-    }
-  }, [user?.email]);
   const premium = usePremium();
   const { currency } = useCurrency();
   const [subscriptions, setSubscriptions] = useState([]);
@@ -164,22 +138,15 @@ export default function Dashboard() {
   }, [user?.email]);
 
   useEffect(() => {
-    const syncOnReconnect = async () => {
-      if (isOnline() && user?.email && localStorage.getItem("token")) {
-        console.log("📡 Reconnected — syncing pending data...");
-        await syncPending(user.email, localStorage.getItem("token"));
-        // Optionally: reload or refresh state
-        const refreshed = await kvGet(user.email);
-        await saveSubscriptionsLocal(refreshed);
-        setSubscriptions(refreshed);
+    const onOnline = () => {
+      const token = localStorage.getItem("token");
+      if (user?.email && token) {
+        flushQueue({ email: user.email, token });
       }
     };
-
-    window.addEventListener("online", syncOnReconnect);
-    return () => window.removeEventListener("online", syncOnReconnect);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
   }, [user?.email]);
-
-
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
@@ -314,7 +281,6 @@ export default function Dashboard() {
           return progB - progA;
         }
 
-
         case "next":
         default: {
           const nextA = computeNextRenewal(a.payments, a.frequency);
@@ -333,22 +299,13 @@ export default function Dashboard() {
   const persist = async (nextSubs) => {
     setSubscriptions(nextSubs);
     try {
-      if (user?.email) {
-        await kvSave(user.email, nextSubs);
-      }
-      await saveSubscriptionsLocal(nextSubs);
+      await persistSubscriptions({
+        email: user.email,
+        token: localStorage.getItem("token"),
+        subscriptions: nextSubs,
+      });
     } catch (err) {
-      console.error("KV save failed:", err);
-    }
-  };
-
-
-  // Inside the component
-  const syncNow = async () => {
-    if (user?.email && localStorage.getItem("token")) {
-      await syncPending(user.email, localStorage.getItem("token"));
-      // Optionally reload after syncing
-      window.location.reload();
+      console.error("Persist failed:", err);
     }
   };
 
@@ -360,11 +317,6 @@ export default function Dashboard() {
         <div className="bg-yellow-100 text-yellow-800 text-sm p-3 rounded mb-3 text-center">
           You’re currently offline. Changes will be saved locally and synced later.
         </div>
-      )}
-      {isOnline() && pendingCount > 0 && (
-        <button onClick={syncNow} className="text-xs text-indigo-600 underline">
-          Sync pending changes ({pendingCount})
-        </button>
       )}
 
       {loading ? (

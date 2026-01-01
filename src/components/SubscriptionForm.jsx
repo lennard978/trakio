@@ -4,7 +4,6 @@ import { useToast } from "../context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { usePremium } from "../hooks/usePremium";
-import { useCurrency } from "../context/CurrencyContext";
 
 // UI
 import CategorySelector from "../components/CategorySelector";
@@ -13,7 +12,8 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
-import { addPending, isOnline, syncPending, saveSubscriptionsLocal, loadSubscriptionsLocal } from "../utils/mainDB";
+import { isOnline, saveSubscriptionsLocal, loadSubscriptionsLocal } from "../utils/mainDB";
+import { persistSubscriptions } from "../utils/persistSubscriptions";
 
 /* -------------------- Utility -------------------- */
 function normalizeDateString(d) {
@@ -84,7 +84,7 @@ function toRgba(color, alpha) {
 }
 
 /* -------------------- Component -------------------- */
-const uuid = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+const uuid = () => crypto.randomUUID();
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
@@ -93,7 +93,6 @@ export default function SubscriptionForm() {
   const { showToast } = useToast();
   const { user } = useAuth();
   const premium = usePremium();
-  const { currency: mainCurrency } = useCurrency();
   const [method, setMethod] = useState("");
   const [methodOpen, setMethodOpen] = useState(false);
   const email = user?.email;
@@ -184,26 +183,6 @@ export default function SubscriptionForm() {
     return Array.isArray(data.subscriptions) ? data.subscriptions : [];
   };
 
-  const kvSave = async (updated) => {
-    const res = await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ action: "save", email, subscriptions: updated }),
-    });
-
-    if (!res.ok) {
-      let msg = "Failed to save subscriptions";
-      try {
-        const data = await res.json();
-        msg = data?.error || msg;
-      } catch { }
-      throw new Error(msg);
-    }
-  };
-
   /* ------------------ Load Data ------------------ */
   useEffect(() => {
     if (!email) return;
@@ -218,19 +197,18 @@ export default function SubscriptionForm() {
           list = await kvGet();
           await saveSubscriptionsLocal(list);
         } else {
-          console.info("🔌 Offline mode – loading from IndexedDB");
           list = await loadSubscriptionsLocal();
         }
 
         if (cancelled) return;
 
-        // 🛠 Migrate subscriptions (adds missing gradientIntensity)
         const migrated = list.map((s) => ({
           ...s,
           gradientIntensity:
             typeof s.gradientIntensity === "number"
               ? s.gradientIntensity
-              : CATEGORY_INTENSITY_DEFAULT[s.category] ?? CATEGORY_INTENSITY_DEFAULT.other,
+              : CATEGORY_INTENSITY_DEFAULT[s.category] ??
+              CATEGORY_INTENSITY_DEFAULT.other,
         }));
 
         setSubscriptions(migrated);
@@ -247,23 +225,18 @@ export default function SubscriptionForm() {
           setPrice(String(existing.price || ""));
           setFrequency(existing.frequency || "monthly");
           setCategory(existing.category || "other");
-          const latestPaid =
-        Array.isArray(existing.payments) && existing.payments.length
-          ? [...existing.payments]
-              .map((p) => p?.date)
-              .filter(Boolean)
-              .sort()
-              .at(-1)
-          : existing.datePaid;
 
-      setDatePaid(latestPaid || "");
+          const latestPaid =
+            existing.payments?.map((p) => p.date).filter(Boolean).sort().at(-1) ??
+            existing.datePaid;
+
+          setDatePaid(latestPaid || "");
           setNotify(existing.notify !== false);
           setCurrency(existing.currency || "EUR");
           setMethod(existing.method || "");
           setColor(existing.color || getRandomColor());
           setGradientIntensity(existing.gradientIntensity);
         }
-
       } catch (err) {
         console.error("SubscriptionForm load error:", err);
         showToast("Failed to load subscription data", "error");
@@ -276,13 +249,13 @@ export default function SubscriptionForm() {
     return () => {
       cancelled = true;
     };
-  }, [email, id, navigate, showToast]);
+  }, [email, id]);
+
 
   useEffect(() => {
     const handleOnline = async () => {
       if (user?.email && isOnline() && token) {
         console.log("📡 Online — syncing subscription form changes");
-        await syncPending(user.email, token);
       }
     };
 
@@ -322,64 +295,64 @@ export default function SubscriptionForm() {
       let updated;
       if (id) {
         updated = subscriptions.map((s) => {
-        if (String(s.id) !== String(id)) return s;
+          if (String(s.id) !== String(id)) return s;
 
-        const existingPayments = Array.isArray(s.payments) ? [...s.payments] : [];
+          const existingPayments = Array.isArray(s.payments) ? [...s.payments] : [];
 
-        const lastPaid =
-          existingPayments.length
-            ? [...existingPayments]
+          const lastPaid =
+            existingPayments.length
+              ? [...existingPayments]
                 .map((p) => p?.date)
                 .filter(Boolean)
                 .sort()
                 .at(-1)
-            : s.datePaid;
+              : s.datePaid;
 
-        const paidRaw = normalizeDateString(datePaid);
-        const today = normalizeDateString(new Date());
-        const paid = paidRaw && paidRaw > today ? today : paidRaw;
+          const paidRaw = normalizeDateString(datePaid);
+          const today = normalizeDateString(new Date());
+          const paid = paidRaw && paidRaw > today ? today : paidRaw;
 
-        if (paid && (!lastPaid || normalizeDateString(lastPaid) !== paid)) {
-          existingPayments.push({
-            id: uuid(),
-            date: paid,
-            amount: priceNum,
+          if (paid && (!lastPaid || normalizeDateString(lastPaid) !== paid)) {
+            existingPayments.push({
+              id: uuid(),
+              date: paid,
+              amount: priceNum,
+              currency,
+            });
+          }
+
+          // De-dup by date+amount+currency
+          const uniq = new Map();
+          for (const p of existingPayments) {
+            if (!p?.date) continue;
+            const key = `${normalizeDateString(p.date)}|${Number(p.amount).toFixed(2)}|${p.currency || currency}`;
+            uniq.set(key, p);
+          }
+
+          const nextPayments = Array.from(uniq.values()).sort((a, b) =>
+            String(a.date).localeCompare(String(b.date))
+          );
+
+          return {
+            ...s,
+            name: name.trim(),
+            icon,
+            price: priceNum,
+            frequency,
+            category,
             currency,
-          });
-        }
+            method: method.trim(),
+            notify,
+            color,
+            gradientIntensity,
+            payments: nextPayments,
 
-        // De-dup by date+amount+currency
-        const uniq = new Map();
-        for (const p of existingPayments) {
-          if (!p?.date) continue;
-          const key = `${normalizeDateString(p.date)}|${Number(p.amount).toFixed(2)}|${p.currency || currency}`;
-          uniq.set(key, p);
-        }
-
-        const nextPayments = Array.from(uniq.values()).sort((a, b) =>
-          String(a.date).localeCompare(String(b.date))
-        );
-
-        return {
-          ...s,
-          name: name.trim(),
-          icon,
-          price: priceNum,
-          frequency,
-          category,
-          currency,
-          method: method.trim(),
-          notify,
-          color,
-          gradientIntensity,
-          payments: nextPayments,
-
-          // Back-compat only (optional)
-          datePaid: nextPayments.at(-1)?.date ?? paid ?? s.datePaid,
-          history: [],
-        };
-      });
-showToast(t("toast_updated"), "success");
+            // Back-compat only (optional)
+            datePaid: nextPayments.at(-1)?.date ?? paid ?? s.datePaid,
+            history: [],
+          };
+        });
+        showToast(t("toast_updated"), "success");
       } else {
         updated = [
           ...subscriptions,
@@ -409,19 +382,11 @@ showToast(t("toast_updated"), "success");
 
         showToast(t("toast_added"), "success");
       }
-
-      if (isOnline()) {
-        await kvSave(updated);
-        await saveSubscriptionsLocal(updated);
-        await syncPending(email, token);
-      } else {
-        const pendingItem = updated.find(s => !s.id || s.id === id);
-        addPending(pendingItem);
-        await saveSubscriptionsLocal(updated);
-        showToast("Saved offline. Will sync when online.", "info");
-      }
-
-
+      await persistSubscriptions({
+        email,
+        token,
+        subscriptions: updated,
+      });
       navigate("/dashboard");
 
     } catch (err) {
@@ -471,19 +436,6 @@ showToast(t("toast_updated"), "success");
   /* ------------------ JSX ------------------ */
   return (
     <div className="max-w-2xl mx-auto pb-2">
-      {!isOnline() && (
-        <button
-          type="button"
-          onClick={async () => {
-            await syncPending(user.email, token);
-            showToast("Synced pending changes.", "success");
-          }}
-          className="mt-2 px-4 py-1.5 text-sm bg-blue-500 text-white rounded"
-        >
-          Sync Now
-        </button>
-      )}
-
       <Card className="relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"

@@ -17,13 +17,9 @@ import { getCategoryStyles } from "../utils/CategoryStyles";
 import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
 import { useTheme } from "../hooks/useTheme";
-import {
-  isOnline,
-  addPending,
-  syncPending,
-  saveSubscriptionsLocal,
-  getPending,
-} from "../utils/mainDB.js"; // Adjust path if needed
+import { saveSubscriptionsLocal } from "../utils/mainDB";
+import { persistSubscriptions } from "../utils/persistSubscriptions";
+
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
@@ -168,36 +164,13 @@ export default function SubscriptionItem({
         ],
       };
     });
-
     setSubscriptions(updated);
-    await saveSubscriptionsLocal(updated);
 
-    if (isOnline()) {
-      try {
-        const res = await fetch("/api/subscriptions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            action: "save",
-            email: user.email,
-            subscriptions: updated,
-          }),
-        });
-
-        if (!res.ok) throw new Error("Failed to sync");
-
-        await syncPending(user.email, localStorage.getItem("token"));
-      } catch (err) {
-        console.warn("Online sync failed", err);
-      }
-    } else {
-      const justUpdated = updated.find((s) => s.id === id);
-      addPending(justUpdated);
-      console.info("Saved payment offline – will sync later.");
-    }
+    await persistSubscriptions({
+      email: user.email,
+      token: localStorage.getItem("token"),
+      subscriptions: updated,
+    });
   };
 
 
@@ -212,18 +185,6 @@ export default function SubscriptionItem({
           isSwiping,
           isLightCard,
         });
-
-        useEffect(() => {
-          const handleOnline = async () => {
-            if (user?.email) {
-              await syncPending(user.email, localStorage.getItem("token"));
-            }
-          };
-
-          window.addEventListener("online", handleOnline);
-          return () => window.removeEventListener("online", handleOnline);
-        }, [user?.email]);
-
 
         return (
           <div className={`

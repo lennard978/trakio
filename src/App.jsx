@@ -23,6 +23,7 @@ import { Toaster } from "react-hot-toast";
 import { useTheme } from "./hooks/useTheme";
 import { AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { flushQueue } from "./utils/mainDB";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -81,12 +82,10 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    const email = savedUser ? JSON.parse(savedUser)?.email : null;
-
     const handleOnline = () => {
-      syncPending(email, token);
+      const token = localStorage.getItem("token");
+      const email = JSON.parse(localStorage.getItem("user") || "{}")?.email;
+      if (email && token) flushQueue({ email, token });
     };
 
     window.addEventListener("online", handleOnline);
