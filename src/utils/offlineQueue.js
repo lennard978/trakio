@@ -1,41 +1,42 @@
 import { dbPromise } from "./mainDB";
 import { persistSubscriptions } from "./persistSubscriptions";
+import { loadSubscriptionsLocal } from "./mainDB";
 
-export async function enqueueSave(email, subscriptions) {
+export async function enqueueSave(email) {
   const db = await dbPromise;
-
   await db.put("queue", {
-    id: crypto.randomUUID(),
-    type: "SAVE_SUBSCRIPTIONS",
+    id: email,
     email,
-    payload: subscriptions,
     createdAt: Date.now(),
   });
 }
 
-export async function flushQueue(token) {
+
+export async function flushQueue() {
+  if (!navigator.onLine) return;
+
   const db = await dbPromise;
-  const tx = db.transaction("queue", "readwrite");
-  const store = tx.objectStore("queue");
+  const jobs = await db.getAll("queue");
 
-  const jobs = await store.getAll();
+  if (!jobs.length) return;
 
-  for (const job of jobs) {
-    try {
-      if (job.type === "SAVE_SUBSCRIPTIONS") {
-        await persistSubscriptions({
-          email: job.email,
-          token,
-          subscriptions: job.payload,
-        });
-      }
+  // 🔑 ALWAYS read latest local truth
+  const subscriptions = await loadSubscriptionsLocal();
 
-      await store.delete(job.id);
-    } catch (err) {
-      console.warn("Queue job failed, stopping flush", err);
-      break; // stop on first failure
-    }
-  }
+  const token = localStorage.getItem("token");
 
-  await tx.done;
+  await fetch("/api/subscriptions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      action: "save",
+      email: jobs[0].email,
+      subscriptions,
+    }),
+  });
+
+  await db.clear("queue");
 }

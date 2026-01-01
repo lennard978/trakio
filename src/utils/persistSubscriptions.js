@@ -24,7 +24,7 @@ export async function persistSubscriptions({ email, token, subscriptions }) {
   });
 
   if (!res.ok) {
-    await enqueueSave(email, subscriptions);
+    await enqueueSave(email);
     throw new Error("Persist failed, queued");
   }
 }

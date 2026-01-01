@@ -77,21 +77,11 @@ export default function App() {
   const { currency, setCurrency } = useCurrency();
 
   useEffect(() => {
-    const onOnline = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        console.log("🌐 Online — flushing offline queue");
-        await flushQueue(token);
-      } catch (err) {
-        console.warn("Queue flush failed, will retry later", err);
-      }
-    };
-
+    const onOnline = () => flushQueue();
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
   }, []);
+
 
   return (
     <div
