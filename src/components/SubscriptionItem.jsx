@@ -1,6 +1,6 @@
 // src/components/SubscriptionItem.jsx
 
-import React, { useRef, useMemo, useEffect } from "react";
+import React, { useRef, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -18,29 +18,26 @@ import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
 import { useTheme } from "../hooks/useTheme";
 
-// ---------- UTILITIES ----------
+/* ---------- utilities ---------- */
 function diffInDays(dateA, dateB) {
   return Math.ceil((dateA - dateB) / 86400000);
 }
 
 function toRgba(color, alpha) {
   if (!color) return `rgba(255,255,255,${alpha})`;
-
   if (color.startsWith("rgba")) {
     return color.replace(/rgba\(([^)]+),[^)]+\)/, `rgba($1, ${alpha})`);
   }
-
   if (color.startsWith("#")) {
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
     const b = parseInt(color.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
-
   return color;
 }
 
-// ---------- COMPONENT ----------
+/* ---------- component ---------- */
 export default function SubscriptionItem({
   item,
   currency,
@@ -52,19 +49,19 @@ export default function SubscriptionItem({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const premium = usePremium();
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
+
   const dateInputRef = useRef(null);
+
+  // 🔒 LOCAL ACTION LOCK
+  const [busy, setBusy] = useState(false);
 
   const payments = Array.isArray(item.payments) ? item.payments : [];
   const categoryKey = (item.category || "other").toLowerCase();
   const progressColor = CATEGORY_COLORS[categoryKey] || CATEGORY_COLORS.other;
 
   const baseColor = item.color || "rgba(255,255,255,0.9)";
-
-  const categoryStyle = getCategoryStyles(item.category);
-
-  const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
-
   const hasCustomColor = Boolean(item.color);
   const isLightCard = hasCustomColor && isLightSurface(item.color);
 
@@ -73,17 +70,16 @@ export default function SubscriptionItem({
       ? item.gradientIntensity
       : 0.25;
 
-  // 🌙 Reduce intensity in dark mode
   const intensity = isDarkMode
     ? Math.max(0.12, baseIntensity * 0.6)
     : baseIntensity;
 
   const gradientStyle = {
     background: `linear-gradient(
-    135deg,
-    ${toRgba(baseColor, intensity)},
-    transparent
-  )`
+      135deg,
+      ${toRgba(baseColor, intensity)},
+      transparent
+    )`,
   };
 
   const lastPaymentDate = useMemo(() => {
@@ -123,7 +119,29 @@ export default function SubscriptionItem({
     return t("overdue_days", { d: Math.abs(daysLeft) });
   }, [nextRenewal, daysLeft, t]);
 
+  /* ---------- handlers ---------- */
+  const handleDelete = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onDelete(item.id); // ✅ await parent persist
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleMarkPaid = async (date) => {
+    if (busy || !date) return;
+    setBusy(true);
+    try {
+      await onMarkPaid(item.id, date);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const openCalendar = () => {
+    if (busy) return;
     const input = dateInputRef.current;
     input?.showPicker?.();
     input?.click?.();
@@ -131,7 +149,7 @@ export default function SubscriptionItem({
 
   return (
     <SwipeToDeleteWrapper
-      onDelete={() => onDelete(item.id)}
+      onDelete={handleDelete}
       deleteLabel={t("button_delete")}
     >
       {({ isSwiping }) => {
@@ -142,13 +160,7 @@ export default function SubscriptionItem({
         });
 
         return (
-          <div className={`
-  relative overflow-hidden rounded-3xl border shadow-lg
-  dark:border-white/10
-  ${isDarkMode && isLightCard ? "saturate-90" : ""}
-`}
-          >
-            {/* Gradient overlay */}
+          <div className="relative overflow-hidden rounded-3xl border shadow-lg dark:border-white/10">
             <div
               className={`absolute inset-0 ${premium.isPremium ? "transition-all duration-500" : ""
                 }`}
@@ -157,42 +169,30 @@ export default function SubscriptionItem({
 
             <div className="relative z-10 p-5 backdrop-blur-xl">
               <div className="flex justify-between items-start mb-1">
-                <div className="flex flex-row">
-                  <div className="flex flex-col justify-center items-center">
+                <div className="flex">
+                  <div className="flex flex-col items-center">
                     <HealthBadge {...subscriptionHealth(item)} />
                     <div className="p-2">
                       {item.icon ? (
-                        <img
-                          src={`/icons/${item.icon}.svg`}
-                          alt={item.name}
-                          className="w-8 h-8"
-                        />
+                        <img src={`/icons/${item.icon}.svg`} alt="" className="w-8 h-8" />
                       ) : (
-                        <span className="text-xl" title={item.category}>
-                          {categoryStyle.icon}
+                        <span className="text-xl">
+                          {getCategoryStyles(item.category).icon}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="flex flex-col ml-2">
-                      <div
-                        className={`text-lg text-black dark:text-gray-300 font-tight tracking-tight drop-shadow-sm font-semibold`}
-                      >
-                        {item.name}
-                      </div>
-
-                      <div
-                        className={`text-xs text-black dark:text-gray-300 font-medium tabular-nums`}
-                      >
-                        {currency} {displayPrice?.toFixed(2)} /{" "}
-                        {t(`frequency_${item.frequency}`)}
-                      </div>
-                      <div className={`text-xs text-black dark:text-gray-300 tabular-nums`}
-                      >
-                        {nextPaymentText}
-                      </div>
+                  <div className="ml-2">
+                    <div className="text-lg font-semibold text-black dark:text-gray-300">
+                      {item.name}
+                    </div>
+                    <div className="text-xs tabular-nums">
+                      {currency} {displayPrice?.toFixed(2)} /{" "}
+                      {t(`frequency_${item.frequency}`)}
+                    </div>
+                    <div className="text-xs tabular-nums">
+                      {nextPaymentText}
                     </div>
                   </div>
                 </div>
@@ -207,13 +207,9 @@ export default function SubscriptionItem({
 
               <div className="flex items-center gap-4 flex-wrap">
                 <button
-                  onClick={() => {
-                    const today = new Date().toISOString().split("T")[0];
-                    //onMarkPaid(item.id, today);  // ✅ UNCOMMENT THIS LINE
-                    openCalendar();
-                  }}
-                  title={nextPaymentText}
-                  className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black"
+                  onClick={openCalendar}
+                  disabled={busy}
+                  className="px-4 py-1.5 rounded-xl text-xs bg-green-300 text-black disabled:opacity-50"
                 >
                   {t("paid")}
                 </button>
@@ -226,7 +222,8 @@ export default function SubscriptionItem({
 
                 <button
                   onClick={() => navigate(`/edit/${item.id}`)}
-                  className="px-4 py-1.5 capitalize rounded-xl text-xs bg-blue-500 text-white"
+                  disabled={busy}
+                  className="px-4 py-1.5 rounded-xl text-xs bg-blue-500 text-white disabled:opacity-50"
                 >
                   {t("edit")}
                 </button>
@@ -236,13 +233,12 @@ export default function SubscriptionItem({
                 ref={dateInputRef}
                 type="date"
                 className="hidden"
-                onChange={(e) => onMarkPaid(item.id, e.target.value)} // ✅ Use parent callback
+                onChange={(e) => handleMarkPaid(e.target.value)}
               />
             </div>
           </div>
         );
       }}
     </SwipeToDeleteWrapper>
-
   );
 }

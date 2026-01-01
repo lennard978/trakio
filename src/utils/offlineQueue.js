@@ -1,42 +1,71 @@
-import { dbPromise } from "./mainDB";
-import { persistSubscriptions } from "./persistSubscriptions";
-import { loadSubscriptionsLocal } from "./mainDB";
+// src/utils/offlineQueue.js
 
-export async function enqueueSave(email) {
+import { dbPromise } from "./mainDB";
+
+/* -------------------------------------------------
+ * Queue one FULL snapshot per offline action
+ * ------------------------------------------------- */
+
+export async function enqueueSave(email, subscriptions) {
+  if (!email || !Array.isArray(subscriptions)) return;
+
   const db = await dbPromise;
-  await db.put("queue", {
-    id: email,
+
+  // 🔥 IMPORTANT: keep ONLY latest snapshot
+  const existing = await db.getAll("queue");
+
+  for (const job of existing) {
+    if (job.email === email) {
+      await db.delete("queue", job.id);
+    }
+  }
+
+  await db.add("queue", {
+    id: crypto.randomUUID(),
     email,
+    subscriptions,
     createdAt: Date.now(),
   });
 }
 
 
+/* -------------------------------------------------
+ * Flush queue (FIFO, safe, idempotent)
+ * ------------------------------------------------- */
+
 export async function flushQueue() {
   if (!navigator.onLine) return;
 
   const db = await dbPromise;
-  const jobs = await db.getAll("queue");
+  const jobs = await db.getAllFromIndex("queue", "by_created");
 
   if (!jobs.length) return;
 
-  // 🔑 ALWAYS read latest local truth
-  const subscriptions = await loadSubscriptionsLocal();
-
   const token = localStorage.getItem("token");
 
-  await fetch("/api/subscriptions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      action: "save",
-      email: jobs[0].email,
-      subscriptions,
-    }),
-  });
+  for (const job of jobs) {
+    try {
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "save",
+          email: job.email,
+          subscriptions: job.subscriptions,
+        }),
+      });
 
-  await db.clear("queue");
+      if (!res.ok) throw new Error("Sync failed");
+
+      // ✅ remove only after successful sync
+      await db.delete("queue", job.id);
+    } catch (err) {
+      // ⛔ stop processing — retry later
+      console.warn("Offline sync failed, will retry", err);
+      return;
+    }
+  }
 }

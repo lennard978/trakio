@@ -9,17 +9,40 @@ export default function SwipeToDeleteWrapper({
   style = {},
 }) {
   const [translateX, setTranslateX] = useState(0);
+  const [deleting, setDeleting] = useState(false);
   const openedRef = useRef(false);
 
   const MAX_SWIPE = -90;
 
+  const resetSwipe = () => {
+    setTranslateX(0);
+    openedRef.current = false;
+  };
+
   const toggleSwipe = () => {
+    if (deleting) return;
+
     if (openedRef.current) {
-      setTranslateX(0);
-      openedRef.current = false;
+      resetSwipe();
     } else {
       setTranslateX(MAX_SWIPE);
       openedRef.current = true;
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    if (typeof onDelete !== "function") {
+      console.warn("SwipeToDeleteWrapper: onDelete is not a function.");
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await onDelete();          // ✅ allow async delete
+    } finally {
+      setDeleting(false);
+      resetSwipe();              // ✅ always reset UI
     }
   };
 
@@ -41,35 +64,34 @@ export default function SwipeToDeleteWrapper({
           bounce: 0.4,
         }}
         style={{
-          pointerEvents: Math.abs(translateX) > 10 ? "auto" : "none",
+          pointerEvents:
+            Math.abs(translateX) > 10 && !deleting ? "auto" : "none",
         }}
       >
         <button
-          onClick={() => {
-            if (typeof onDelete === "function") onDelete();
-            else console.warn("SwipeToDeleteWrapper: onDelete is not a function.");
-          }}
+          onClick={handleDelete}
+          disabled={deleting}
           className="
-      px-4 py-2 rounded-xl text-xs font-semibold text-white
-      uppercase active:scale-95 transition border
-      bg-red-500/80 border-red-400/70
-      dark:bg-red-600/80 dark:border-red-400/50
-      backdrop-blur-xl backdrop-saturate-150
-      shadow-[0_0_10px_rgba(255,70,70,0.25)]
-      dark:shadow-[0_0_14px_rgba(255,50,50,0.3)]
-    "
+            px-4 py-2 rounded-xl text-xs font-semibold text-white
+            uppercase transition border
+            bg-red-500/80 border-red-400/70
+            dark:bg-red-600/80 dark:border-red-400/50
+            backdrop-blur-xl backdrop-saturate-150
+            shadow-[0_0_10px_rgba(255,70,70,0.25)]
+            dark:shadow-[0_0_14px_rgba(255,50,50,0.3)]
+            disabled:opacity-50 disabled:cursor-not-allowed
+          "
         >
-          {deleteLabel}
+          {deleting ? "Deleting…" : deleteLabel}
         </button>
       </motion.div>
-
 
       {/* Tap-to-toggle content */}
       <div
         style={{
           transform: `translateX(${translateX}px)`,
           transition: "transform 0.25s ease-out",
-          cursor: "pointer",
+          cursor: deleting ? "default" : "pointer",
         }}
         onClick={toggleSwipe}
       >
