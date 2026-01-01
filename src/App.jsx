@@ -6,12 +6,8 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import { useTranslation } from "react-i18next";
-// import DarkModeToggle from "./components/DarkModeToggle";
-// import LanguageSwitcher from "./components/LanguageSwitcher";
 import AnimatedPage from "./components/AnimatedPage";
 import FloatingTabBar from "./components/FloatingTabBar";
-// import LogoIcon from "./icons/icon-192.png";
 import CurrencyPickerSheet from "./components/settings/CurrencyPickerSheet";
 import LanguagePickerSheet from "./components/settings/LanguagePickerSheet";
 
@@ -20,10 +16,9 @@ import { usePremium } from "./hooks/usePremium";
 
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "react-hot-toast";
-import { useTheme } from "./hooks/useTheme";
 import { AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { flushQueue } from "./utils/mainDB";
+import { flushQueue } from "./utils/offlineQueue";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -75,25 +70,28 @@ function TrialGuard({ children }) {
 /* -------------------- App -------------------- */
 export default function App() {
   const { user } = useAuth();
-  const { i18n, t } = useTranslation();
-  const dir = i18n.dir();
-  const { theme } = useTheme();
   const [activeSheet, setActiveSheet] = useState(null);
   const location = useLocation();
 
-  useEffect(() => {
-    const handleOnline = () => {
-      const token = localStorage.getItem("token");
-      const email = JSON.parse(localStorage.getItem("user") || "{}")?.email;
-      if (email && token) flushQueue({ email, token });
-    };
-
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
-  }, []);
-
   /* Currency */
   const { currency, setCurrency } = useCurrency();
+
+  useEffect(() => {
+    const onOnline = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        console.log("🌐 Online — flushing offline queue");
+        await flushQueue(token);
+      } catch (err) {
+        console.warn("Queue flush failed, will retry later", err);
+      }
+    };
+
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   return (
     <div

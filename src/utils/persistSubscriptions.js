@@ -1,23 +1,11 @@
-import {
-  saveSubscriptionsLocal,
-  queueSyncJob,
-  isOnline,
-} from "./mainDB";
+import { enqueueSave } from "./offlineQueue";
 
 export async function persistSubscriptions({ email, token, subscriptions }) {
-  // Always save locally
-  await saveSubscriptionsLocal(subscriptions);
-
-  // Offline → queue
-  if (!isOnline() || !token) {
-    await queueSyncJob({
-      action: "save",
-      payload: { subscriptions },
-    });
+  if (!navigator.onLine) {
+    await enqueueSave(email, subscriptions);
     return;
   }
 
-  // Online → save immediately
   const res = await fetch("/api/subscriptions", {
     method: "POST",
     headers: {
@@ -31,5 +19,9 @@ export async function persistSubscriptions({ email, token, subscriptions }) {
     }),
   });
 
-  if (!res.ok) throw new Error("Persist failed");
+  if (!res.ok) {
+    // network or server failure → enqueue
+    await enqueueSave(email, subscriptions);
+    throw new Error("Persist failed, queued for retry");
+  }
 }

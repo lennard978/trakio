@@ -17,9 +17,6 @@ import { getCategoryStyles } from "../utils/CategoryStyles";
 import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
 import { useTheme } from "../hooks/useTheme";
-import { saveSubscriptionsLocal } from "../utils/mainDB";
-import { persistSubscriptions } from "../utils/persistSubscriptions";
-
 
 // ---------- UTILITIES ----------
 function diffInDays(dateA, dateB) {
@@ -51,9 +48,6 @@ export default function SubscriptionItem({
   convert,
   onDelete,
   onMarkPaid,
-  subscriptions,
-  setSubscriptions,
-  user,
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -83,12 +77,6 @@ export default function SubscriptionItem({
   const intensity = isDarkMode
     ? Math.max(0.12, baseIntensity * 0.6)
     : baseIntensity;
-
-  /* 🔹 ADD: low-power detection */
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ||
-      navigator.connection?.saveData === true);
 
   const gradientStyle = {
     background: `linear-gradient(
@@ -140,39 +128,6 @@ export default function SubscriptionItem({
     input?.showPicker?.();
     input?.click?.();
   };
-
-  const markPaid = async (id, date) => {
-    const updated = subscriptions.map((s) => {
-      if (s.id !== id) return s;
-
-      const payments = Array.isArray(s.payments) ? s.payments : [];
-
-      // Skip if already paid
-      const alreadyPaid = payments.some((p) => p.date === date);
-      if (alreadyPaid) return s;
-
-      return {
-        ...s,
-        payments: [
-          ...payments,
-          {
-            id: crypto.randomUUID(),
-            date,
-            amount: s.price,
-            currency: s.currency || "EUR",
-          },
-        ],
-      };
-    });
-    setSubscriptions(updated);
-
-    await persistSubscriptions({
-      email: user.email,
-      token: localStorage.getItem("token"),
-      subscriptions: updated,
-    });
-  };
-
 
   return (
     <SwipeToDeleteWrapper

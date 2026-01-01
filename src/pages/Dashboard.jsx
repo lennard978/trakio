@@ -15,8 +15,8 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
-import { persistSubscriptions } from "../utils/persistSubscriptions";
-import { isOnline, loadSubscriptionsLocal, saveSubscriptionsLocal, flushQueue } from "../utils/mainDB";
+import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
+import { flushQueue } from "../utils/offlineQueue";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -46,8 +46,6 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
   const [loading, setLoading] = useState(true); // ← Add this
-  const uuid = () =>
-    globalThis.uuid?.() ?? `${Date.now()}-${Math.random()}`;
 
   /* ---------------- Filters ---------------- */
   const [filters, setFilters] = useState({
@@ -70,17 +68,13 @@ export default function Dashboard() {
 
         let list = [];
 
-        if (isOnline()) {
-          // Fetch from API
+        try {
           list = await kvGet(user.email);
-
-          // Save to IndexedDB
           await saveSubscriptionsLocal(list);
-        } else {
-          // Load from IndexedDB
-          console.log("🌀 Loading from IndexedDB (offline mode)");
+        } catch {
           list = await loadSubscriptionsLocal();
         }
+
 
         // Migrate legacy data
         const migrated = list.map((s) => {
@@ -141,7 +135,7 @@ export default function Dashboard() {
     const onOnline = () => {
       const token = localStorage.getItem("token");
       if (user?.email && token) {
-        flushQueue({ email: user.email, token });
+        flushQueue(token);
       }
     };
     window.addEventListener("online", onOnline);
@@ -313,18 +307,17 @@ export default function Dashboard() {
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
-      {!isOnline() && (
-        <div className="bg-yellow-100 text-yellow-800 text-sm p-3 rounded mb-3 text-center">
-          You’re currently offline. Changes will be saved locally and synced later.
-        </div>
+
+      {loading && !navigator.onLine && (
+        <p className="mt-2 text-sm text-gray-500">
+          Offline mode — showing cached data
+        </p>
       )}
+
 
       {loading ? (
         <div className="flex flex-col justify-center items-center h-40">
           <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          {!isOnline() && (
-            <p className="mt-2 text-sm text-gray-500">Offline mode: Loading from local storage…</p>
-          )}
         </div>
       ) : hasSubscriptions ? (
         <>

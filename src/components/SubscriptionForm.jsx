@@ -12,7 +12,6 @@ import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 import { subscriptionCatalog } from "../data/subscriptionCatalog";
 import { setPremiumIntent } from "../utils/premiumIntent";
-import { isOnline, saveSubscriptionsLocal, loadSubscriptionsLocal } from "../utils/mainDB";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 
 /* -------------------- Utility -------------------- */
@@ -21,18 +20,6 @@ function normalizeDateString(d) {
   const dt = new Date(d);
   if (Number.isNaN(dt.getTime())) return null;
   return dt.toISOString().slice(0, 10);
-}
-
-function uniqDates(list) {
-  const out = [];
-  const seen = new Set();
-  for (const d of list) {
-    const nd = normalizeDateString(d);
-    if (!nd || seen.has(nd)) continue;
-    seen.add(nd);
-    out.push(nd);
-  }
-  return out;
 }
 
 /* 🔹 ADD: category default gradient intensity */
@@ -193,13 +180,6 @@ export default function SubscriptionForm() {
       try {
         let list = [];
 
-        if (isOnline()) {
-          list = await kvGet();
-          await saveSubscriptionsLocal(list);
-        } else {
-          list = await loadSubscriptionsLocal();
-        }
-
         if (cancelled) return;
 
         const migrated = list.map((s) => ({
@@ -250,19 +230,6 @@ export default function SubscriptionForm() {
       cancelled = true;
     };
   }, [email, id]);
-
-
-  useEffect(() => {
-    const handleOnline = async () => {
-      if (user?.email && isOnline() && token) {
-        console.log("📡 Online — syncing subscription form changes");
-      }
-    };
-
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
-  }, [user?.email, token]);
-
 
   /* ------------------ Submit ------------------ */
   const handleSubmit = async (e) => {
