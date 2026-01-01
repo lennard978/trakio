@@ -15,7 +15,7 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
-import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 
 /* ------------------------------------------------------------------ */
@@ -74,11 +74,9 @@ export default function Dashboard() {
 
         try {
           list = await kvGet(user.email);
-          await saveSubscriptionsLocal(list);
         } catch {
           list = await loadSubscriptionsLocal();
         }
-
 
         // Migrate legacy data
         const migrated = list.map((s) => {
