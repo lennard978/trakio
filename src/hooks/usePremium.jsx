@@ -1,22 +1,42 @@
 import { useMemo } from "react";
 import { usePremiumContext } from "../context/PremiumContext";
 
+const SNAPSHOT_KEY = "premium_snapshot_v1";
+
+function saveSnapshot(data) {
+  try {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({
+      ...data,
+      savedAt: Date.now(),
+    }));
+  } catch { }
+}
+
+function loadSnapshot() {
+  try {
+    const raw = localStorage.getItem(SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Authoritative premium resolver.
  * Frontend MUST NOT trust raw flags alone.
  */
 export function usePremium() {
   const ctx = usePremiumContext();
-
-  const {
-    status,
-    currentPeriodEnd,
-    trialEnds,
-    loading,
-  } = ctx;
+  const { status, currentPeriodEnd, trialEnds, loading } = ctx;
 
   const premiumState = useMemo(() => {
     const now = Date.now();
+
+    // ---- OFFLINE FALLBACK (DISPLAY ONLY) ----
+    if (!navigator.onLine && !status) {
+      const cached = loadSnapshot();
+      if (cached) return cached;
+    }
 
     const periodEndMs =
       typeof currentPeriodEnd === "number"
@@ -38,7 +58,6 @@ export function usePremium() {
       periodEndMs &&
       periodEndMs > now;
 
-
     const trialExpired =
       !!trialEndMs &&
       trialEndMs <= now &&
@@ -49,17 +68,15 @@ export function usePremium() {
       !hasActiveTrial &&
       !isPremium;
 
-
     let trialDaysLeft = null;
     if (hasActiveTrial) {
-      const diffMs = trialEndMs - now;
       trialDaysLeft = Math.max(
         0,
-        Math.ceil(diffMs / 86400000)
+        Math.ceil((trialEndMs - now) / 86400000)
       );
     }
 
-    return {
+    const resolved = {
       isPremium,
       hasActiveTrial,
       trialExpired,
@@ -73,7 +90,13 @@ export function usePremium() {
         : null,
     };
 
-  }, [status, currentPeriodEnd, trialEnds]);
+    // ---- SAVE SNAPSHOT WHEN ONLINE ----
+    if (navigator.onLine && !loading) {
+      saveSnapshot(resolved);
+    }
+
+    return resolved;
+  }, [status, currentPeriodEnd, trialEnds, loading]);
 
   return {
     ...ctx,
@@ -81,3 +104,4 @@ export function usePremium() {
     loading,
   };
 }
+

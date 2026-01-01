@@ -16,6 +16,7 @@ import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { readPendingQueue } from "../utils/offlineQueue";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -70,7 +71,21 @@ export default function Dashboard() {
         setLoading(true);
 
         let list = [];
-        list = await kvGet(user.email);
+        let remote = [];
+        try {
+          remote = await kvGet(user.email);
+        } catch { }
+
+        const pending = await readPendingQueue();
+
+        list = [...remote];
+
+        // merge pending subscriptions (by id)
+        pending.forEach((p) => {
+          if (!list.find((s) => s.id === p.id)) {
+            list.push(p);
+          }
+        });
 
         // Migrate legacy data
         const migrated = list.map((s) => {
