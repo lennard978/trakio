@@ -16,6 +16,7 @@ import { useTheme } from "../hooks/useTheme";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -66,78 +67,32 @@ export default function Dashboard() {
     if (!user?.email) return;
 
     (async () => {
+      setLoading(true);
+
+      // 1️⃣ IMMEDIATE local hydration
       try {
-        setLoading(true);
-
-        let list = [];
-        let remote = [];
-        try {
-          remote = await kvGet(user.email);
-        } catch { }
-
-        list = [...remote];
-
-        // merge pending subscriptions (by id)
-        pending.forEach((p) => {
-          if (!list.find((s) => s.id === p.id)) {
-            list.push(p);
-          }
-        });
-
-        // Migrate legacy data
-        const migrated = list.map((s) => {
-          let payments = Array.isArray(s.payments) ? [...s.payments] : [];
-
-          // Legacy migration logic
-          if (Array.isArray(s.history)) {
-            s.history.forEach((d) => {
-              payments.push({
-                id: uuid(),
-                date: d,
-                color: s.color || "#ffffff",
-                amount: s.price,
-                currency: s.currency || "EUR",
-              });
-            });
-          }
-
-          if (s.datePaid) {
-            payments.push({
-              id: uuid(),
-              date: s.datePaid,
-              amount: s.price,
-              currency: s.currency || "EUR",
-            });
-          }
-
-          // Remove duplicates
-          const seen = new Set();
-          payments = payments.filter((p) => {
-            const key = new Date(p.date).toISOString().slice(0, 10);
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-
-          return {
-            ...s,
-            id: s.id || uuid(),
-            payments,
-            color: s.color || "#ffffff",
-            history: undefined,
-            datePaid: undefined,
-          };
-        });
-
-        setSubscriptions(migrated);
-      } catch (err) {
-        console.error("Subscription load failed:", err);
-        setSubscriptions([]);
-      } finally {
-        setLoading(false);
+        const local = await loadSubscriptionsLocal();
+        if (local.length) setSubscriptions(local);
+      } catch (e) {
+        console.warn("Local cache read failed", e);
       }
+
+
+      // 2️⃣ Try backend sync
+      if (navigator.onLine) {
+        try {
+          const remote = await kvGet(user.email);
+          setSubscriptions(remote);
+          await saveSubscriptionsLocal(remote);
+        } catch (err) {
+          console.warn("Backend fetch failed, using local cache");
+        }
+      }
+
+      setLoading(false);
     })();
   }, [user?.email]);
+
 
   /* ---------------- Notifications ---------------- */
   useNotifications(subscriptions);
