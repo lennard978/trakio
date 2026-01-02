@@ -16,6 +16,7 @@ import SettingsRow from "../components/ui/SettingsRow";
 import languages from "../utils/languages";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
 
 import {
   GlobeAltIcon,

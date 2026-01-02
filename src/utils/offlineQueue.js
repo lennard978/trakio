@@ -36,36 +36,34 @@ export async function enqueueSave(email, subscriptions) {
 export async function flushQueue() {
   if (!navigator.onLine) return;
 
+  const token = localStorage.getItem("token");
+  if (!token) return; // ✅ GUARD
+
   const db = await dbPromise;
   const jobs = await db.getAllFromIndex("queue", "by_created");
-
   if (!jobs.length) return;
 
-  const token = localStorage.getItem("token");
-
   for (const job of jobs) {
-    try {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "save",
-          email: job.email,
-          subscriptions: job.subscriptions,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Sync failed");
-
-      // ✅ remove only after successful sync
+    if (!job.email || !job.subscriptions) {
       await db.delete("queue", job.id);
-    } catch (err) {
-      // ⛔ stop processing — retry later
-      console.warn("Offline sync failed, will retry", err);
-      return;
+      continue;
     }
+
+    const res = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action: "save",
+        email: job.email,
+        subscriptions: job.subscriptions,
+      }),
+    });
+
+    if (!res.ok) return;
+    await db.delete("queue", job.id);
   }
 }
+

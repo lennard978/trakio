@@ -23,15 +23,15 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      workbox: {
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [
-          /^\/assets\//,
-          /^\/api\//,
-          /^\/flags\//
-        ],
-      },
-      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
+
+      includeAssets: [
+        "favicon.ico",
+        "apple-touch-icon.png",
+        "icon-192.png",
+        "icon-512.png",
+        "icon-512-maskable.png",
+      ],
+
       manifest: {
         name: "Trakio",
         short_name: "Trakio",
@@ -49,20 +49,24 @@ export default defineConfig({
             src: "/icon-512-maskable.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "maskable"
-          }
-        ]
+            purpose: "maskable",
+          },
+        ],
       },
+
       workbox: {
+        // SPA fallback
         navigateFallback: "/index.html",
 
-        // VERY IMPORTANT
+        // 🔒 CRITICAL: never serve HTML for these
         navigateFallbackDenylist: [
           /^\/api\//,
           /^\/assets\//,
+          /^\/flags\//,
           /^\/icons\//,
         ],
 
+        // Pages: network first
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === "navigate",
@@ -76,7 +80,6 @@ export default defineConfig({
           },
         ],
       },
-
     })
   ],
 });

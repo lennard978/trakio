@@ -27,14 +27,21 @@ export function PremiumProvider({ children }) {
   /* Reset on logout                                                     */
   /* ------------------------------------------------------------------ */
 
+  if (loading && !isLoggedIn) {
+    console.warn("PremiumProvider loading while logged out — forcing reset");
+    setLoading(false);
+  }
+
   useEffect(() => {
     if (!isLoggedIn) {
       setStatus(null);
       setCurrentPeriodEnd(null);
       setTrialEnds(null);
       setCancelAtPeriodEnd(false);
+      setLoading(false); // ✅ IMPORTANT
     }
   }, [isLoggedIn]);
+
 
   useEffect(() => {
     if (status === "incomplete") {
@@ -43,13 +50,15 @@ export function PremiumProvider({ children }) {
   }, [status]);
 
 
-  const authHeaders = useCallback(
-    () => ({
+  const authHeaders = useCallback(() => {
+    if (!token) return null;
+
+    return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-    }),
-    [token]
-  );
+    };
+  }, [token]);
+
 
   /* ------------------------------------------------------------------ */
   /* Refresh premium from backend (Stripe truth)                         */
@@ -60,11 +69,17 @@ export function PremiumProvider({ children }) {
     setLoading(true);
 
     try {
+      const headers = authHeaders();
+      if (!headers) {
+        setLoading(false);
+        return null;
+      }
       const res = await fetch("/api/user", {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ action: "get-status" }),
       });
+
 
       if (!res.ok) {
         setLoading(false);
@@ -100,10 +115,15 @@ export function PremiumProvider({ children }) {
   /* ------------------------------------------------------------------ */
 
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     refreshPremiumStatus();
     const id = setInterval(refreshPremiumStatus, 5 * 60 * 1000);
+
     return () => clearInterval(id);
-  }, [refreshPremiumStatus]);
+  }, [isLoggedIn, refreshPremiumStatus]);
+
+
 
   /* ------------------------------------------------------------------ */
   /* Trial handling (still backend-authoritative)                        */
@@ -113,10 +133,15 @@ export function PremiumProvider({ children }) {
     if (!isLoggedIn) return false;
 
     try {
-      setLoading(true);
+      const headers = authHeaders();
+      if (!headers) {
+        setLoading(false);
+        return false;
+      }
+
       const res = await fetch("/api/user", {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ action: "start-trial" }),
       });
 
@@ -136,12 +161,18 @@ export function PremiumProvider({ children }) {
     if (!isLoggedIn) return false;
 
     try {
-      setLoading(true);
+      const headers = authHeaders();
+      if (!headers) {
+        setLoading(false);
+        return false;
+      }
+
       const res = await fetch("/api/user", {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ action: "cancel-trial" }),
       });
+
 
       if (!res.ok) return false;
 
@@ -161,12 +192,18 @@ export function PremiumProvider({ children }) {
     if (!isLoggedIn) return;
 
     try {
-      setLoading(true);
+      const headers = authHeaders();
+      if (!headers) {
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/stripe", {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ action: "checkout", plan }),
       });
+
 
       const data = await res.json();
       if (data?.url) {
@@ -203,8 +240,23 @@ export function PremiumProvider({ children }) {
 
 export function usePremiumContext() {
   const ctx = useContext(PremiumContext);
+
   if (!ctx) {
-    throw new Error("usePremiumContext must be used inside PremiumProvider");
+    // SAFE fallback — prevents white screen
+    return {
+      status: null,
+      currentPeriodEnd: null,
+      trialEnds: null,
+      cancelAtPeriodEnd: false,
+      loading: false,
+      startTrial: async () => false,
+      cancelTrial: async () => false,
+      startCheckout: async () => { },
+      refreshPremiumStatus: async () => null,
+    };
   }
+
   return ctx;
 }
+
+

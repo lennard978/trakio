@@ -26,9 +26,46 @@ function loadSnapshot() {
  * Frontend MUST NOT trust raw flags alone.
  */
 export function usePremium() {
-  const ctx = usePremiumContext();
-  const { status, currentPeriodEnd, trialEnds, loading } = ctx;
+  const ctx = usePremiumContext?.() ?? null;
 
+  // ✅ NEVER throw here — return safe defaults instead
+  if (!ctx) {
+    return {
+      loaded: true,
+      isPremium: false,
+      status: null,
+      currentPeriodEnd: null,
+      trialEnds: null,
+      cancelAtPeriodEnd: false,
+      loading: false,
+
+      // keep API stable
+      startTrial: async () => false,
+      cancelTrial: async () => false,
+      startCheckout: async () => { },
+      refreshPremiumStatus: async () => null,
+
+      // any other fields your UI expects:
+      hasActiveTrial: false,
+      trialExpired: false,
+      noTrial: true,
+      trialDaysLeft: 0,
+      trialEndDate: null,
+    };
+  }
+
+  // ✅ only destructure AFTER ctx is confirmed
+  const {
+    status,
+    currentPeriodEnd,
+    trialEnds,
+    cancelAtPeriodEnd,
+    loading,
+    startTrial,
+    cancelTrial,
+    startCheckout,
+    refreshPremiumStatus,
+  } = ctx;
   const premiumState = useMemo(() => {
     const now = Date.now();
 

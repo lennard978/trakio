@@ -17,6 +17,7 @@ import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
 import { getAnnualCost } from "../utils/annualCost";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
+import { flushQueue } from "../utils/offlineQueue";
 
 /* ------------------------------------------------------------------ */
 /* KV helpers */
@@ -61,6 +62,10 @@ export default function Dashboard() {
 
   /* ---------------- Sorting (MUST be before useMemo) ---------------- */
   const [sortBy, setSortBy] = useState("next"); // next | price | name | progress
+
+  if (!user?.email) {
+    return null; // or loading skeleton
+  }
 
   /* ---------------- Load & migrate ---------------- */
   useEffect(() => {

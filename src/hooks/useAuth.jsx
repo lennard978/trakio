@@ -74,12 +74,20 @@ export function AuthProvider({ children }) {
     return true;
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("user");
+  async function logout() {
+    // 1️⃣ Clear auth
     localStorage.removeItem("token");
-  };
+
+    // 2️⃣ Clear premium snapshot
+    localStorage.removeItem("premium_snapshot_v1");
+
+    // 3️⃣ Clear IndexedDB (subscriptions + queue)
+    indexedDB.deleteDatabase("trakio-db");
+
+    // 4️⃣ Reload app cleanly
+    window.location.href = "/";
+  }
+
 
   return (
     <AuthContext.Provider value={{ user, token, signup, login, logout, loading }}>

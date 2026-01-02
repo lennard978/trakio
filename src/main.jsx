@@ -18,30 +18,33 @@ import { AuthProvider } from "./hooks/useAuth";
 import { PremiumProvider } from "./context/PremiumContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
-
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./i18n.js";
 const Router = BrowserRouter;
 
 import { registerSW } from "virtual:pwa-register";
+import HardErrorBoundary from "./components/HardErrorBoundary";
 
 registerSW({ immediate: true });
 
+// document.documentElement.classList.add("ready");
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ThemeProvider>
-
-      <ToastProvider>
-        <AuthProvider>
-          <PremiumProvider>
-            <Router >
-              <CurrencyProvider>
-                <App />
-              </CurrencyProvider>
-            </Router>
-          </PremiumProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
-
+    <ErrorBoundary>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <PremiumProvider>
+              <Router >
+                <CurrencyProvider>
+                  <App />
+                </CurrencyProvider>
+              </Router>
+            </PremiumProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
