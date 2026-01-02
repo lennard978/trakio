@@ -43,7 +43,7 @@ export default function PaymentAccordion({
           <div
             key={s.id}
             className="rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1f2a]
-            shadow-sm dark:shadow-inner dark:shadow-[#141824] transition-all"
+            shadow-sm p-1 dark:shadow-inner dark:shadow-[#141824] transition-all"
           >
             <button
               onClick={() => toggle(s.id)}
@@ -81,7 +81,7 @@ export default function PaymentAccordion({
                     {payments.map((p) => (
                       <div
                         key={p.id}
-                        className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 py-1"
+                        className="flex justify-between pb-2 items-center border-b border-gray-200 dark:border-gray-700 py-1"
                       >
                         <span>{new Date(p.date).toLocaleDateString()}</span>
 

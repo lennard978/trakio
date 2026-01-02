@@ -10,6 +10,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
 
+// ✅ ADD THIS BLOCK
+const PRICE_MAP = {
+  monthly: process.env.STRIPE_PRICE_MONTHLY,
+  yearly: process.env.STRIPE_PRICE_YEARLY,
+};
+
 function getAuthUser(req) {
   const auth = req.headers.authorization || "";
   const match = auth.match(/^Bearer\s+(.+)$/);
@@ -48,11 +54,6 @@ export default async function handler(req, res) {
       }
 
       const priceId = PRICE_MAP[plan];
-
-      if (plan !== "monthly" && plan !== "yearly") {
-        return res.status(400).json({ error: "Invalid plan" });
-      }
-
       if (!priceId) {
         return res.status(500).json({ error: "Stripe price not configured" });
       }
@@ -65,13 +66,9 @@ export default async function handler(req, res) {
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/premium?canceled=true`,
-        metadata: {
-          userId: authUser.userId,
-        },
+        metadata: { userId: authUser.userId },
         subscription_data: {
-          metadata: {
-            userId: authUser.userId,
-          },
+          metadata: { userId: authUser.userId },
         },
       }, { idempotencyKey });
 

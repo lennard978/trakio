@@ -24,15 +24,12 @@ import {
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
-import AchievementsCard from "./InsightsAchievements";
 import InsightsSummary from "./InsightsSummary";
-import { TagIcon, ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, AcademicCapIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, AcademicCapIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
-import { MONTHLY_FACTOR } from "../../utils/frequency";
 import { getNormalizedPayments } from "../../utils/payments";
 import SmartForecastCard from "./SmartForecastCard";
-import DynamicAchievements from "./DynamicAchievements"; // ✅ new
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
 import { getAnnualCost } from '../../utils/annualCost'
 const COLORS = [
@@ -634,11 +631,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
       {/* Achievements + Summary */}
       {/* 3️⃣ Behavioral & motivational feedback */}
-      <AchievementsCard data={data} />
-      <DynamicAchievements
-        data={data}
-        currency={currency}
-      />
+
       <SmartForecastCard data={data} currency={currency} />  {/* ← NEW */}
       <SubscriptionOptimizer subscriptions={subscriptions} currency={currency} rates={rates} />
       <InsightsSummary data={data} currency={currency} />

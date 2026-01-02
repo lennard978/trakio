@@ -119,8 +119,6 @@ export default function Premium() {
         </div>
       </div>
 
-
-
       {/* PRICING */}
       <div className="grid gap-4">
         {/* MONTHLY */}
@@ -132,7 +130,7 @@ export default function Premium() {
           </p>
 
           <button
-            disabled={!accepted || premium.loading}
+            disabled={!accepted || premium.loading || !premium.loaded}
             onClick={() => premium.startCheckout("monthly")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
           >
@@ -157,7 +155,7 @@ export default function Premium() {
           </p>
 
           <button
-            disabled={!accepted || premium.loading}
+            disabled={!accepted || premium.loading || !premium.loaded}
             onClick={() => premium.startCheckout("yearly")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
           >

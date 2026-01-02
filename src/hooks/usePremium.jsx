@@ -125,7 +125,11 @@ export function usePremium() {
       trialEndsAt: trialEndMs
         ? new Date(trialEndMs).toISOString()
         : null,
+      trialEndDate: trialEndMs
+        ? new Date(trialEndMs).toISOString()
+        : null,
     };
+
 
     // ---- SAVE SNAPSHOT WHEN ONLINE ----
     if (navigator.onLine && !loading) {
@@ -139,6 +143,8 @@ export function usePremium() {
     ...ctx,
     ...premiumState,
     loading,
+    loaded: true, // ✅ REQUIRED
   };
+
 }
 
