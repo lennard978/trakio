@@ -22,6 +22,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: "auto",
+      workbox: {
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [
+          /^\/assets\//,
+          /^\/api\//,
+          /^\/flags\//
+        ],
+      },
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
         name: "Trakio",
