@@ -82,18 +82,44 @@ export default function Settings({ setActiveSheet }) {
     if (!user?.email) return;
 
     (async () => {
+      // 1️⃣ Always load local first (offline-safe)
       const local = await loadSubscriptionsLocal();
-      if (local.length) setSubscriptions(local);
+      if (Array.isArray(local) && local.length) {
+        setSubscriptions(local);
+      }
 
+      // 2️⃣ Fetch remote only if online
       if (navigator.onLine) {
         try {
-          const res = await fetch("/api/subscriptions", {});
+          const token = localStorage.getItem("token");
+          if (!token) return;
+
+          const res = await fetch("/api/subscriptions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              action: "get",
+              email: user.email,
+            }),
+          });
+
           const data = await res.json();
-          setSubscriptions(data.subscriptions || []);
-        } catch { }
+
+          if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
+            setSubscriptions(data.subscriptions);
+          } else {
+            console.warn("Settings: remote empty, keeping local");
+          }
+        } catch (err) {
+          console.warn("Settings: failed to fetch remote subscriptions", err);
+        }
       }
     })();
   }, [user?.email]);
+
 
 
   function parseCSV(text) {
@@ -393,7 +419,13 @@ export default function Settings({ setActiveSheet }) {
             // premium
             glow
             description={t("settings_export_subs_desc") || "Export all subscriptions as CSV"}
-            onClick={() => exportSubscriptionsCSV(subscriptions)}
+            onClick={() => {
+              if (!subscriptions.length) {
+                alert(t("no_data_to_export") || "No subscriptions to export.");
+                return;
+              }
+              exportSubscriptionsCSV(subscriptions);
+            }}
             accent="blue"
           />
           <SettingsRow
@@ -403,7 +435,13 @@ export default function Settings({ setActiveSheet }) {
             // premium
             glow
             accent="blue"
-            onClick={() => exportPaymentHistoryCSV(subscriptions)}
+            onClick={() => {
+              if (!subscriptions.length) {
+                alert(t("no_data_to_export") || "No payement history to export.");
+                return;
+              }
+              exportSubscriptionsCSV(subscriptions);
+            }}
           />
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
@@ -412,7 +450,13 @@ export default function Settings({ setActiveSheet }) {
             // premium
             glow
             accent="blue"
-            onClick={() => exportAnnualSummaryCSV(subscriptions)}
+            onClick={() => {
+              if (!subscriptions.length) {
+                alert(t("no_data_to_export") || "No annual history to export.");
+                return;
+              }
+              exportSubscriptionsCSV(subscriptions);
+            }}
           />
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
@@ -457,16 +501,16 @@ export default function Settings({ setActiveSheet }) {
             glow
             onClick={async () => {
               if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
-              // console.log(importFile)
-              const token = localStorage.getItem("token");
+              const merged = [...subscriptions, ...importFile];
 
               await persistSubscriptions({
                 email: user.email,
                 token: localStorage.getItem("token"),
-                subscriptions: [],
+                subscriptions: merged,
               });
 
-              setSubscriptions([]);
+              setSubscriptions(merged);
+
               alert("✅ All subscriptions deleted successfully.");
             }}
           />
@@ -596,14 +640,6 @@ export default function Settings({ setActiveSheet }) {
                     });
 
                     setSubscriptions(importFile);
-
-
-                    // Refresh UI after import
-                    if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
-                      setSubscriptions(data.subscriptions);
-                    } else {
-                      console.warn("Settings: remote empty, keeping local");
-                    }
 
                     alert(t("import_success_message") === "import_success_message" ? "Import successful!" : t("import_success_message"));
                   } catch (err) {
