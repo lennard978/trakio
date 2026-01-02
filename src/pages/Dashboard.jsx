@@ -307,9 +307,9 @@ export default function Dashboard() {
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("dashboard_total_monthly")}
               </div>
-              <div className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white">
+              {/* <div className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white">
                 {preferredCurrency} {totalMonthly.toFixed(2)}
-              </div>
+              </div> */}
               {/* Optional percentage badge */}
               {typeof monthlyChange === "number" && (
                 <div
