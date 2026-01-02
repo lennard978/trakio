@@ -3,9 +3,22 @@
 		{ "source": "/api/(.*)", "destination": "/api/$1" },
 		{ "source": "/flags/(.*)", "destination": "/flags/$1" },
 		{ "source": "/assets/(.*)", "destination": "/assets/$1" },
+		{
+			"source": "/manifest.webmanifest",
+			"destination": "/manifest.webmanifest"
+		},
 		{ "source": "/(.*)", "destination": "/index.html" }
 	],
 	"headers": [
+		{
+			"source": "/manifest.webmanifest",
+			"headers": [
+				{
+					"key": "Content-Type",
+					"value": "application/manifest+json"
+				}
+			]
+		},
 		{
 			"source": "/(.*)",
 			"headers": [
