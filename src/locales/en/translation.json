@@ -310,6 +310,8 @@
 	"category_transport": "Transport",
 	"forgoten_subs": "Subscriptions you may have forgotten",
 	"last_paid_subs": "Last paid {{days}} days ago",
+	"install_app": "Install this app for a better experience",
+	"install": "Install",
 	"faq": {
 		"add_subscription": {
 			"q": "How do I add a new subscription?",

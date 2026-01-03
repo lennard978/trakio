@@ -581,14 +581,14 @@ export default function Settings({ setActiveSheet }) {
             }}
           />
 
-          <SettingsRow
+          {/* <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
             title={t("settings_rate") || "Rate Trakio"}
             description={t("settings_rate_desc") || "Help us improve by leaving a review"}
             onClick={handleRate}
             accent="purple"
             glow
-          />
+          /> */}
 
           <SettingsRow
             icon={<ShareIcon className="w-6 h-6" />}
