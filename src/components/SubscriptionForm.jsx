@@ -96,6 +96,7 @@ export default function SubscriptionForm() {
   const [color, setColor] = useState(getRandomColor());
   const [icon, setIcon] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [originalSnapshot, setOriginalSnapshot] = useState(null);
 
 
 
@@ -209,14 +210,44 @@ export default function SubscriptionForm() {
 
         if (id) {
           const existing = migrated.find((s) => String(s.id) === String(id));
+
           if (!existing) {
             showToast("Subscription not found", "error");
             navigate("/dashboard");
             return;
           }
 
-          // populate form fields (your existing code)
+          setOriginalSnapshot(JSON.parse(JSON.stringify(existing)));
+
+          setName(existing.name ?? "");
+          setPrice(existing.price != null ? String(existing.price) : "");
+          setFrequency(existing.frequency ?? "monthly");
+          setCategory(existing.category ?? "other");
+          setCurrency(existing.currency ?? "EUR");
+          setMethod(existing.method ?? "");
+          setNotify(existing.notify ?? true);
+          setColor(existing.color ?? getRandomColor());
+          setIcon(existing.icon ?? null);
+          setGradientIntensity(
+            typeof existing.gradientIntensity === "number"
+              ? existing.gradientIntensity
+              : CATEGORY_INTENSITY_DEFAULT[existing.category] ??
+              CATEGORY_INTENSITY_DEFAULT.other
+          );
+
+          const lastPayment =
+            Array.isArray(existing.payments) && existing.payments.length
+              ? [...existing.payments]
+                .map((p) => normalizeDateString(p.date))
+                .filter(Boolean)
+                .sort()
+                .at(-1)
+              : normalizeDateString(existing.datePaid);
+
+          setDatePaid(lastPayment ?? "");
         }
+
+
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -353,6 +384,52 @@ export default function SubscriptionForm() {
     } catch (err) {
       console.error("Save failed:", err);
       showToast(err.message || "Failed to save subscription", "error");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+
+    if (!confirm(t("confirm_delete_subscription") || "Delete this subscription permanently?")) {
+      return;
+    }
+
+    try {
+      const updated = subscriptions.filter((s) => String(s.id) !== String(id));
+
+      await persistSubscriptions({
+        email,
+        token,
+        subscriptions: updated,
+      });
+
+      showToast(t("toast_deleted") || "Subscription deleted", "success");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      showToast("Failed to delete subscription", "error");
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!originalSnapshot) return;
+
+    try {
+      const updated = subscriptions.map((s) =>
+        String(s.id) === String(id) ? originalSnapshot : s
+      );
+
+      await persistSubscriptions({
+        email,
+        token,
+        subscriptions: updated,
+      });
+
+      showToast(t("toast_undo_success") || "Changes reverted", "success");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Undo failed:", err);
+      showToast("Failed to undo changes", "error");
     }
   };
 
@@ -650,6 +727,7 @@ export default function SubscriptionForm() {
               <SettingButton type="submit" variant="primary">
                 {id ? t("form_save") : t("add_subscription")}
               </SettingButton>
+
               <SettingButton
                 type="button"
                 variant="neutral"
@@ -657,7 +735,28 @@ export default function SubscriptionForm() {
               >
                 {t("button_cancel")}
               </SettingButton>
+
+              {id && (
+                <SettingButton
+                  type="button"
+                  variant="danger"
+                  onClick={handleDelete}
+                >
+                  {t("button_delete")}
+                </SettingButton>
+              )}
+              {id && originalSnapshot && (
+                <SettingButton
+                  type="button"
+                  variant="neutral"
+                  onClick={handleUndo}
+                >
+                  Undo changes
+                </SettingButton>
+              )}
+
             </div>
+
           </form>
         </div>
       </Card>

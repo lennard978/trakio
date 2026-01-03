@@ -1,6 +1,6 @@
 // src/components/SubscriptionItem.jsx
 
-import React, { useRef, useMemo, useState } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +17,8 @@ import { getCategoryStyles } from "../utils/CategoryStyles";
 import { useReadableText } from "../hooks/useReadableText";
 import { isLightSurface } from "../utils/isLightSurface";
 import { useTheme } from "../hooks/useTheme";
+import { useParams } from "react-router-dom";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
 
 /* ---------- utilities ---------- */
 function diffInDays(dateA, dateB) {
@@ -51,6 +53,7 @@ export default function SubscriptionItem({
   const premium = usePremium();
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
+  const { id } = useParams();
 
   const dateInputRef = useRef(null);
 
@@ -146,6 +149,28 @@ export default function SubscriptionItem({
     input?.showPicker?.();
     input?.click?.();
   };
+
+  useEffect(() => {
+    (async () => {
+      const subs = await loadSubscriptionsLocal();
+      const found = subs.find((s) => s.id === id);
+
+      if (!found) {
+        navigate("/dashboard");
+        return;
+      }
+
+      setForm({
+        name: found.name ?? "",
+        price: found.price ?? "",
+        frequency: found.frequency ?? "monthly",
+        category: found.category ?? "Other",
+        paymentMethod: found.method ?? "",
+        color: found.color ?? null,
+        payments: found.payments ?? [],
+      });
+    })();
+  }, [id]);
 
   return (
     <SwipeToDeleteWrapper

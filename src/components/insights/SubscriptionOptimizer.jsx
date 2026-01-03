@@ -140,35 +140,45 @@ export default function SubscriptionOptimizer({
       "
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="space-y-3 mb-2">
         <div className="flex items-center gap-2">
           <LightBulbIcon className="w-5 h-5 text-[#ED7014]" />
-          <h3 className="text-sm font-semibold">
+
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {t("optimizer_title", "Optimize My Subscriptions")}
           </h3>
 
           {/* Beta badge */}
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ED7014]/20 text-[#ED7014] font-semibold">
+          <span className="
+      text-[10px] px-2 py-0.5 rounded-full
+      bg-[#ED7014]/15 text-[#ED7014]
+      font-semibold tracking-wide
+    ">
             AI Preview · Beta
           </span>
         </div>
 
+        {/* Action button */}
         <button
           onClick={async () => {
             setOpen((v) => !v);
             if (!open && AI_ENABLED) await runAI();
           }}
           className="
-            flex items-center gap-1
-            text-xs px-3 py-1 rounded-full
-            bg-[#ED7014] text-white
-            hover:opacity-90 transition
-          "
+      inline-flex items-center gap-2
+      text-xs font-medium
+      px-4 py-2 rounded-xl
+      bg-[#ED7014] text-white
+      hover:opacity-90 active:scale-[0.98]
+      transition
+      self-start
+    "
         >
           <Cog6ToothIcon className="w-4 h-4" />
           {open ? t("hide") : t("analyze")}
         </button>
       </div>
+
 
       {!open && (
         <p className="text-xs text-gray-500 dark:text-gray-400 italic">

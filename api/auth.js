@@ -7,7 +7,6 @@ if (!process.env.JWT_SECRET) {
   throw new Error("Missing environment variable: JWT_SECRET");
 }
 
-
 async function rateLimit({ key, limit = 10, windowSeconds = 60 }) {
   // Sliding window is ideal, but a fixed window counter is sufficient for basic brute-force protection.
   const count = await kv.incr(key);
