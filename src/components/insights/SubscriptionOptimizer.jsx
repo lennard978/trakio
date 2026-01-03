@@ -99,16 +99,15 @@ export default function SubscriptionOptimizer({
 
     setAiResults([
       {
-        recommendation:
-          "You are subscribed to multiple streaming platforms. Consider keeping only one to reduce monthly costs.",
+        recommendation: t("streaming_overlap"),
         estimated_saving: 13.99,
       },
       {
-        recommendation:
-          "Apple One already includes Music and iCloud+. Cancelling standalone plans could save money.",
+        recommendation: t("bundle_suggestion"),
         estimated_saving: 27,
       },
     ]);
+
 
     setLoading(false);
   }

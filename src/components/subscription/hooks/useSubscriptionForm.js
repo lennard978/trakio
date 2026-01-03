@@ -223,16 +223,22 @@ export function useSubscriptionForm({
             ? [...s.payments]
             : [];
 
-          const lastPaid =
-            existingPayments.length
-              ? [...existingPayments]
-                .map((p) => p?.date)
-                .filter(Boolean)
-                .sort()
-                .at(-1)
-              : s.datePaid;
+          const lastPaymentIndex = existingPayments.length
+            ? existingPayments
+              .map((p, i) => ({ p, i }))
+              .filter(({ p }) => p?.date)
+              .sort((a, b) =>
+                String(a.p.date).localeCompare(String(b.p.date))
+              )
+              .at(-1)?.i
+            : null;
 
-          if (paid && normalizeDateString(lastPaid) !== paid) {
+          const lastPayment = lastPaymentIndex != null
+            ? existingPayments[lastPaymentIndex]
+            : null;
+
+          // 1️⃣ Date changed → add new payment
+          if (paid && normalizeDateString(lastPayment?.date) !== paid) {
             existingPayments.push({
               id: uuid(),
               date: paid,
@@ -240,6 +246,19 @@ export function useSubscriptionForm({
               currency,
             });
           }
+
+          // 2️⃣ Same date, price changed → update last payment
+          else if (
+            lastPayment &&
+            Number(lastPayment.amount) !== priceNum
+          ) {
+            existingPayments[lastPaymentIndex] = {
+              ...lastPayment,
+              amount: priceNum,
+              currency,
+            };
+          }
+
 
           // de-dup
           const uniq = new Map();
