@@ -195,7 +195,7 @@ export default function SubscriptionStatusCard() {
 
           {/* Days left */}
           <p className="text-xs text-gray-500">
-            {t(daysLeft === 1 ? "subscription_trial_days_left" : "subscription_trial_days_left_plural", {
+            {t(daysLeft === 1 ? "subscription_trial_days_left" : "subscription_trial_days_left", {
               days: daysLeft,
             })}
           </p>

@@ -117,7 +117,7 @@ export default function CurrencyPickerSheet({ onClose }) {
               value={query}
               autoFocus
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search currencies..."
+              placeholder={t("search_curr") || "Search currencies..."}
               className="bg-transparent w-full outline-none text-sm placeholder-gray-400"
             />
           </div>

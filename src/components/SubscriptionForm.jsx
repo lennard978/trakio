@@ -129,7 +129,7 @@ export default function SubscriptionForm() {
 
   const selectedMethod =
     PAYMENT_METHODS.find((m) => m.value === method) || {
-      label: "Select method", // Default label
+      label: t("form.select_method"), // Default label
       icon: "💳",              // Optional: generic icon
     };
 
@@ -575,7 +575,7 @@ export default function SubscriptionForm() {
             {/* Payment Method */}
             <div ref={methodRef} className="relative">
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Payment Method
+                {t('pay_method') || "Payment Method"}
               </label>
 
               {/* BUTTON */}
@@ -640,8 +640,6 @@ export default function SubscriptionForm() {
               )}
             </div>
 
-
-            {/* Color Picker */}
             {/* Color Picker */}
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -751,7 +749,7 @@ export default function SubscriptionForm() {
                   variant="neutral"
                   onClick={handleUndo}
                 >
-                  Undo changes
+                  {t('undo_changes') || "Undo changes"}
                 </SettingButton>
               )}
 

@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 const SRC_DIR = path.resolve("src");
-const LOCALE_FILE = path.resolve("src/i18n/locales/en.json");
+const LOCALE_FILE = path.resolve("src/locales/en/translation.json");
 
 const T_REGEX = /\bt\s*\(\s*["'`]([^"'`]+)["'`]/g;
 const FILE_REGEX = /\.(js|jsx|ts|tsx)$/;

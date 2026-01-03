@@ -1,7 +1,9 @@
 // src/utils/subscriptionHealth.js
 import { computeNextRenewal } from "./renewal";
+import { useTranslation } from "react-i18next";
 
 export function subscriptionHealth(subscription) {
+
   const payments = Array.isArray(subscription.payments)
     ? subscription.payments
     : [];

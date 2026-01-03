@@ -308,5 +308,124 @@
 	"category_insurance": "Versicherung",
 	"category_cloud": "Wolke",
 	"category_family": "Familie",
-	"category_transport": "Transport"
+	"category_transport": "Transport",
+
+	"forgoten_subs": "Abonnements, die du möglicherweise vergessen hast",
+	"last_paid_subs": "Zuletzt vor {{days}} Tagen bezahlt",
+
+	"faq": {
+		"add_subscription": {
+			"q": "Wie füge ich ein neues Abonnement hinzu?",
+			"a": "Tippe auf die „+“-Schaltfläche im Dashboard, wähle einen Dienst oder erstelle einen benutzerdefinierten, gib Preis und Verlängerungsdatum ein und speichere."
+		},
+		"edit_subscription": {
+			"q": "Wie kann ich ein Abonnement bearbeiten oder aktualisieren?",
+			"a": "Öffne das Abonnement im Dashboard und tippe auf „Bearbeiten“. Du kannst Preis, Intervall, Kategorie oder Verlängerungsdatum ändern."
+		},
+		"renewal_reminders": {
+			"q": "Wie richte ich Verlängerungserinnerungen ein?",
+			"a": "Verlängerungserinnerungen sind automatisch. Trakio verfolgt Verlängerungsdaten und zeigt anstehende Zahlungen frühzeitig an."
+		},
+		"currencies": {
+			"q": "Kann ich verschiedene Währungen verwenden?",
+			"a": "Ja. Jedes Abonnement kann eine eigene Währung haben. Du kannst außerdem eine Basiswährung in den Einstellungen festlegen."
+		},
+		"backup_data": {
+			"q": "Wie sichere ich meine Daten?",
+			"a": "Gehe zu Einstellungen → Datenverwaltung, um deine Abonnements und den Zahlungsverlauf als CSV oder JSON zu exportieren."
+		},
+		"premium_features": {
+			"q": "Welche Funktionen sind in Premium enthalten?",
+			"a": "Premium beinhaltet Analysen, Budget-Tracking, Export des Zahlungsverlaufs, Benachrichtigungen und erweiterte Einblicke."
+		},
+		"delete_subscription": {
+			"q": "Wie lösche ich ein Abonnement?",
+			"a": "Wische ein Abonnement nach links oder öffne es und tippe auf „Löschen“."
+		},
+		"custom_categories": {
+			"q": "Kann ich benutzerdefinierte Kategorien erstellen?",
+			"a": "Ja. Benutzerdefinierte Kategorien sind mit Premium verfügbar."
+		}
+	},
+
+	"help": "Hilfe & Support",
+	"find_answer": "Finde Antworten oder kontaktiere uns",
+	"how_can_we": "Wie können wir dir helfen?",
+	"browse": "Durchsuche häufige Fragen oder wende dich an den Support.",
+	"still_need_help": "Benötigst du weitere Hilfe?",
+	"our_support": "Unser Support-Team hilft dir gerne weiter.",
+	"contact_support": "Support kontaktieren",
+
+	"theme": {
+		"dark": "Dunkler Modus",
+		"light": "Heller Modus"
+	},
+
+	"search_curr": "Währungen suchen …",
+	"search_lang": "Sprache suchen …",
+	"undo_changes": "Änderungen rückgängig machen",
+	"pay_method": "Zahlungsmethode",
+
+	"form": {
+		"select_method": "Methode auswählen"
+	},
+
+	"premium": {
+		"expires_notice": "Premium läuft am <strong>{{date}}</strong> ab. Du kannst jederzeit erneut abonnieren.",
+		"expired_notice": "Premium ist abgelaufen. Upgrade, um wieder Zugriff zu erhalten."
+	},
+
+	"payment": {
+		"failed_notice": "Die Zahlung ist fehlgeschlagen. Bitte aktualisiere deine Zahlungsdaten, um den Premium-Zugang nicht zu verlieren."
+	},
+
+	"tabs": {
+		"general": "Allgemein",
+		"categories": "Kategorien",
+		"frequency": "Intervall",
+		"payment_methods": "Zahlungsmethoden",
+		"trends": "Trends",
+		"forecast": "Prognose"
+	},
+
+	"sections": {
+		"overview": "Übersicht"
+	},
+
+	"forecast": {
+		"next_forecast": "Nächster (Prognose)",
+		"next_predicted": "Nächster (Vorhersage)"
+	},
+
+	"stats": {
+		"monthly_spend": "Monatliche Ausgaben",
+		"annual_cost": "Jährliche Kosten",
+		"top_category": "Top-Kategorie",
+		"avg_per_subscription": "Ø pro Abonnement",
+		"active_subscriptions": "Aktive Abonnements",
+		"growth_rate": "Wachstumsrate",
+
+		"avg_monthly_payment": "Durchschnittliche monatliche Zahlung",
+		"expected_yearly_cost": "Erwartete jährliche Kosten",
+		"due_this_month": "Fällig diesen Monat",
+		"due_this_year": "Fällig dieses Jahr",
+		"paid_this_month": "Bezahlt diesen Monat",
+		"paid_this_year": "Bezahlt dieses Jahr",
+		"total_this_month": "Gesamt diesen Monat",
+		"total_this_year": "Gesamt dieses Jahr"
+	},
+
+	"budget": {
+		"usage": "Budgetauslastung"
+	},
+
+	"projection": {
+		"title": "Prognose für {{range}}",
+		"description": "Geschätzte Ausgaben basierend auf deinen letzten Abonnementzahlungen."
+	},
+
+	"common": {
+		"empty": "—",
+		"spending": "Ausgaben"
+	}
 }

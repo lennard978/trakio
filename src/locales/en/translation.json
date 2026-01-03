@@ -181,7 +181,6 @@
 	"top_category": "Top Category",
 	"budget_usage": "Budget usage",
 	"spending_overview": "Spending Overview ({{currency}})",
-	"projection_for_range": "Projection for the last {{range}}",
 	"spending_projection_description": "💡 These bars estimate your spending pattern based on current subscriptions. They dynamically project monthly costs to help visualize trends.",
 	"spending_over_time": "Spending Over Time",
 	"avg_monthly_payment": "Average monthly payment",
@@ -268,10 +267,10 @@
 	"optimize_inactive": "{{name}} hasn't been used recently — consider canceling.",
 	"optimizer_total_savings": "Potential monthly savings: {{currency}}{{total}}",
 	"optimizer_ai_loading": "Analyzing subscriptions using AI...",
-	"Overview": "TODO: Overview",
-	"analytics_monthly_trend": "TODO: analytics monthly trend",
-	"confirm_delete_payment": "TODO: confirm delete payment",
-	"confirm_delete_subscription": "TODO: confirm delete subscription",
+	"Overview": " Overview",
+	"analytics_monthly_trend": "analytics monthly trend",
+	"confirm_delete_payment": "confirm delete payment",
+	"confirm_delete_subscription": "confirm delete subscription",
 	"delete": "Delete",
 	"edit": "Edit",
 	"frequency_${item.frequency}": "TODO: frequency ${item.frequency}",
@@ -308,5 +307,115 @@
 	"category_insurance": "Insurance",
 	"category_cloud": "Cloud",
 	"category_family": "Family",
-	"category_transport": "Transport"
+	"category_transport": "Transport",
+	"forgoten_subs": "Subscriptions you may have forgotten",
+	"last_paid_subs": "Last paid {{days}} days ago",
+	"faq": {
+		"add_subscription": {
+			"q": "How do I add a new subscription?",
+			"a": "Tap the '+' button on the dashboard, choose a service or create a custom one, enter the price and renewal date, then save."
+		},
+		"edit_subscription": {
+			"q": "How can I edit or update a subscription?",
+			"a": "Open the subscription from the dashboard and tap 'Edit'. You can update price, frequency, category, or renewal date."
+		},
+		"renewal_reminders": {
+			"q": "How do I set up renewal reminders?",
+			"a": "Renewal reminders are automatic. Trakio tracks renewal dates and shows upcoming payments in advance."
+		},
+		"currencies": {
+			"q": "Can I use different currencies?",
+			"a": "Yes. Each subscription can have its own currency. You can also set a base currency in Settings."
+		},
+		"backup_data": {
+			"q": "How do I back up my data?",
+			"a": "Go to Settings → Data Management to export your subscriptions and payment history as CSV or JSON."
+		},
+		"premium_features": {
+			"q": "What features are included in Premium?",
+			"a": "Premium includes analytics, budget tracking, payment history export, alerts, and advanced insights."
+		},
+		"delete_subscription": {
+			"q": "How do I delete a subscription?",
+			"a": "Swipe left on a subscription or open it and tap 'Delete'."
+		},
+		"custom_categories": {
+			"q": "Can I create custom categories?",
+			"a": "Yes. Custom categories are available with Premium."
+		}
+	},
+	"help": "Help & Support",
+	"find_answer": "Find answers or contact us",
+	"how_can_we": "How can we help you ?",
+	"browse": "Browse common questions or reach out to support.",
+	"still_need_help": "Still need help?",
+	"our_support": "Our support team is happy to help you.",
+	"contact_support": "Contact Support",
+	"theme": {
+		"dark": "Dark mode",
+		"light": "Light mode"
+	},
+	"search_curr": "Search currencies...",
+	"search_lang": "Search language…",
+	"undo_changes": "Undo changes",
+	"pay_method": "Payment Method",
+	"form": {
+		"select_method": "Select method"
+	},
+	"premium": {
+		"expires_notice": "Premium will expire on <strong>{{date}}</strong>. You can resubscribe anytime.",
+		"expired_notice": "Premium has expired. Upgrade to regain access."
+	},
+	"payment": {
+		"failed_notice": "Payment failed. Please update your billing details to avoid losing premium access."
+	},
+	"tabs": {
+		"general": "General",
+		"categories": "Categories",
+		"frequency": "Frequency",
+		"payment_methods": "Payment Methods",
+		"trends": "Trends",
+		"forecast": "Forecast"
+	},
+
+	"sections": {
+		"overview": "Overview"
+	},
+
+	"forecast": {
+		"next_forecast": "Next (Forecast)",
+		"next_predicted": "Next (Predicted)"
+	},
+
+	"stats": {
+		"monthly_spend": "Monthly Spend",
+		"annual_cost": "Annual Cost",
+		"top_category": "Top Category",
+		"avg_per_subscription": "Avg / Subscription",
+		"active_subscriptions": "Active Subscriptions",
+		"growth_rate": "Growth Rate",
+
+		"avg_monthly_payment": "Avg Monthly Payment",
+		"expected_yearly_cost": "Expected Yearly Cost",
+		"due_this_month": "Due This Month",
+		"due_this_year": "Due This Year",
+		"paid_this_month": "Paid This Month",
+		"paid_this_year": "Paid This Year",
+		"total_this_month": "Total This Month",
+		"total_this_year": "Total This Year"
+	},
+
+	"budget": {
+		"usage": "Budget usage"
+	},
+
+	"projection": {
+		"title": "Projection for {{range}}",
+		"description": "Estimated spending based on your recent subscription payments."
+	},
+
+	"common": {
+		"empty": "—",
+		"spending": "Spending"
+	}
 }

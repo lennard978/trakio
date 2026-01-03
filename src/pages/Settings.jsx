@@ -377,7 +377,7 @@ export default function Settings({ setActiveSheet }) {
             icon={<MoonIcon className="w-6 h-6" />}
             title={t("settings_appearance") || "Appearance"}
             glow
-            description={isDark ? "Dark mode" : "Light mode"}
+            description={t(isDark ? "theme.dark" : "theme.light")}
             right={
               <ThemeSwitch
                 checked={isDark}

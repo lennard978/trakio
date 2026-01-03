@@ -2,8 +2,11 @@ import { XMarkIcon, QuestionMarkCircleIcon, EnvelopeIcon } from "@heroicons/reac
 import HelpAccordion from "./HelpAccordion";
 import { HELP_FAQ } from "../../data/helpFaq";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function HelpSupportSheet({ onClose }) {
+  const { t } = useTranslation();
+
   // lock background scroll
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -43,9 +46,9 @@ export default function HelpSupportSheet({ onClose }) {
         {/* header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Help & Support</h2>
+            <h2 className="text-lg font-semibold">{t('help') || "Help & Support"}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Find answers or contact us
+              {t('find_answer') || "Find answers or contact us"}
             </p>
           </div>
           <button onClick={onClose}>
@@ -65,11 +68,11 @@ export default function HelpSupportSheet({ onClose }) {
             </div>
 
             <h3 className="font-semibold text-lg">
-              How can we help you?
+              {t("how_can_we") || "How can we help you?"}
             </h3>
 
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Browse common questions or reach out to support.
+              {t("browse") || "Browse common questions or reach out to support."}
             </p>
           </div>
 
@@ -78,8 +81,8 @@ export default function HelpSupportSheet({ onClose }) {
             {HELP_FAQ.map((item, i) => (
               <HelpAccordion
                 key={i}
-                question={item.q}
-                answer={item.a}
+                question={t(item.q)}
+                answer={t(item.a)}
               />
             ))}
           </div>
@@ -94,11 +97,11 @@ export default function HelpSupportSheet({ onClose }) {
             </div>
 
             <h3 className="font-semibold">
-              Still need help?
+              {t('still_need_help') || "Still need help?"}
             </h3>
 
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Our support team is happy to help you.
+              {t('our_support') || "Our support team is happy to help you."}
             </p>
 
             <a
@@ -110,7 +113,7 @@ export default function HelpSupportSheet({ onClose }) {
                 font-medium transition
               "
             >
-              Contact Support
+              {t('contact_support') || "Contact Support"}
             </a>
           </div>
         </div>

@@ -1,0 +1,727 @@
+[
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\App.jsx",
+    "text": "Impressum",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\App.jsx",
+    "text": "Datenschutz",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\AnimatedPage.jsx",
+    "text": "0 ? 80 : direction",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\AnimatedPage.jsx",
+    "text": "0 ? -80 : direction",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "All Years",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "All Categories",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Entertainment",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Productivity",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Business",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Education",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "All Payment Methods",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Visa",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Mastercard",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "PayPal",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Google Pay",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Apple Pay",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Next Payment",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Price",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Name",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\DashboardFilterUI.jsx",
+    "text": "Progress",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\ErrorBoundary.jsx",
+    "text": "App crashed",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\ForgottenSubscriptions.jsx",
+    "text": "getForgottenSubscriptions(subscriptions),\r\n    [subscriptions]\r\n  );\r\n\r\n  if (forgotten.length === 0) return null;\r\n\r\n  return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\HardErrorBoundary.jsx",
+    "text": "Application crashed",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\DefaultSubscriptionIcon.jsx",
+    "text": "Subscription",
+    "type": "jsx-attr"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\PaymentMethodIcons.jsx",
+    "text": ";\r\n    case \"mastercard\":\r\n      return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\PaymentMethodIcons.jsx",
+    "text": ";\r\n    case \"paypal\":\r\n      return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\PaymentMethodIcons.jsx",
+    "text": ";\r\n    case \"google pay\":\r\n      return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\PaymentMethodIcons.jsx",
+    "text": ";\r\n    case \"apple pay\":\r\n      return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\icons\\PaymentMethodIcons.jsx",
+    "text": ";\r\n    case \"amex\":\r\n      return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": "),\r\n              icon:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": "),\r\n              icon:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": ",\r\n              value: (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": ",\r\n              value: (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": "),\r\n              icon:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": "0;\r\n                if (!hasTrend) return",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": ";\r\n                const arrow = isIncrease ? \"↑\" : \"↓\";\r\n                const color = isIncrease ? \"text-orange-400\" : \"text-green-400\";\r\n                return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\BudgetOverviewChart.jsx",
+    "text": ") : activeTab === \"Trends\" ? (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\SubscriptionOptimizer.jsx",
+    "text": "a + (s.potentialSaving || 0), 0)\r\n    .toFixed(2);\r\n\r\n  /* --------------------------------------------------\r\n   * Render\r\n   * -------------------------------------------------- */\r\n  return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\insights\\SubscriptionOptimizer.jsx",
+    "text": "AI Preview · Beta",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\InstallBanner.jsx",
+    "text": "Install this app for a better experience",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\InstallBanner.jsx",
+    "text": "Install",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\MonthlyBudget.jsx",
+    "text": "= 90 && percentUsed",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\premium\\PlanComparison.jsx",
+    "text": "Free vs Premium",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\premium\\PlanComparison.jsx",
+    "text": "Free",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\premium\\PlanComparison.jsx",
+    "text": "Premium",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\premium\\PremiumGuard.jsx",
+    "text": "Premium feature",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\premium\\SubscriptionStatusCard.jsx",
+    "text": ") : null;\r\n\r\n  return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\settings\\CurrencyPickerSheet.jsx",
+    "text": "No currencies found",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\SpendingTrends.jsx",
+    "text": "getMonthlySpending(subscriptions), [subscriptions]);\r\n\r\n  if (data.length === 0) return null;\r\n\r\n  return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\SubscriptionForm.jsx",
+    "text": "Loading…",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\SubscriptionForm.jsx",
+    "text": "You’re offline — changes will sync automatically when online.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\SubscriptionForm.jsx",
+    "text": "Current saved color",
+    "type": "jsx-attr"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\components\\SubscriptionForm.jsx",
+    "text": "Pick custom color",
+    "type": "jsx-attr"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\context\\ThemeContext.jsx",
+    "text": "(prev === \"dark\" ? \"light\" : \"dark\"));\r\n\r\n  return (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\hooks\\usePremium.jsx",
+    "text": "now;\r\n\r\n    const trialExpired =\r\n      !!trialEndMs &&\r\n      trialEndMs",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Allgemeine Geschäftsbedingungen (AGB)",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Stand: 23.12.2025",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "1. Geltungsbereich",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Diese Allgemeinen Geschäftsbedingungen (AGB) regeln die Nutzung der\r\n          webbasierten Software",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "„Trakio“",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "zur Verwaltung von\r\n          Abonnements und wiederkehrenden Ausgaben.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Anbieter ist der im Impressum genannte Diensteanbieter. Diese AGB\r\n          gelten gegenüber Verbrauchern im Sinne des § 13 BGB.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "2. Vertragsgegenstand",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Trakio stellt eine digitale Anwendung zur Verfügung, mit der Nutzer\r\n          ihre Abonnements, Ausgaben und Zahlungsintervalle verwalten können.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter schuldet keinen wirtschaftlichen Erfolg oder konkrete\r\n          Einsparungen, sondern ausschließlich die Bereitstellung der Software\r\n          in ihrem jeweils aktuellen Zustand.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "3. Registrierung und Nutzerkonto",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Die Nutzung von Trakio setzt eine Registrierung mit einer gültigen\r\n          E-Mail-Adresse voraus. Der Nutzer ist verpflichtet, seine\r\n          Zugangsdaten geheim zu halten.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter ist berechtigt, Nutzerkonten zu sperren oder zu löschen,\r\n          wenn ein Verstoß gegen diese AGB oder geltendes Recht vorliegt.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "4. Leistungsumfang und Verfügbarkeit",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter bemüht sich um eine hohe Verfügbarkeit der Software,\r\n          schuldet jedoch keine jederzeit unterbrechungsfreie Verfügbarkeit.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Wartungsarbeiten, Sicherheitsupdates oder technische Störungen können\r\n          zu vorübergehenden Einschränkungen führen.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "5. Kostenlose Nutzung und Premium-Abonnement",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Trakio kann in einer kostenlosen Basisversion genutzt werden.\r\n          Bestimmte Funktionen sind nur im Rahmen eines kostenpflichtigen\r\n          Premium-Abonnements verfügbar.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Die Abrechnung erfolgt über den Zahlungsdienstleister",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Stripe",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "6. Probezeit (Trial)",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter kann eine kostenlose Testphase anbieten. Nach Ablauf der\r\n          Testphase geht das Abonnement – sofern vom Nutzer bestätigt – in ein\r\n          kostenpflichtiges Abonnement über.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "7. Zahlung, Laufzeit und Kündigung",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Abonnements werden monatlich oder jährlich im Voraus abgerechnet.\r\n          Die Kündigung ist jederzeit über das Kundenportal möglich.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Eine Kündigung wird zum Ende der laufenden Abrechnungsperiode wirksam.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "8. Widerrufsrecht für Verbraucher",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Verbrauchern steht grundsätzlich ein gesetzliches Widerrufsrecht zu.\r\n          Dieses kann bei digitalen Inhalten erlöschen, wenn der Nutzer\r\n          ausdrücklich zustimmt, dass mit der Ausführung des Vertrags vor Ablauf\r\n          der Widerrufsfrist begonnen wird.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "9. Pflichten des Nutzers",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Nutzer darf Trakio ausschließlich im Rahmen der geltenden Gesetze\r\n          verwenden. Missbräuchliche Nutzung oder Manipulationsversuche sind\r\n          untersagt.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "10. Haftung",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit.\r\n          Bei einfacher Fahrlässigkeit haftet der Anbieter nur bei Verletzung\r\n          wesentlicher Vertragspflichten.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Eine Haftung für Datenverluste ist ausgeschlossen, soweit gesetzlich\r\n          zulässig.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "11. Datenschutz",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Die Verarbeitung personenbezogener Daten erfolgt gemäß der\r\n          Datenschutz-Grundverordnung (DSGVO). Details sind in der\r\n          Datenschutzerklärung geregelt.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "12. Änderungen der AGB",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Der Anbieter behält sich vor, diese AGB zu ändern, sofern dies aus\r\n          sachlichen Gründen erforderlich ist. Nutzer werden über wesentliche\r\n          Änderungen informiert.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "13. Schlussbestimmungen",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\AGB.jsx",
+    "text": "Es gilt das Recht der Bundesrepublik Deutschland. Sollte eine\r\n          Bestimmung dieser AGB unwirksam sein, bleibt die Wirksamkeit der\r\n          übrigen Bestimmungen unberührt.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Dashboard.jsx",
+    "text": "new Date(p.date).getTime()))\n              : null;\n\n          if (lastA == null || lastB == null) return 0;\n\n          const totalA = nextA.getTime() - lastA;\n          const totalB = nextB.getTime() - lastB;\n\n          if (totalA",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Dashboard.jsx",
+    "text": "Offline mode — showing cached data",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Dashboard.jsx",
+    "text": ") : hasSubscriptions ? (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Datenschutzerklärung",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Informationen zur Verarbeitung personenbezogener Daten",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "1. Verantwortlicher",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "2. Welche Daten verarbeiten wir?",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Bei der Nutzung der App verarbeiten wir insbesondere:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Account-Daten (z. B. E-Mail-Adresse, Login-Token).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "App-Inhalte (z. B. Abonnements, Kategorien, Zahlungsdaten/History, Einstellungen).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Technische Daten (z. B. IP-Adresse, Geräte-/Browserdaten, Log-Daten), soweit für Betrieb/Sicherheit erforderlich.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "3. Zwecke & Rechtsgrundlagen",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Wir verarbeiten Daten für folgende Zwecke:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Bereitstellung der App-Funktionen und Verwaltung von Accounts.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Speicherung und Synchronisierung deiner Abonnement-Daten.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Abwicklung von Zahlungen und Premium-Funktionen (Stripe).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "IT-Sicherheit, Missbrauchsprävention und Fehleranalyse.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Rechtsgrundlagen sind je nach Kontext insbesondere Art. 6 Abs. 1 lit. b DSGVO (Vertrag/Account),\r\n              Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse, z. B. Sicherheit) sowie ggf. Art. 6 Abs. 1 lit. a DSGVO (Einwilligung),\r\n              sofern du eine solche erteilst.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "4. Empfänger / Dienstleister",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Wir setzen Dienstleister (Auftragsverarbeiter) ein, um die App zuverlässig zu betreiben:",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Hosting/Deployment: Vercel (Server- und Log-Verarbeitung).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Datenbank/Storage: Upstash (Speicherung deiner App-Daten).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Zahlungsabwicklung: Stripe (Zahlung, Billing-Portal, Abos).",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Vercel",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Upstash",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Stripe",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "5. Speicherdauer",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Wir speichern deine Daten grundsätzlich nur so lange, wie es für die Bereitstellung der App\r\n            und der jeweiligen Zwecke erforderlich ist. Account- und App-Daten kannst du durch Löschen\r\n            deines Accounts entfernen lassen (sofern implementiert). Gesetzliche Aufbewahrungspflichten\r\n            (z. B. bei zahlungsrelevanten Vorgängen) bleiben unberührt.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "6. Deine Rechte",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,\r\n              Datenübertragbarkeit sowie Widerspruch gegen Verarbeitung, soweit die gesetzlichen Voraussetzungen erfüllt sind.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren.\r\n              Für Hessen ist dies der Hessische Beauftragte für Datenschutz und Informationsfreiheit.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Datenschutz.jsx",
+    "text": "7. Kontakt",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Impressum",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Anbieterkennzeichnung",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Anbieter",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Kontakt",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Umsatzsteuer",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Umsatzsteuer-Identifikationsnummer (USt-IdNr.): Nicht vorhanden.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Haftungsausschluss",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Impressum.jsx",
+    "text": "Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung\r\n            für die Inhalte externer Links. Für den Inhalt der verlinkten Seiten\r\n            sind ausschließlich deren Betreiber verantwortlich.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\InsightsPage.jsx",
+    "text": "monthlyBudget && (",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Login.jsx",
+    "text": "you@example.com",
+    "type": "jsx-attr"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Settings.jsx",
+    "text": "You are not logged in.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Settings.jsx",
+    "text": "Widerrufsbelehrung",
+    "type": "jsx-attr"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Widerrufsbelehrung",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Widerrufsrecht",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Verbraucher haben das Recht, binnen vierzehn Tagen ohne Angabe von\r\n        Gründen diesen Vertrag zu widerrufen.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des\r\n        Vertragsabschlusses.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Ausübung des Widerrufs",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Trakio, Kassel,\r\n        Deutschland, E-Mail: support@trakio.de) mittels einer eindeutigen\r\n        Erklärung (z. B. per E-Mail) über Ihren Entschluss informieren.",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Ausschluss des Widerrufsrechts bei digitalen Inhalten",
+    "type": "jsx-text"
+  },
+  {
+    "file": "C:\\Users\\shpar\\Desktop\\Sub\\src\\pages\\Widerrufsbelehrung.jsx",
+    "text": "Das Widerrufsrecht erlischt vorzeitig, wenn wir mit der Ausführung des\r\n        Vertrags begonnen haben, nachdem Sie ausdrücklich zugestimmt haben,\r\n        dass wir vor Ablauf der Widerrufsfrist mit der Ausführung beginnen,\r\n        und Sie Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre\r\n        Zustimmung Ihr Widerrufsrecht verlieren.",
+    "type": "jsx-text"
+  }
+]

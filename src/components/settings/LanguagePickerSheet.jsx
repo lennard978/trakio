@@ -77,7 +77,7 @@ export default function LanguagePickerSheet({ onClose }) {
               value={query}
               autoFocus
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search language…"
+              placeholder={t('search_lang' || "Search language…")}
               className="bg-transparent w-full outline-none text-sm"
             />
           </div>

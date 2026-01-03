@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
 import { getForgottenSubscriptions } from "../utils/forgottenSubscriptions";
+import { useTranslation } from "react-i18next";
 
 export default function ForgottenSubscriptions({ subscriptions }) {
+  const { t } = useTranslation();
   const forgotten = useMemo(
     () => getForgottenSubscriptions(subscriptions),
     [subscriptions]
@@ -16,7 +18,7 @@ export default function ForgottenSubscriptions({ subscriptions }) {
       rounded-xl p-4 mb-4
     ">
       <h3 className="text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-3 text-center">
-        Subscriptions you may have forgotten
+        {t("forgoten_subs") || "Subscriptions you may have forgotten"}
       </h3>
 
       <ul className="space-y-2 text-sm">
@@ -30,7 +32,7 @@ export default function ForgottenSubscriptions({ subscriptions }) {
             </span>
 
             <span className="text-xs text-yellow-700 dark:text-yellow-300">
-              Last paid {s.overdueDays} days ago
+              {t("last_paid_subs", { days: s.overdueDays })}
             </span>
           </li>
         ))}
