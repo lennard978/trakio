@@ -39,6 +39,7 @@ const HelpSupportSheet = lazy(() => import("./components/help/HelpSupportSheet")
 
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
+import InstallBanner from "./components/InstallBanner";
 
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
@@ -96,7 +97,7 @@ export default function App() {
     >
       <Toaster position="top-center" />
       <Analytics />
-
+      <InstallBanner />
       {/* MAIN */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
