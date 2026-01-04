@@ -152,8 +152,8 @@ export default async function handler(req, res) {
         });
         break;
       }
-
       default:
+        console.warn("Unhandled Stripe event type:", event.type);
         break;
     }
 

@@ -31,8 +31,8 @@ export default function Signup() {
       return;
     }
 
-    if (password.length < 6) {
-      showToast(t("error_password_short"), "error");
+    if (password.length < 8) {
+      showToast("Password must be at least 8 characters", "error"); // or update i18n
       return;
     }
 

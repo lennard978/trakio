@@ -70,6 +70,9 @@ export default async function handler(req, res) {
       if (existing) {
         return res.status(409).json({ error: "User already exists" });
       }
+      if (password.length < 8) {
+        return res.status(400).json({ error: "Password must be at least 8 characters long" });
+      }
 
       const hashed = await bcrypt.hash(password, 10);
       const userId = nanoid();

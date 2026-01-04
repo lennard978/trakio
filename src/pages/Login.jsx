@@ -31,6 +31,7 @@ export default function Login() {
       return;
     }
 
+
     try {
       await login(email, password);
       showToast(t("toast_login_success"), "success");
