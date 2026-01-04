@@ -581,5 +581,10 @@
 		"3M": "3 Months",
 		"6M": "6 Months",
 		"12M": "12 Months"
+	},
+	"footer": {
+		"impressum": "Legal Notice",
+		"datenschutz": "Privacy Policy",
+		"agb": "Terms & Conditions"
 	}
 }
