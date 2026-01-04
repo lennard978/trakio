@@ -302,136 +302,135 @@
 	"category_productivity": "Productivity",
 	"category_software": "Software",
 	"category_streaming": "Streaming",
-	"category_shopping": "Einkaufen",
-	"category_books": "Bücher",
-	"category_entertainment": "Unterhaltung",
-	"category_finance": "Finanzen",
-	"category_utilities": "Nebenkosten",
-	"category_insurance": "Versicherungen",
+	"category_shopping": "Shopping",
+	"category_books": "Books",
+	"category_entertainment": "Entertainment",
+	"category_finance": "Finance",
+	"category_utilities": "Utilities",
+	"category_insurance": "Insurance",
 	"category_cloud": "Cloud",
-	"category_family": "Familie",
+	"category_family": "Family",
 	"category_transport": "Transport",
 
-	"forgoten_subs": "Abonnements, die du möglicherweise vergessen hast",
-	"last_paid_subs": "Zuletzt vor {{days}} Tagen bezahlt",
+	"forgoten_subs": "Subscriptions you might have forgotten",
+	"last_paid_subs": "Last paid {{days}} days ago",
 
-	"install_app": "Installiere diese App für ein besseres Erlebnis",
-	"install": "Installieren",
+	"install_app": "Install this app for a better experience",
+	"install": "Install",
 
-	"help": "Hilfe & Support",
-	"find_answer": "Finde Antworten oder kontaktiere uns",
-	"how_can_we": "Wie können wir dir helfen?",
-	"browse": "Durchsuche häufige Fragen oder wende dich an den Support.",
-	"still_need_help": "Benötigst du weitere Hilfe?",
-	"our_support": "Unser Support-Team hilft dir gerne weiter.",
-	"contact_support": "Support kontaktieren",
+	"help": "Help & Support",
+	"find_answer": "Find answers or contact us",
+	"how_can_we": "How can we help you?",
+	"browse": "Browse FAQs or contact support.",
+	"still_need_help": "Still need help?",
+	"our_support": "Our support team is happy to assist you.",
+	"contact_support": "Contact Support",
 
-	"search_curr": "Währungen suchen…",
-	"search_lang": "Sprache suchen…",
+	"search_curr": "Search currencies…",
+	"search_lang": "Search language…",
 
-	"undo_changes": "Änderungen rückgängig machen",
-	"pay_method": "Zahlungsmethode",
+	"undo_changes": "Undo changes",
+	"pay_method": "Payment method",
 
 	"faq": {
 		"add_subscription": {
-			"q": "Wie füge ich ein neues Abonnement hinzu?",
-			"a": "Tippe auf die „+“-Schaltfläche im Dashboard, wähle einen Dienst oder erstelle einen benutzerdefinierten, gib Preis und Verlängerungsdatum ein und speichere."
+			"q": "How do I add a new subscription?",
+			"a": "Tap the “+” button on the dashboard, select a service or create a custom one, enter the price and renewal date, then save."
 		},
 		"edit_subscription": {
-			"q": "Wie kann ich ein Abonnement bearbeiten oder aktualisieren?",
-			"a": "Öffne das Abonnement im Dashboard und tippe auf „Bearbeiten“. Du kannst Preis, Abrechnungsintervall, Kategorie oder Verlängerungsdatum ändern."
+			"q": "How can I edit or update a subscription?",
+			"a": "Open the subscription from the dashboard and tap “Edit”. You can change the price, billing interval, category, or renewal date."
 		},
 		"renewal_reminders": {
-			"q": "Wie richte ich Verlängerungserinnerungen ein?",
-			"a": "Verlängerungserinnerungen sind automatisch. Trakio verfolgt Verlängerungsdaten und zeigt bevorstehende Zahlungen im Voraus an."
+			"q": "How do I set up renewal reminders?",
+			"a": "Renewal reminders are automatic. Trakio tracks renewal dates and shows upcoming payments in advance."
 		},
 		"currencies": {
-			"q": "Kann ich verschiedene Währungen verwenden?",
-			"a": "Ja. Jedes Abonnement kann seine eigene Währung haben. Zusätzlich kannst du in den Einstellungen eine Basiswährung festlegen."
+			"q": "Can I use different currencies?",
+			"a": "Yes. Each subscription can have its own currency. You can also set a base currency in settings."
 		},
 		"backup_data": {
-			"q": "Wie sichere ich meine Daten?",
-			"a": "Gehe zu Einstellungen → Datenverwaltung, um deine Abonnements und die Zahlungshistorie als CSV oder JSON zu exportieren."
+			"q": "How do I back up my data?",
+			"a": "Go to Settings → Data Management to export your subscriptions and payment history as CSV or JSON."
 		},
 		"premium_features": {
-			"q": "Welche Funktionen sind in Premium enthalten?",
-			"a": "Premium beinhaltet Analysen, Budgetverwaltung, Export der Zahlungshistorie, Benachrichtigungen und erweiterte Einblicke."
+			"q": "What features are included in Premium?",
+			"a": "Premium includes analytics, budget management, payment history export, notifications, and advanced insights."
 		},
 		"delete_subscription": {
-			"q": "Wie lösche ich ein Abonnement?",
-			"a": "Wische ein Abonnement nach links oder öffne es und tippe auf „Löschen“."
+			"q": "How do I delete a subscription?",
+			"a": "Swipe a subscription to the left or open it and tap “Delete”."
 		},
 		"custom_categories": {
-			"q": "Kann ich eigene Kategorien erstellen?",
-			"a": "Ja. Benutzerdefinierte Kategorien sind mit Premium verfügbar."
+			"q": "Can I create custom categories?",
+			"a": "Yes. Custom categories are available with Premium."
 		}
 	},
 
 	"theme": {
-		"dark": "Dunkler Modus",
-		"light": "Heller Modus"
+		"dark": "Dark mode",
+		"light": "Light mode"
 	},
 
 	"form": {
-		"select_method": "Zahlungsmethode auswählen"
+		"select_method": "Select payment method"
 	},
 
 	"premium": {
-		"expires_notice": "Premium läuft am <strong>{{date}}</strong> ab. Du kannst jederzeit erneut abonnieren.",
-		"expired_notice": "Premium ist abgelaufen. Upgrade, um wieder Zugriff zu erhalten."
+		"expires_notice": "Premium expires on <strong>{{date}}</strong>. You can resubscribe at any time.",
+		"expired_notice": "Premium has expired. Upgrade to regain access."
 	},
 
 	"payment": {
-		"failed_notice": "Zahlung fehlgeschlagen. Bitte aktualisiere deine Zahlungsdaten, um den Premium-Zugang nicht zu verlieren."
+		"failed_notice": "Payment failed. Please update your payment info to keep Premium access."
 	},
 
 	"tabs": {
-		"general": "Allgemein",
-		"categories": "Kategorien",
-		"frequency": "Intervall",
-		"payment_methods": "Zahlungsmethoden",
+		"general": "General",
+		"categories": "Categories",
+		"frequency": "Frequency",
+		"payment_methods": "Payment methods",
 		"trends": "Trends",
-		"forecast": "Prognose"
+		"forecast": "Forecast"
 	},
 
 	"sections": {
-		"overview": "Übersicht"
+		"overview": "Overview"
 	},
 
 	"forecast": {
-		"next_forecast": "Nächster (Prognose)",
-		"next_predicted": "Nächster (Vorhersage)"
+		"next_forecast": "Next (Forecast)",
+		"next_predicted": "Next (Predicted)"
 	},
 
 	"stats": {
-		"monthly_spend": "Monatliche Ausgaben",
-		"annual_cost": "Jährliche Kosten",
-		"top_category": "Top-Kategorie",
-		"avg_per_subscription": "Ø pro Abonnement",
-		"active_subscriptions": "Aktive Abonnements",
-		"growth_rate": "Wachstumsrate",
-
-		"avg_monthly_payment": "Ø monatliche Zahlung",
-		"expected_yearly_cost": "Erwartete Jahreskosten",
-		"due_this_month": "Fällig diesen Monat",
-		"due_this_year": "Fällig dieses Jahr",
-		"paid_this_month": "Bezahlt diesen Monat",
-		"paid_this_year": "Bezahlt dieses Jahr",
-		"total_this_month": "Gesamt diesen Monat",
-		"total_this_year": "Gesamt dieses Jahr"
+		"monthly_spend": "Monthly Spend",
+		"annual_cost": "Annual Cost",
+		"top_category": "Top Category",
+		"avg_per_subscription": "Avg per Subscription",
+		"active_subscriptions": "Active Subscriptions",
+		"growth_rate": "Growth Rate",
+		"avg_monthly_payment": "Avg Monthly Payment",
+		"expected_yearly_cost": "Expected Yearly Cost",
+		"due_this_month": "Due This Month",
+		"due_this_year": "Due This Year",
+		"paid_this_month": "Paid This Month",
+		"paid_this_year": "Paid This Year",
+		"total_this_month": "Total This Month",
+		"total_this_year": "Total This Year"
 	},
 
 	"budget": {
-		"usage": "Budgetauslastung"
+		"usage": "Budget Usage"
 	},
 
 	"projection": {
-		"title": "Prognose für {{range}}",
-		"description": "Geschätzte Ausgaben basierend auf deinen letzten Abonnementzahlungen."
+		"title": "Forecast for {{range}}",
+		"description": "Estimated expenses based on your recent subscription payments."
 	},
 
 	"common": {
 		"empty": "—",
-		"spending": "Ausgaben"
+		"spending": "Spending"
 	}
 }

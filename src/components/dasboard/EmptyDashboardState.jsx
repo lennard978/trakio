@@ -17,7 +17,7 @@ export default function EmptyDashboardState() {
 
       {/* Description */}
       <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
-        <Trans i18nKey="dashboard_intro_text" values={{ currency }} components={{ 1: <strong /> }} />
+        <Trans i18nKey="welcome_message" values={{ currency }} components={{ 1: <strong /> }} />
 
       </p>
 
