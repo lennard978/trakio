@@ -475,7 +475,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               <LineChart data={chartData}>
                 <XAxis dataKey="label" stroke="#aaa" />
                 <YAxis stroke="#aaa" />
-                <Tooltip formatter={(v) => `${currency} ${v.toFixed(2)}`} />
+                <Tooltip formatter={(v) => [`${currency} ${v.toFixed(2)}`, t("common.spending")]} />
                 <Line type="monotone" dataKey="total" stroke="#ED7014" strokeWidth={3} dot={{ r: 4 }} />
                 <Line type="monotone" dataKey="forecast" stroke="#10B981" strokeDasharray="5 5" />
               </LineChart>
@@ -575,7 +575,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                     : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/40 hover:text-white"
                   }`}
               >
-                {range}
+                {t(`range.${range}`)}
               </motion.button>
             ))}
           </div>

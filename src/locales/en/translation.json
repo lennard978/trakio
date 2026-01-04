@@ -550,5 +550,36 @@
 	"agb.12.p1": "The provider may amend these terms for valid reasons. Users will be informed of significant changes.",
 
 	"agb.13.title": "13. Final Provisions",
-	"agb.13.p1": "The laws of the Federal Republic of Germany apply. If any provision is invalid, the remaining provisions remain unaffected."
+	"agb.13.p1": "The laws of the Federal Republic of Germany apply. If any provision is invalid, the remaining provisions remain unaffected.",
+	"withdrawal.title": "Right of Withdrawal",
+	"withdrawal.description": "Information about your right to cancel",
+	"common.optional": "Optional",
+	"label.ai_preview": "AI Preview · Beta",
+
+	"subscriptions": {
+		"status": {
+			"never_paid": "Never paid",
+			"inactive": "Inactive",
+			"active": "Active",
+			"at_risk": "At-risk"
+		}
+	},
+	"category": {
+		"fitness": "Fitness",
+		"bills": "Bills",
+		"transport": "Transport",
+		"streaming": "Streaming",
+		"software": "Software",
+		"productivity": "Productivity",
+		"gaming": "Gaming",
+		"education": "Education",
+		"food": "Food",
+		"other": "Other"
+	},
+	"range": {
+		"1M": "1 Month",
+		"3M": "3 Months",
+		"6M": "6 Months",
+		"12M": "12 Months"
+	}
 }

@@ -153,7 +153,7 @@ export default function SubscriptionOptimizer({
       bg-[#ED7014]/15 text-[#ED7014]
       font-semibold tracking-wide
     ">
-            AI Preview · Beta
+            {t("label.ai_preview")}
           </span>
         </div>
 

@@ -552,8 +552,8 @@ export default function Settings({ setActiveSheet }) {
 
           <SettingsRow
             icon={<DocumentTextIcon className="w-6 h-6" />}
-            title="Widerrufsbelehrung"
-            description="Informationen zum Widerrufsrecht"
+            title={t("withdrawal.title")}
+            description={t("withdrawal.description")}
             to="/widerruf"
             glow
             accent="green"

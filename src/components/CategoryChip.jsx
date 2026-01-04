@@ -1,5 +1,5 @@
-// src/components/ui/CategoryChip.jsx
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 // Pastel colors unified here → reusable everywhere
 export const CATEGORY_COLORS = {
@@ -16,6 +16,8 @@ export const CATEGORY_COLORS = {
 };
 
 export default function CategoryChip({ category }) {
+  const { t } = useTranslation();
+
   const key = (category || "other").trim().toLowerCase();
   const color = CATEGORY_COLORS[key] || CATEGORY_COLORS.other;
 
@@ -32,7 +34,7 @@ export default function CategoryChip({ category }) {
         boxShadow: `0 0 18px ${color}90`,
       }}
     >
-      {key}
+      {t(`category.${key}`, key)} {/* fallback to key if missing */}
     </div>
   );
 }

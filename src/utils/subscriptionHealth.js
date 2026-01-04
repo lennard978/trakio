@@ -1,9 +1,8 @@
 // src/utils/subscriptionHealth.js
 import { computeNextRenewal } from "./renewal";
-import { useTranslation } from "react-i18next";
+import i18n from "../i18n"; // Make sure this is the initialized i18n instance
 
 export function subscriptionHealth(subscription) {
-
   const payments = Array.isArray(subscription.payments)
     ? subscription.payments
     : [];
@@ -11,7 +10,7 @@ export function subscriptionHealth(subscription) {
   if (payments.length === 0) {
     return {
       status: "never_paid",
-      label: "Never paid",
+      label: i18n.t("subscriptions.status.never_paid"),
       color: "gray",
     };
   }
@@ -23,7 +22,7 @@ export function subscriptionHealth(subscription) {
   if (isNaN(lastPaid.getTime())) {
     return {
       status: "never_paid",
-      label: "Never paid",
+      label: i18n.t("subscriptions.status.never_paid"),
       color: "gray",
     };
   }
@@ -33,7 +32,7 @@ export function subscriptionHealth(subscription) {
   if (!next) {
     return {
       status: "inactive",
-      label: "Inactive",
+      label: i18n.t("subscriptions.status.inactive"),
       color: "red",
     };
   }
@@ -41,28 +40,25 @@ export function subscriptionHealth(subscription) {
   const now = new Date();
   const diffDays = Math.ceil((next - now) / 86400000);
 
-  // ✅ Still active
   if (diffDays >= 0) {
     return {
       status: "active",
-      label: "Active",
+      label: i18n.t("subscriptions.status.active"),
       color: "green",
     };
   }
 
-  // ⚠️ Recently overdue (grace window)
   if (diffDays >= -30) {
     return {
       status: "at_risk",
-      label: "At-risk",
+      label: i18n.t("subscriptions.status.at_risk"),
       color: "yellow",
     };
   }
 
-  // ❌ Long overdue
   return {
     status: "inactive",
-    label: "Inactive",
+    label: i18n.t("subscriptions.status.inactive"),
     color: "red",
   };
 }
