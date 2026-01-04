@@ -40,7 +40,7 @@ const HelpSupportSheet = lazy(() => import("./components/help/HelpSupportSheet")
 import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
 import InstallBanner from "./components/InstallBanner";
-
+import { useTranslation } from "react-i18next";
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
   return (
@@ -73,6 +73,7 @@ export default function App() {
   const { user } = useAuth();
   const [activeSheet, setActiveSheet] = useState(null);
   const location = useLocation();
+  const { t } = useTranslation();
 
   /* Currency */
   const { currency, setCurrency } = useCurrency();
