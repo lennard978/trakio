@@ -258,7 +258,7 @@
 	"forecast_category_single": "{{فئة}}",
 	"forecast_category_double": "{{c1}} و {{c2}}",
 	"forecast_category_triple": "{{c1}}، {{c2}}، و {{c3}}",
-	"month_projection_label": "التالي +{{الشهر}}",
+	"month_projection_label": "التالي +{{month}}",
 	"optimizer_title": "تحسين اشتراكاتي",
 	"hide": "يخفي",
 	"optimizer_hint": "انقر فوق \"تحليل\" للعثور على الاشتراكات المتداخلة أو باهظة الثمن.",

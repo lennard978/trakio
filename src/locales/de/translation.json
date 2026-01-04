@@ -258,7 +258,7 @@
 	"forecast_category_single": "{{Kategorie}}",
 	"forecast_category_double": "{{c1}} und {{c2}}",
 	"forecast_category_triple": "{{c1}}, {{c2}} und {{c3}}",
-	"month_projection_label": "Nächster +{{Monat}}",
+	"month_projection_label": "Nächster +{{month}}",
 	"optimizer_title": "Optimieren Sie meine Abonnements",
 	"hide": "Verstecken",
 	"optimizer_hint": "Klicken Sie auf „Analysieren“, um sich überschneidende oder überteuerte Abonnements zu finden.",
