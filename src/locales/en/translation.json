@@ -586,5 +586,7 @@
 		"impressum": "Legal Notice",
 		"datenschutz": "Privacy Policy",
 		"agb": "Terms & Conditions"
-	}
+	},
+	"new_version": "New version available",
+	"update_app": "Update"
 }

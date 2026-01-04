@@ -41,6 +41,9 @@ import { useCurrency } from "./context/CurrencyContext";
 import AGB from "./pages/AGB";
 import InstallBanner from "./components/InstallBanner";
 import { useTranslation } from "react-i18next";
+import { useAppUpdate } from "./hooks/useAppUpdate";
+import AppUpdateBanner from "./components/AppUpdateBanner";
+
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
   return (
@@ -74,6 +77,7 @@ export default function App() {
   const [activeSheet, setActiveSheet] = useState(null);
   const location = useLocation();
   const { t } = useTranslation();
+  const { updateAvailable, applyUpdate } = useAppUpdate();
 
   /* Currency */
   const { currency, setCurrency } = useCurrency();
@@ -218,6 +222,10 @@ export default function App() {
           <Link to="/agb" className="hover:underline">{t("footer.agb")}</Link>
         </div>
       </div>
+
+      {updateAvailable && (
+        <AppUpdateBanner onUpdate={applyUpdate} />
+      )}
     </div>
   );
 }

@@ -255,7 +255,7 @@
 	"forecast_summary_stable_ai": "Ihr Ausgabentrend scheint stabil zu sein, mit ausgeglichenen Kosten in {{categorySummary}}.",
 	"forecast_expected_next": "Prognose für nächsten Monat: {{currency}} {{value}}.",
 	"forecast_top_categories": "Hauptausgabebereiche",
-	"forecast_category_single": "{{Kategorie}}",
+	"forecast_category_single": "{{category}}",
 	"forecast_category_double": "{{c1}} und {{c2}}",
 	"forecast_category_triple": "{{c1}}, {{c2}} und {{c3}}",
 	"month_projection_label": "Nächster +{{month}}",

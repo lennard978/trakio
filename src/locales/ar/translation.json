@@ -255,7 +255,7 @@
 	"forecast_summary_stable_ai": "يبدو أن اتجاه إنفاقك مستقر، مع تكاليف متوازنة عبر {{categorySummary}}.",
 	"forecast_expected_next": "التوقعات للشهر القادم: {{currency}} {{value}}.",
 	"forecast_top_categories": "مجالات الإنفاق الرئيسية",
-	"forecast_category_single": "{{فئة}}",
+	"forecast_category_single": "{{category}}",
 	"forecast_category_double": "{{c1}} و {{c2}}",
 	"forecast_category_triple": "{{c1}}، {{c2}}، و {{c3}}",
 	"month_projection_label": "التالي +{{month}}",
