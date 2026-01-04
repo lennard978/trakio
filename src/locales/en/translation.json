@@ -432,5 +432,123 @@
 	"common": {
 		"empty": "—",
 		"spending": "Spending"
-	}
+	},
+
+	"widerruf.title": "Right of Withdrawal",
+	"widerruf.right.title": "Right of Withdrawal",
+	"widerruf.right.text1": "Consumers have the right to withdraw from this contract within fourteen days without giving any reason.",
+	"widerruf.right.text2": "The withdrawal period is fourteen days from the day the contract is concluded.",
+	"widerruf.exercise.title": "Exercising the Right of Withdrawal",
+	"widerruf.exercise.text": "To exercise your right of withdrawal, you must inform us (Trakio, Kassel, Germany, Email: support@trakio.de) of your decision by means of a clear statement (e.g. by email).",
+	"widerruf.exclusion.title": "Exclusion of the Right of Withdrawal for Digital Content",
+	"widerruf.exclusion.text": "The right of withdrawal expires early if we have started to execute the contract after you have expressly agreed that we may begin execution before the withdrawal period has expired, and you have confirmed your knowledge that you lose your right of withdrawal by agreeing.",
+	"widerruf.date_label": "Status: {{date}}",
+
+	"impressum.title": "Legal Notice",
+	"impressum.subtitle": "Provider Identification",
+
+	"impressum.provider.title": "Provider",
+	"impressum.address.name": "PLEASE ENTER YOUR FULL NAME",
+	"impressum.address.street": "PLEASE ENTER STREET + HOUSE NUMBER",
+	"impressum.address.zip": "34134 Kassel",
+	"impressum.address.country": "Germany",
+
+	"impressum.contact.title": "Contact",
+	"impressum.contact.email_label": "Email",
+
+	"impressum.vat.title": "VAT Information",
+	"impressum.vat.text": "VAT ID (USt-IdNr.): Not available.",
+
+	"impressum.disclaimer.title": "Disclaimer",
+	"impressum.disclaimer.text": "Despite careful content control, we assume no liability for the content of external links. The operators of the linked pages are solely responsible for their content.",
+
+	"privacy.title": "Privacy Policy",
+	"privacy.subtitle": "Information about processing personal data",
+
+	"privacy.1.title": "1. Controller",
+	"privacy.1.name": "PLEASE ENTER YOUR FULL NAME",
+	"privacy.1.street": "PLEASE ENTER STREET + HOUSE NUMBER",
+	"privacy.1.city": "34134 Kassel, Germany",
+	"privacy.1.email": "shparavalo78nenad@yahoo.com",
+
+	"privacy.2.title": "2. What data do we process?",
+	"privacy.2.p1": "When using the app, we process in particular:",
+	"privacy.2.li1": "Account data (e.g., email address, login token).",
+	"privacy.2.li2": "App content (e.g., subscriptions, categories, payment data/history, settings).",
+	"privacy.2.li3": "Technical data (e.g., IP address, device/browser data, log data), as required for operation and security.",
+
+	"privacy.3.title": "3. Purposes & Legal Basis",
+	"privacy.3.p1": "We process data for the following purposes:",
+	"privacy.3.li1": "Providing app functionality and managing accounts.",
+	"privacy.3.li2": "Storing and syncing your subscription data.",
+	"privacy.3.li3": "Handling payments and premium features (Stripe).",
+	"privacy.3.li4": "IT security, fraud prevention, and error analysis.",
+	"privacy.3.legal": "Legal bases include Art. 6(1)(b) GDPR (contract/account), Art. 6(1)(f) GDPR (legitimate interest, e.g. security), and Art. 6(1)(a) GDPR (consent), where provided.",
+
+	"privacy.4.title": "4. Recipients / Service Providers",
+	"privacy.4.p1": "We use service providers (processors) to reliably operate the app:",
+	"privacy.4.li1": "Hosting/Deployment: Vercel (server and log handling).",
+	"privacy.4.li2": "Database/Storage: Upstash (your app data).",
+	"privacy.4.li3": "Payments: Stripe (billing portal, subscriptions).",
+	"privacy.4.note": "See the privacy policies of these providers: ",
+
+	"privacy.5.title": "5. Data Retention",
+	"privacy.5.p1": "We store your data only as long as necessary to provide the app and for the stated purposes. You can remove your account and app data by deleting your account (if implemented). Legal retention obligations (e.g. for payment data) remain unaffected.",
+
+	"privacy.6.title": "6. Your Rights",
+	"privacy.6.p1": "You have the right to access, rectify, erase, restrict processing, data portability, and object to processing under applicable legal conditions.",
+	"privacy.6.p2": "You can also lodge a complaint with a data protection authority. In Hessen, this is the 'Hessische Beauftragte für Datenschutz und Informationsfreiheit'.",
+
+	"privacy.7.title": "7. Contact",
+	"privacy.7.p1": "If you have questions about how your data is processed, contact us at ",
+
+	"agb.title": "Terms & Conditions (AGB)",
+	"agb.last_updated": "Last updated: 12/23/2025",
+
+	"agb.1.title": "1. Scope",
+	"agb.1.p1": "These Terms and Conditions (AGB) govern the use of the web-based software \"Trakio\" for managing subscriptions and recurring expenses.",
+	"agb.1.p2": "The provider is the service provider named in the legal notice (Impressum). These terms apply to consumers as defined by § 13 BGB.",
+
+	"agb.2.title": "2. Subject Matter",
+	"agb.2.p1": "Trakio provides a digital application for users to manage their subscriptions, expenses, and payment intervals.",
+	"agb.2.p2": "The provider does not guarantee financial success or savings, only the provision of the software as it is currently available.",
+
+	"agb.3.title": "3. Registration and User Account",
+	"agb.3.p1": "Using Trakio requires registration with a valid email address. Users must keep their login credentials confidential.",
+	"agb.3.p2": "The provider may suspend or delete accounts that violate these terms or applicable laws.",
+
+	"agb.4.title": "4. Scope of Services and Availability",
+	"agb.4.p1": "The provider aims for high availability but does not guarantee uninterrupted access at all times.",
+	"agb.4.p2": "Maintenance, security updates, or technical issues may cause temporary limitations.",
+
+	"agb.5.title": "5. Free Use and Premium Subscription",
+	"agb.5.p1": "Trakio is available in a free basic version. Certain features require a paid premium subscription.",
+	"agb.5.p2": "Billing is handled via the payment provider Stripe.",
+
+	"agb.6.title": "6. Trial Period",
+	"agb.6.p1": "The provider may offer a free trial period. After the trial, the subscription converts to a paid one if the user confirms.",
+
+	"agb.7.title": "7. Payment, Term, and Cancellation",
+	"agb.7.p1": "Subscriptions are billed monthly or yearly in advance. You can cancel anytime through the customer portal.",
+	"agb.7.p2": "Cancellation becomes effective at the end of the current billing period.",
+
+	"agb.8.title": "8. Right of Withdrawal",
+	"agb.8.p1": "Consumers have a legal right of withdrawal. This right may expire for digital content if the user consents to begin before the withdrawal period ends.",
+
+	"agb.9.title": "9. User Obligations",
+	"agb.9.p1": "Users must use Trakio in compliance with applicable laws. Abuse or attempts to manipulate the service are prohibited.",
+
+	"agb.10.title": "10. Liability",
+	"agb.10.p1": "The provider is fully liable for intent and gross negligence.",
+	"agb.10.p2": "For slight negligence, liability applies only if essential contractual obligations are breached.",
+	"agb.10.p3": "Liability for data loss is excluded where legally permitted.",
+
+	"agb.11.title": "11. Data Protection",
+	"agb.11.p1": "Personal data is processed in accordance with the GDPR. See the Privacy Policy for details.",
+
+	"agb.12.title": "12. Changes to the Terms",
+	"agb.12.p1": "The provider may amend these terms for valid reasons. Users will be informed of significant changes.",
+
+	"agb.13.title": "13. Final Provisions",
+	"agb.13.p1": "The laws of the Federal Republic of Germany apply. If any provision is invalid, the remaining provisions remain unaffected."
 }
