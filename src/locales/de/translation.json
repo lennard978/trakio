@@ -250,7 +250,7 @@
 	"forecast_increase": "Aufstand",
 	"forecast_decrease": "Fallen",
 	"forecast_stable": "Stabil",
-	"forecast_summary_rising_ai": "Error 504 (Server Error)!!1504.That’s an error.There was an error. Please try again later.That’s all we know.",
+	"forecast_summary_rising_ai": "Die Ausgaben werden voraussichtlich im nächsten Monat steigen, hauptsächlich wegen {{categorySummary}}.",
 	"forecast_summary_declining_ai": "Ihre Ausgaben werden im nächsten Monat wahrscheinlich sinken, hauptsächlich beeinflusst durch {{categorySummary}}.",
 	"forecast_summary_stable_ai": "Ihr Ausgabentrend scheint stabil zu sein, mit ausgeglichenen Kosten über {{categorySummary}}.",
 	"forecast_expected_next": "Prognose für nächsten Monat: {{currency}} {{value}}.",

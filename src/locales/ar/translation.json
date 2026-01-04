@@ -250,7 +250,7 @@
 	"forecast_increase": "ارتفاع",
 	"forecast_decrease": "هبوط",
 	"forecast_stable": "مستقر",
-	"forecast_summary_rising_ai": "من المتوقع أن يرتفع الإنفاق الشهر المقبل، ويرجع ذلك أساسًا إلى {{categorySummary}}.",
+	"forecast_summary_rising_ai": "من المتوقع أن تزداد النفقات في الشهر القادم، ويرجع ذلك أساسًا إلى {{categorySummary}}.",
 	"forecast_summary_declining_ai": "من المرجح أن ينخفض ​​إنفاقك في الشهر المقبل، ويتأثر في الغالب بـ {{categorySummary}}.",
 	"forecast_summary_stable_ai": "يبدو أن اتجاه إنفاقك مستقر، مع تكاليف متوازنة عبر {{categorySummary}}.",
 	"forecast_expected_next": "التوقعات للشهر القادم: {{currency}} {{value}}.",

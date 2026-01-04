@@ -577,10 +577,10 @@
 		"other": "Other"
 	},
 	"range": {
-		"1M": "1 Month",
-		"3M": "3 Months",
-		"6M": "6 Months",
-		"12M": "12 Months"
+		"1M": "1M",
+		"3M": "3M",
+		"6M": "6M",
+		"12M": "12M"
 	},
 	"footer": {
 		"impressum": "Legal Notice",
