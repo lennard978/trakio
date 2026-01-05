@@ -23,6 +23,15 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
+  // 🔐 GDPR HARD STOP — MUST BE HERE
+  const deleted = await kv.get(`gdpr:deletion:${authUser.userId}`);
+  if (deleted) {
+    return res.status(403).json({
+      error: "Account deleted",
+      code: "ACCOUNT_DELETED",
+    });
+  }
+
   const { action, subscriptions } = req.body || {};
 
   try {
