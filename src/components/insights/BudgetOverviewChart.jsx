@@ -31,7 +31,26 @@ import { getCurrencyFlag } from "../../utils/currencyFlags";
 import { getNormalizedPayments } from "../../utils/payments";
 import SmartForecastCard from "./SmartForecastCard";
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
-import { getAnnualCost } from '../../utils/annualCost'
+import { getAnnualCost } from '../../utils/annualCost';
+import { usePremium } from "../../hooks/usePremium";
+
+function explainOverlap({ group, keep, cancel, potentialSavings, currency }, t) {
+  if (!keep || !cancel?.length) return null;
+
+  const cancelledNames = cancel.map(c => c.name).join(" and ");
+
+  return t(
+    "overlaps.ai_explanation",
+    "You have multiple {{group}} services ({{cancelled}} and {{kept}}). Since {{kept}} is the cheapest option, keeping it could reduce your recurring costs by {{amount}} {{currency}} per month without losing access to this category."
+  )
+    .replace("{{group}}", group)
+    .replace("{{cancelled}}", cancelledNames)
+    .replaceAll("{{kept}}", keep.name)
+    .replace("{{amount}}", potentialSavings.toFixed(2))
+    .replace("{{currency}}", currency);
+}
+
+
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
@@ -102,8 +121,47 @@ function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 2, duratio
 export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
   const [activeRange, setActiveRange] = useState("6M");
+  // === Overlapping subscriptions (Insights) ===
+  const [overlaps, setOverlaps] = useState([]);
+  const [overlapsLoading, setOverlapsLoading] = useState(false);
+
+  // === Fetch overlapping services + savings ===
+  useEffect(() => {
+    if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
+      setOverlaps([]);
+      return;
+    }
+
+    const run = async () => {
+      try {
+        setOverlapsLoading(true);
+
+        const res = await fetch("/api/overlaps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscriptions }),
+        });
+
+        if (!res.ok) throw new Error("Overlap fetch failed");
+
+        const data = await res.json();
+        setOverlaps(Array.isArray(data.overlaps) ? data.overlaps : []);
+      } catch (err) {
+        console.error("Overlap detection failed", err);
+        setOverlaps([]);
+      } finally {
+        setOverlapsLoading(false);
+      }
+    };
+
+    run();
+  }, [subscriptions]);
+
   const { currency } = useCurrency();
   const { t } = useTranslation();
+  const premium = usePremium();
+  const hasPremiumAccess = premium.isPremium || premium.hasActiveTrial;
+
 
   const convert = convertUtil;
 
@@ -633,6 +691,125 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       {/* 3️⃣ Behavioral & motivational feedback */}
 
       <SmartForecastCard data={data} currency={currency} />  {/* ← NEW */}
+      {/* === Overlapping Services & Savings === */}
+      {/* === Overlapping Services & Savings === */}
+      <Section title={t("overlaps.title", "Overlapping Services & Savings")}>
+
+        {/* Loading state */}
+        {overlapsLoading && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t("overlaps.loading", "Analyzing overlapping subscriptions…")}
+          </p>
+        )}
+
+        {/* No overlaps */}
+        {!overlapsLoading && overlaps.length === 0 && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t("overlaps.none", "No overlapping services detected.")}
+          </p>
+        )}
+
+        {/* Overlaps content (blurred if not premium) */}
+        {!overlapsLoading && overlaps.length > 0 && (
+          <div className="relative">
+
+            {/* BLUR LAYER */}
+            <div className={!hasPremiumAccess ? "blur-sm select-none pointer-events-none" : ""}>
+              <div className="space-y-3">
+                {overlaps.map((group) => (
+                  <div
+                    key={group.group}
+                    className="rounded-lg border border-gray-300 dark:border-gray-800/70 
+                         bg-white dark:bg-[#0e1420] p-3"
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">
+                      {group.group}
+                    </div>
+
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {group.items.map((i) => i.name).join(" vs ")}
+                    </div>
+
+                    {/* Recommended to keep */}
+                    {group.keep && (
+                      <div className="mt-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                        {t(
+                          "overlaps.recommended_keep",
+                          "Recommended to keep: {{name}} (cheapest)"
+                        ).replace("{{name}}", group.keep.name)}
+                      </div>
+                    )}
+
+                    {group.potentialSavings > 0 && (
+                      <div className="mt-2 space-y-0.5">
+                        {/* Monthly savings */}
+                        <div className="text-sm font-medium text-green-600">
+                          {t(
+                            "overlaps.savings_monthly",
+                            "You could save {{amount}} / month"
+                          ).replace(
+                            "{{amount}}",
+                            `${group.potentialSavings.toFixed(2)} ${group.currency}`
+                          )}
+                        </div>
+
+                        {/* Annual savings */}
+                        <div className="text-xs text-green-700 dark:text-green-500">
+                          {t(
+                            "overlaps.savings_annual",
+                            "{{amount}} / year"
+                          ).replace(
+                            "{{amount}}",
+                            `${(group.potentialSavings * 12).toFixed(2)} ${group.currency}`
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI explanation */}
+                    {group.potentialSavings > 0 && (
+                      <div className="mt-2 text-xs text-gray-700 dark:text-gray-400 italic">
+                        {explainOverlap(group, t)}
+                      </div>
+                    )}
+
+
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PREMIUM OVERLAY */}
+            {!hasPremiumAccess && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white/90 dark:bg-[#0e1420]/90 
+                          border border-gray-300 dark:border-gray-800 
+                          rounded-xl p-4 text-center shadow-lg max-w-xs">
+                  <div className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                    {t("premium.unlock_title", "Unlock subscription savings")}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    {t(
+                      "premium.unlock_desc",
+                      "See overlapping services and how much you could save every month."
+                    )}
+                  </p>
+                  <button
+                    onClick={() => window.location.href = "/premium"}
+                    className="px-4 py-1.5 rounded-full bg-[#ED7014] 
+                         text-white text-sm font-medium hover:opacity-90"
+                  >
+                    {t("premium.unlock_cta", "Upgrade to Premium")}
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+      </Section>
+
+
       <SubscriptionOptimizer subscriptions={subscriptions} currency={currency} rates={rates} />
       <InsightsSummary data={data} currency={currency} />
 
