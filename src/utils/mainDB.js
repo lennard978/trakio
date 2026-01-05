@@ -13,6 +13,30 @@ export const dbPromise = openDB("trakio-db", 2, {
   },
 });
 
+export async function clearAllLocalData() {
+  // IndexedDB
+  if (indexedDB?.databases) {
+    const dbs = await indexedDB.databases();
+    for (const db of dbs) {
+      if (db.name) {
+        indexedDB.deleteDatabase(db.name);
+      }
+    }
+  }
+
+  // Cache Storage (PWA)
+  if ("caches" in window) {
+    const names = await caches.keys();
+    await Promise.all(names.map((n) => caches.delete(n)));
+  }
+
+  // LocalStorage
+  localStorage.clear();
+  window.location.replace("/login");
+
+}
+
+
 /* ------------------------------------------------------------------
  * Subscriptions (OFFLINE CACHE)
  * ------------------------------------------------------------------ */

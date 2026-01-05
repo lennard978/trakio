@@ -199,15 +199,11 @@ export default function SubscriptionStatusCard() {
           )}
 
           {/* Days left */}
-          <p className="text-xs text-gray-500">
-            {daysLeft !== null && (
-              <p className="text-xs text-gray-500">
-                {t(trialDaysKey, { days: daysLeft })}
-              </p>
-            )}
-
-          </p>
-
+          {daysLeft !== null && (
+            <p className="text-xs text-gray-500">
+              {t(trialDaysKey, { days: daysLeft })}
+            </p>
+          )}
 
           {/* Progress bar */}
           <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">

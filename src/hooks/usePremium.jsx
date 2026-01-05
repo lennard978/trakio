@@ -70,7 +70,7 @@ export function usePremium() {
     const now = Date.now();
 
     // ---- OFFLINE FALLBACK (DISPLAY ONLY) ----
-    if (!navigator.onLine && !status) {
+    if (!navigator.onLine && !status && loading) {
       const cached = loadSnapshot();
       if (cached) return cached;
     }

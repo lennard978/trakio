@@ -43,6 +43,7 @@ import InstallBanner from "./components/InstallBanner";
 import { useTranslation } from "react-i18next";
 import { useAppUpdate } from "./hooks/useAppUpdate";
 import AppUpdateBanner from "./components/AppUpdateBanner";
+import AccountDeleted from "./pages/AccountDeleted";
 
 /* -------------------- Loading -------------------- */
 function LoadingSkeleton() {
@@ -125,6 +126,7 @@ export default function App() {
               <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
               <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
               <Route path="/widerruf" element={<Widerrufsbelehrung />} />
+              <Route path="/account-deleted" element={<AccountDeleted />} />
 
               <Route
                 path="/login"

@@ -17,6 +17,7 @@ import languages from "../utils/languages";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 import { loadSubscriptionsLocal } from "../utils/mainDB";
+import { toast } from "react-hot-toast";
 
 import {
   GlobeAltIcon,
@@ -32,6 +33,7 @@ import {
 } from "../utils/exportData";
 import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 import SectionHeader from "../components/ui/SectionHeader";
+import { clearAllLocalData } from "../utils/mainDB";
 
 export default function Settings({ setActiveSheet }) {
   const { user, logout, loading } = useAuth();
@@ -558,7 +560,56 @@ export default function Settings({ setActiveSheet }) {
             glow
             accent="green"
           />
+          <SettingsRow
+            icon={<TrashIcon className="w-6 h-6 text-red-500" />}
+            title={t("settings_delete_account") || "Delete account permanently"}
+            description={
+              t("settings_delete_account_desc") ||
+              "This will permanently delete your account and all associated data."
+            }
+            accent="red"
+            glow
+            onClick={async () => {
+              const confirmed = window.confirm(
+                "This will permanently delete your Trakio account and all personal data.\n\n" +
+                "Active subscriptions will be cancelled.\n" +
+                "This action is irreversible.\n\n" +
+                "Do you want to proceed?"
+              );
+
+              if (!confirmed) return;
+
+              try {
+                const token = localStorage.getItem("token");
+
+                const res = await fetch("/api/user", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ action: "delete-account" }),
+                });
+
+                if (!res.ok) {
+                  toast.error("Failed to delete account. Please contact support.");
+                  return;
+                }
+
+                await clearAllLocalData();
+
+                toast.success("Account deleted successfully");
+
+                // Prevent back navigation into stale state
+                window.location.replace("/account-deleted");
+              } catch {
+                toast.error("Unexpected error. Please try again.");
+              }
+            }}
+          />
+
         </Card>
+
       </section>
 
       {/* ===================== HELP & SUPPORT ===================== */}

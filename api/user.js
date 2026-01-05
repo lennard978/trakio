@@ -1,6 +1,9 @@
-import { getPremiumRecord } from "./utils/premiumStore.js";
+import { getPremiumRecord, setPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
 import Stripe from "stripe";
+import { kv } from "@vercel/kv";
+import crypto from "crypto"; // ⬅️ REQUIRED at top of file
+
 
 /* ------------------------------------------------------------------ */
 /* Auth helper                                                         */
@@ -74,6 +77,60 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ ok: true });
     }
+
+    /* -------------------------------------------------------------- */
+    /* DELETE ACCOUNT (GDPR – Art. 17)                                */
+    /* -------------------------------------------------------------- */
+
+    if (action === "delete-account") {
+      const record = await getPremiumRecord(userId);
+      const email = authUser.email;
+
+      // 1️⃣ Cancel Stripe subscription
+      if (record?.subscriptionId) {
+        try {
+          await stripe.subscriptions.del(record.subscriptionId);
+        } catch {
+          // already cancelled or gone → ignore
+        }
+      }
+
+      // 2️⃣ Delete premium state
+      await kv.del(`premium:${userId}`);
+
+      // 3️⃣ Delete ALL user data
+      await Promise.all([
+        kv.del(`subs:${email}`),
+        kv.del(`subs:${userId}`),
+
+        kv.del(`user:${email}`),
+        kv.del(`user:${userId}`),
+
+        kv.del(`payments:${email}`),
+        kv.del(`payments:${userId}`),
+      ]);
+
+      // 4️⃣ GDPR deletion audit log (NON-BLOCKING, NON-PII)
+      try {
+        await kv.set(
+          `gdpr:deletion:${userId}`,
+          {
+            deletedAt: Date.now(),
+            emailHash: crypto
+              .createHash("sha256")
+              .update(email)
+              .digest("hex"),
+          },
+          { ex: 60 * 60 * 24 * 3 } // 30 days retention
+        );
+      } catch (err) {
+        // ❗ MUST NOT block deletion
+        console.warn("GDPR audit log failed:", err);
+      }
+
+      return res.status(200).json({ ok: true });
+    }
+
 
     /* -------------------------------------------------------------- */
     /* GET PREMIUM STATUS (Stripe truth passthrough)                  */

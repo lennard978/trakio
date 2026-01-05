@@ -447,6 +447,8 @@
 	"widerruf.exclusion.title": "Exclusion of the Right of Withdrawal for Digital Content",
 	"widerruf.exclusion.text": "The right of withdrawal expires early if we have started to execute the contract after you have expressly agreed that we may begin execution before the withdrawal period has expired, and you have confirmed your knowledge that you lose your right of withdrawal by agreeing.",
 	"widerruf.date_label": "Status: {{date}}",
+	"withdrawal.title": "Right of Withdrawal",
+	"withdrawal.description": "Information about your 14-day statutory right to withdraw from this contract",
 
 	"impressum.title": "Legal Notice",
 	"impressum.subtitle": "Provider Identification",
@@ -592,5 +594,9 @@
 		"agb": "Terms & Conditions"
 	},
 	"new_version": "New version available",
-	"update_app": "Update"
+	"update_app": "Update",
+	"settings_delete_account": "Delete account permanently",
+	"settings_delete_account_desc": "This will permanently delete your account and all associated data.",
+	"delete_account.confirm_title": "Delete account permanently",
+	"delete_account.confirm_text": "This will permanently delete your Trakio account and all associated personal data.\n\nAny active subscriptions will be cancelled and cannot be restored.\nThis action is irreversible.\n\nDo you want to proceed?"
 }
