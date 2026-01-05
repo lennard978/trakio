@@ -174,6 +174,26 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     return getAnnualCost(subscriptions, currency, rates, convert);
   }, [subscriptions, currency, rates]);
 
+  // === Total annual savings (aggregated) ===
+  const totalAnnualSavings = useMemo(() => {
+    if (!Array.isArray(overlaps) || overlaps.length === 0) return 0;
+
+    return overlaps.reduce((sum, group) => {
+      if (!group.potentialSavings || group.potentialSavings <= 0) return sum;
+      return sum + group.potentialSavings * 12;
+    }, 0);
+  }, [overlaps]);
+
+  // === Total monthly savings (aggregated) ===
+  const totalMonthlySavings = useMemo(() => {
+    if (!Array.isArray(overlaps) || overlaps.length === 0) return 0;
+
+    return overlaps.reduce((sum, group) => {
+      if (!group.potentialSavings || group.potentialSavings <= 0) return sum;
+      return sum + group.potentialSavings;
+    }, 0);
+  }, [overlaps]);
+
 
   const TABS = useMemo(() => [
     { key: "General", label: t("tabs.general") },
@@ -355,6 +375,18 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
+
+  const savingsChartData = useMemo(() => {
+    if (!Array.isArray(overlaps)) return [];
+
+    return overlaps
+      .filter(g => g.potentialSavings > 0)
+      .map(g => ({
+        name: g.group,
+        value: Number(g.potentialSavings.toFixed(2)),
+      }));
+  }, [overlaps]);
+
 
   return (
     <div className="space-y-4">
@@ -692,8 +724,44 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
       <SmartForecastCard data={data} currency={currency} />  {/* ← NEW */}
       {/* === Overlapping Services & Savings === */}
-      {/* === Overlapping Services & Savings === */}
       <Section title={t("overlaps.title", "Overlapping Services & Savings")}>
+        {/* === Total Savings Summary === */}
+        {hasPremiumAccess && (totalAnnualSavings > 0 || totalMonthlySavings > 0) && (
+          <div className="mb-4 rounded-lg border border-green-500/40 
+                  bg-green-50 dark:bg-green-900/10 
+                  p-4 text-center space-y-1">
+
+            <div className="text-sm text-green-700 dark:text-green-400">
+              {t("overlaps.total_savings", "Your potential savings")}
+            </div>
+
+            <div className="text-lg font-semibold text-green-800 dark:text-green-300">
+              {totalMonthlySavings.toFixed(2)} {overlaps[0]?.currency || "EUR"} / month
+            </div>
+
+            <div className="text-sm text-green-700 dark:text-green-400">
+              {totalAnnualSavings.toFixed(2)} {overlaps[0]?.currency || "EUR"} / year
+            </div>
+            {hasPremiumAccess && savingsChartData.length > 0 && (
+              <div className="mb-6 h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={savingsChartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(v) =>
+                        `${v.toFixed(2)} ${overlaps[0]?.currency || "EUR"} / month`
+                      }
+                    />
+                    <Bar dataKey="value" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+          </div>
+        )}
+
 
         {/* Loading state */}
         {overlapsLoading && (
@@ -732,12 +800,19 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
                     {/* Recommended to keep */}
                     {group.keep && (
-                      <div className="mt-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                        {t(
-                          "overlaps.recommended_keep",
-                          "Recommended to keep: {{name}} (cheapest)"
-                        ).replace("{{name}}", group.keep.name)}
-                      </div>
+                      <span className="inline-flex items-center gap-1">
+                        {t("overlaps.recommended_keep", "Recommended to keep")}: {group.keep.name}
+                        <span
+                          title={t(
+                            "overlaps.recommended_tooltip",
+                            "This is the cheapest option in this category."
+                          )}
+                          className="cursor-help text-gray-400"
+                        >
+                          ⓘ
+                        </span>
+                      </span>
+
                     )}
 
                     {group.potentialSavings > 0 && (
@@ -763,6 +838,28 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                             `${(group.potentialSavings * 12).toFixed(2)} ${group.currency}`
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Save now action */}
+                    {hasPremiumAccess && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          onClick={() =>
+                            alert(
+                              t(
+                                "overlaps.save_now_hint",
+                                "Tip: Cancel the more expensive subscription directly in the provider’s app or website."
+                              )
+                            )
+                          }
+                          className="text-xs px-3 py-1 rounded-full 
+                 border border-[#ED7014] text-[#ED7014]
+                 hover:bg-[#ED7014] hover:text-white
+                 transition"
+                        >
+                          {t("overlaps.save_now", "Save now")}
+                        </button>
                       </div>
                     )}
 
