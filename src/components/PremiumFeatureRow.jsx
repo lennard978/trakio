@@ -14,11 +14,11 @@ export default function PremiumFeatureRow({
 
       <div className="flex gap-6">
         <span className="w-6 flex justify-center">
-          {free && <CheckIcon className="w-5 h-5 text-green-600" />}
+          {free && <CheckIcon className="w-5 h-5 text-orange-600" />}
         </span>
 
         <span className="w-6 flex justify-center">
-          {premium && <CheckIcon className="w-5 h-5 text-green-600" />}
+          {premium && <CheckIcon className="w-5 h-5 text-orange-400" />}
         </span>
       </div>
     </div>

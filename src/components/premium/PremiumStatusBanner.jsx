@@ -1,5 +1,5 @@
 import { usePremium } from "../../hooks/usePremium";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 export default function PremiumStatusBanner() {
   const {
@@ -8,6 +8,8 @@ export default function PremiumStatusBanner() {
     premiumEndsAt,
     status,
   } = usePremium();
+  const { t } = useTranslation();
+
 
   if (!status) return null;
 

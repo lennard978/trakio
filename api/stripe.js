@@ -68,6 +68,7 @@ export default async function handler(req, res) {
         cancel_url: `${appUrl}/premium?canceled=true`,
         metadata: { userId: authUser.userId },
         subscription_data: {
+          trial_period_days: 7, // ✅ STRIPE TRIAL
           metadata: { userId: authUser.userId },
         },
       }, { idempotencyKey });

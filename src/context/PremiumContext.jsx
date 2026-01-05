@@ -23,6 +23,7 @@ export function PremiumProvider({ children }) {
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(false);
 
+
   /* ------------------------------------------------------------------ */
   /* Reset on logout                                                     */
   /* ------------------------------------------------------------------ */
@@ -129,43 +130,13 @@ export function PremiumProvider({ children }) {
   /* Trial handling (still backend-authoritative)                        */
   /* ------------------------------------------------------------------ */
 
-  const startTrial = async () => {
-    if (!isLoggedIn) return false;
-
-    try {
-      const headers = authHeaders();
-      if (!headers) {
-        setLoading(false);
-        return false;
-      }
-
-      const res = await fetch("/api/user", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ action: "start-trial" }),
-      });
-
-      if (!res.ok) return false;
-
-      const data = await res.json();
-      setTrialEnds(data.trialEnds || null);
-      setStatus("trialing");
-
-      return true;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const cancelTrial = async () => {
     if (!isLoggedIn) return false;
 
+    setLoading(true);
     try {
       const headers = authHeaders();
-      if (!headers) {
-        setLoading(false);
-        return false;
-      }
+      if (!headers) return false;
 
       const res = await fetch("/api/user", {
         method: "POST",
@@ -173,16 +144,16 @@ export function PremiumProvider({ children }) {
         body: JSON.stringify({ action: "cancel-trial" }),
       });
 
-
       if (!res.ok) return false;
 
-      setTrialEnds(null);
-      setStatus("canceled");
+      // 🔁 Always re-sync from Stripe
+      await refreshPremiumStatus();
       return true;
     } finally {
       setLoading(false);
     }
   };
+
 
   /* ------------------------------------------------------------------ */
   /* Stripe checkout                                                     */
@@ -191,19 +162,16 @@ export function PremiumProvider({ children }) {
   const startCheckout = async (plan) => {
     if (!isLoggedIn) return;
 
+    setLoading(true);
     try {
       const headers = authHeaders();
-      if (!headers) {
-        setLoading(false);
-        return;
-      }
+      if (!headers) return;
 
       const res = await fetch("/api/stripe", {
         method: "POST",
         headers,
         body: JSON.stringify({ action: "checkout", plan }),
       });
-
 
       const data = await res.json();
       if (data?.url) {
@@ -213,6 +181,7 @@ export function PremiumProvider({ children }) {
       setLoading(false);
     }
   };
+
 
   /* ------------------------------------------------------------------ */
 
@@ -227,7 +196,6 @@ export function PremiumProvider({ children }) {
 
         // ACTIONS
         loading,
-        startTrial,
         cancelTrial,
         startCheckout,
         refreshPremiumStatus,
@@ -249,7 +217,6 @@ export function usePremiumContext() {
       trialEnds: null,
       cancelAtPeriodEnd: false,
       loading: false,
-      startTrial: async () => false,
       cancelTrial: async () => false,
       startCheckout: async () => { },
       refreshPremiumStatus: async () => null,

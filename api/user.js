@@ -1,11 +1,19 @@
-import { kv } from "@vercel/kv";
-import { getPremiumRecord, setPremiumRecord } from "./utils/premiumStore.js";
+import { getPremiumRecord } from "./utils/premiumStore.js";
 import { verifyToken } from "./utils/jwt.js";
-// <== Add this line
+import Stripe from "stripe";
 
 /* ------------------------------------------------------------------ */
 /* Auth helper                                                         */
 /* ------------------------------------------------------------------ */
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY is not set");
+}
+
 
 function getAuthUser(req) {
   const auth = req.headers.authorization || "";
@@ -36,6 +44,37 @@ export default async function handler(req, res) {
   const userId = authUser.userId;
 
   try {
+
+    /* -------------------------------------------------------------- */
+    /* CANCEL STRIPE TRIAL (OPTION A – SOURCE OF TRUTH)               */
+    /* -------------------------------------------------------------- */
+
+    if (action === "cancel-trial") {
+      const record = await getPremiumRecord(userId);
+
+      if (!record?.stripeCustomerId) {
+        // No Stripe customer → nothing to cancel
+        return res.status(200).json({ ok: true });
+      }
+
+      // Find active trialing subscription
+      const subs = await stripe.subscriptions.list({
+        customer: record.stripeCustomerId,
+        status: "trialing",
+        limit: 1,
+      });
+
+      if (subs.data.length === 0) {
+        // No trial subscription → safe no-op
+        return res.status(200).json({ ok: true });
+      }
+
+      // ❗ Cancel immediately to prevent future charge
+      await stripe.subscriptions.del(subs.data[0].id);
+
+      return res.status(200).json({ ok: true });
+    }
+
     /* -------------------------------------------------------------- */
     /* GET PREMIUM STATUS (Stripe truth passthrough)                  */
     /* -------------------------------------------------------------- */
@@ -66,60 +105,60 @@ export default async function handler(req, res) {
     /* START LOCAL TRIAL (NO STRIPE YET)                               */
     /* -------------------------------------------------------------- */
 
-    if (action === "start-trial") {
-      const existing = (await getPremiumRecord(userId)) || {};
+    // if (action === "start-trial") {
+    //   const existing = (await getPremiumRecord(userId)) || {};
 
-      if (
-        existing.status === "active" ||
-        existing.status === "trialing"
-      ) {
-        return res.status(400).json({ error: "Already premium or trialing" });
-      }
+    //   if (
+    //     existing.status === "active" ||
+    //     existing.status === "trialing"
+    //   ) {
+    //     return res.status(400).json({ error: "Already premium or trialing" });
+    //   }
 
-      if (existing.trialEnds) {
-        return res.status(400).json({ error: "Trial already used" });
-      }
+    //   if (existing.trialEnds) {
+    //     return res.status(400).json({ error: "Trial already used" });
+    //   }
 
-      // 7-day trial (unix seconds)
-      const trialEnds =
-        Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+    //   // 7-day trial (unix seconds)
+    //   const trialEnds =
+    //     Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
 
-      await setPremiumRecord(userId, {
-        status: "trialing",
-        trialEnds,
-        currentPeriodEnd: trialEnds,
-      });
+    //   await setPremiumRecord(userId, {
+    //     status: "trialing",
+    //     trialEnds,
+    //     currentPeriodEnd: trialEnds,
+    //   });
 
-      return res.status(200).json({
-        status: "trialing",
-        trialEnds,
-        currentPeriodEnd: trialEnds,
-      });
-    }
+    //   return res.status(200).json({
+    //     status: "trialing",
+    //     trialEnds,
+    //     currentPeriodEnd: trialEnds,
+    //   });
+    // }
 
     /* -------------------------------------------------------------- */
     /* CANCEL LOCAL TRIAL                                              */
     /* -------------------------------------------------------------- */
 
-    if (action === "cancel-trial") {
-      const existing = (await getPremiumRecord(userId)) || {};
+    // if (action === "cancel-trial") {
+    //   const existing = (await getPremiumRecord(userId)) || {};
 
-      if (existing.status !== "trialing") {
-        return res.status(400).json({ error: "No active trial" });
-      }
+    //   if (existing.status !== "trialing") {
+    //     return res.status(400).json({ error: "No active trial" });
+    //   }
 
-      await setPremiumRecord(userId, {
-        status: "canceled",
-        trialEnds: null,
-        currentPeriodEnd: null,
-      });
+    //   await setPremiumRecord(userId, {
+    //     status: "canceled",
+    //     trialEnds: null,
+    //     currentPeriodEnd: null,
+    //   });
 
-      return res.status(200).json({
-        status: "canceled",
-        trialEnds: null,
-        currentPeriodEnd: null,
-      });
-    }
+    //   return res.status(200).json({
+    //     status: "canceled",
+    //     trialEnds: null,
+    //     currentPeriodEnd: null,
+    //   });
+    // }
 
     return res.status(400).json({ error: "Invalid action" });
   } catch (err) {

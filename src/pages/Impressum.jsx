@@ -30,6 +30,7 @@ export default function Impressum() {
             <div>{streetAndNo}</div>
             <div>{zipCity}</div>
             <div>{country}</div>
+            <div>Einzelunternehmen</div>
           </div>
         </section>
 

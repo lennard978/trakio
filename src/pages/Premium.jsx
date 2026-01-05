@@ -102,13 +102,20 @@ export default function Premium() {
           {t("premium_checkout_consent")}
         </p>
 
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
-            className="mt-1 accent-blue-600"
-          />
+        <label className="flex flex-col items-start gap-3 cursor-pointer">
+          <div className="flex flex-row gap-3">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="mt-1 accent-orange-600"
+            />
+            {!accepted && (
+              <p className="text-xs dark:text-orange-400 mt-2">
+                {t("premium_accept") || "Please accept the terms to start your free trial."}
+              </p>
+            )}
+          </div>
           <span className="text-xs text-gray-700 dark:text-gray-300">
             {t("premium_checkout_checkbox")}
           </span>
@@ -121,10 +128,57 @@ export default function Premium() {
 
       {/* PRICING */}
       <div className="grid gap-4">
+        {/* YEARLY */}
+        <div className="
+  relative
+  rounded-2xl p-6 text-center
+  bg-blue-500/5 dark:bg-blue-500/10
+  border-2 border-orange-500
+  dark:border-orange-400 
+  shadow-xl dark:shadow-orange-500/10 hover:animate-[fadeIn_250ms_ease-out]">
+          <span className="
+    absolute -top-4 left-1/2 -translate-x-1/2
+    bg-orange-600 text-white
+    text-xs font-semibold
+    px-4 py-1 rounded-full
+    shadow
+  ">            {t("premium_best_value")}
+          </span>
+
+          <h3 className="font-semibold text-lg mt-2 text-orange-300">{t("premium_yearly_title")}</h3>
+          <div className="text-4xl font-bold mb-2 text-orange-400">{t("premium_yearly_price")}</div>
+          <p className="text-sm text-gray-600 mb-3 dark:text-gray-400">
+            {t("premium_yearly_note")}
+          </p>
+
+          <button
+            disabled={!accepted || premium.loading || !premium.loaded}
+            onClick={() => premium.startCheckout("yearly")}
+            className={`
+    w-full py-4 rounded-xl font-semibold text-lg
+    transition-all duration-150 ease-out
+    ${accepted
+                ? "bg-orange-400 dark:bg-orange-500 hover:scale-[1.015] hover:shadow-lg hover:shadow-orange-500/30 text-white"
+                : "bg-gray-600 text-gray-300 cursor-not-allowed"}
+    `}        >
+            {t("premium_yearly_button")}
+          </button>
+
+          <p className="text-xs text-gray-400 mt-3">
+            {t("premium_trial_note")}
+          </p>
+        </div>
         {/* MONTHLY */}
-        <div className="border rounded-2xl p-5 text-center dark:border-gray-800">
-          <h3 className="font-semibold mb-1">{t("premium_monthly_title")}</h3>
-          <div className="text-3xl font-bold mb-1">{t("premium_monthly_price")}</div>
+        <div className="
+  border border-gray-700
+  rounded-2xl
+  p-5
+  text-center
+  opacity-90
+">            <h3 className="font-medium mb-1">
+            {t("premium_monthly_title")}</h3>
+          <div className="text-2xl font-semibold mb-1">
+            {t("premium_monthly_price")}</div>
           <p className="text-sm text-gray-500 mb-4">
             {t("premium_monthly_note")}
           </p>
@@ -132,38 +186,21 @@ export default function Premium() {
           <button
             disabled={!accepted || premium.loading || !premium.loaded}
             onClick={() => premium.startCheckout("monthly")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
-          >
+            className={`
+      w-full py-3 rounded-xl font-medium
+      transition
+      ${accepted
+                ? "bg-gray-700 hover:bg-gray-600 text-white"
+                : "bg-gray-600 text-gray-300 cursor-not-allowed"}
+    `}         >
             {t("premium_monthly_button")}
           </button>
 
           <p className="text-xs text-gray-500 mt-2">
             {t("premium_trial_note")}
           </p>
-        </div>
-
-        {/* YEARLY */}
-        <div className="border-2 border-blue-600 rounded-2xl p-5 text-center relative">
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-            {t("premium_best_value")}
-          </span>
-
-          <h3 className="font-semibold mb-1">{t("premium_yearly_title")}</h3>
-          <div className="text-3xl font-bold mb-1">{t("premium_yearly_price")}</div>
-          <p className="text-xs text-gray-500 mb-4">
-            {t("premium_yearly_note")}
-          </p>
-
-          <button
-            disabled={!accepted || premium.loading || !premium.loaded}
-            onClick={() => premium.startCheckout("yearly")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium disabled:opacity-50"
-          >
-            {t("premium_yearly_button")}
-          </button>
-
           <p className="text-xs text-gray-500 mt-2">
-            {t("premium_trial_note")}
+            {t("premium_trial_auto_renew")}
           </p>
         </div>
       </div>

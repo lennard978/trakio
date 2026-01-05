@@ -33,10 +33,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 /**
  * Prevent downgrade from out-of-order events
  */
-function resolveStatus(prevStatus, nextStatus) {
-  if (prevStatus === "active" || prevStatus === "trialing") {
-    return prevStatus;
-  }
+function resolveStatus(_prevStatus, nextStatus) {
   return nextStatus;
 }
 

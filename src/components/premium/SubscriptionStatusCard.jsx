@@ -63,6 +63,11 @@ export default function SubscriptionStatusCard() {
   const trialTotalDays = 7;
   const daysLeft = premium.trialDaysLeft;
 
+  const trialDaysKey =
+    daysLeft === 1
+      ? "subscription_trial_days_left_one"
+      : "subscription_trial_days_left_other";
+
   const [highlightTrial, setHighlightTrial] = useState(false);
 
   useEffect(() => {
@@ -195,9 +200,12 @@ export default function SubscriptionStatusCard() {
 
           {/* Days left */}
           <p className="text-xs text-gray-500">
-            {t(daysLeft === 1 ? "subscription_trial_days_left" : "subscription_trial_days_left", {
-              days: daysLeft,
-            })}
+            {daysLeft !== null && (
+              <p className="text-xs text-gray-500">
+                {t(trialDaysKey, { days: daysLeft })}
+              </p>
+            )}
+
           </p>
 
 
@@ -277,7 +285,7 @@ export default function SubscriptionStatusCard() {
           {/* Start trial (primary CTA) */}
           {premium.noTrial && (
             <SettingButton
-              onClick={premium.startTrial}
+              onClick={() => navigate("/premium")}
               className={
                 highlightTrial
                   ? "ring-2 ring-orange-400 shadow-orange-500/40 shadow-lg animate-pulse-soft"
