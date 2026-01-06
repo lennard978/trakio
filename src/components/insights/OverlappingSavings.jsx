@@ -4,6 +4,7 @@ import { resolveProviderLink } from "../../utils/providerLinks";
 import { useTranslation } from "react-i18next";
 import { explainOverlap } from "../../utils/overlapExplanation";
 import SubscriptionComparisonBars from "./SubscriptionComparisonBars";
+import SubscriptionPriceHistoryLines from "./SubscriptionPriceHistoryLines";
 
 /**
  * Props:
@@ -13,6 +14,7 @@ import SubscriptionComparisonBars from "./SubscriptionComparisonBars";
  */
 export default function OverlappingSavings({
   overlaps = [],
+  subscriptions = [], // ✅ ADD
   hasPremiumAccess,
   onSaveNow,
 }) {
@@ -53,6 +55,10 @@ export default function OverlappingSavings({
           ? resolveProviderLink(cancelTarget.name)
           : null;
 
+        const historySubscriptions = subscriptions.filter(s =>
+          group.items.some(i => i.name === s.name)
+        );
+
         return (
           <div
             key={group.group}
@@ -69,6 +75,19 @@ export default function OverlappingSavings({
               {group.items.map((i) => i.name).join(" vs ")}
             </div>
 
+            <SubscriptionComparisonBars
+              items={group.items.map(i => ({
+                name: i.name,
+                price: i.price,
+                currency: i.currency || group.currency || "EUR",
+              }))}
+              keepName={group.keep?.name}
+            />
+            <SubscriptionPriceHistoryLines
+              subscriptions={historySubscriptions}
+              keepName={group.keep?.name}
+              currency={group.currency}
+            />
 
 
             {/* Recommended tooltip */}
@@ -83,15 +102,6 @@ export default function OverlappingSavings({
                 <InformationCircleIcon className="w-4 h-4" />
               </span>
             )}
-
-            <SubscriptionComparisonBars
-              items={group.items.map((i) => ({
-                name: i.name,
-                price: i.price,
-                currency: i.currency || group.currency || "EUR",
-              }))}
-              recommendedName={group.keep?.name}
-            />
 
             {/* Savings */}
             {group.potentialSavings > 0 && (

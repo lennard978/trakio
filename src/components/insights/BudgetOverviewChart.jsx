@@ -52,7 +52,6 @@ const Stat = ({ label, value }) => (
 );
 
 
-
 // ✨ Glossy gradient section container with light/dark mode
 const Section = ({ title, children }) => {
   return (
@@ -778,6 +777,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
               <div className="space-y-3">
                 <OverlappingSavings
                   overlaps={overlaps}
+                  subscriptions={subscriptions}   // ✅ ADD THIS
                   hasPremiumAccess={hasPremiumAccess}
                   onSaveNow={({ provider, message }) => {
                     setSaveNowProvider(provider);

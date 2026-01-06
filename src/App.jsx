@@ -217,11 +217,11 @@ export default function App() {
       {/* FOOTER */}
       <div className="fixed bottom-0 w-full flex justify-center bg-gray-300 dark:bg-gray-600 items-center font-bold">
         <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-300">
-          <Link to="/impressum" className="hover:underline">{t("footer.impressum")}</Link>
+          <Link to="/impressum" className="hover:underline">Impressum</Link>
           <span>|</span>
-          <Link to="/datenschutz" className="hover:underline">{t("footer.datenschutz")}</Link>
+          <Link to="/datenschutz" className="hover:underline">Datenschutz</Link>
           <span>|</span>
-          <Link to="/agb" className="hover:underline">{t("footer.agb")}</Link>
+          <Link to="/agb" className="hover:underline">AGB</Link>
         </div>
       </div>
 
