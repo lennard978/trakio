@@ -598,5 +598,11 @@
 	"settings_delete_account": "Delete account permanently",
 	"settings_delete_account_desc": "This will permanently delete your account and all associated data.",
 	"delete_account.confirm_title": "Delete account permanently",
-	"delete_account.confirm_text": "This will permanently delete your Trakio account and all associated personal data.\n\nAny active subscriptions will be cancelled and cannot be restored.\nThis action is irreversible.\n\nDo you want to proceed?"
+	"delete_account.confirm_text": "This will permanently delete your Trakio account and all associated personal data.\n\nAny active subscriptions will be cancelled and cannot be restored.\nThis action is irreversible.\n\nDo you want to proceed?",
+	"overlaps": {
+		"avoided_next_charge": "≈ {{amount}} {{currency}} will be avoided at the next renewal{{days}}",
+		"save_now_with_avoidance": "Cancel {{service}} before the next renewal to avoid a {{amount}} {{currency}} charge.",
+		"ai_explanation": "You have multiple {{group}} services ({{cancelled}} and {{kept}}). Keeping {{kept}} instead could reduce your recurring costs by {{amount}} {{currency}} per month without losing access to this category."
+	},
+	"common_in_days": "in {{d}} days"
 }

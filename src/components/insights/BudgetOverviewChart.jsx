@@ -25,7 +25,9 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "
 import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
 import InsightsSummary from "./InsightsSummary";
-import { ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, AcademicCapIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, ChartBarIcon, InformationCircleIcon
+} from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
 import { getNormalizedPayments } from "../../utils/payments";
@@ -33,23 +35,9 @@ import SmartForecastCard from "./SmartForecastCard";
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
 import { getAnnualCost } from '../../utils/annualCost';
 import { usePremium } from "../../hooks/usePremium";
-
-function explainOverlap({ group, keep, cancel, potentialSavings, currency }, t) {
-  if (!keep || !cancel?.length) return null;
-
-  const cancelledNames = cancel.map(c => c.name).join(" and ");
-
-  return t(
-    "overlaps.ai_explanation",
-    "You have multiple {{group}} services ({{cancelled}} and {{kept}}). Since {{kept}} is the cheapest option, keeping it could reduce your recurring costs by {{amount}} {{currency}} per month without losing access to this category."
-  )
-    .replace("{{group}}", group)
-    .replace("{{cancelled}}", cancelledNames)
-    .replaceAll("{{kept}}", keep.name)
-    .replace("{{amount}}", potentialSavings.toFixed(2))
-    .replace("{{currency}}", currency);
-}
-
+import { createPortal } from "react-dom";
+import { resolveProviderLink } from "../../utils/providerLinks";
+import OverlappingSavings from "./OverlappingSavings";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
@@ -124,6 +112,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   // === Overlapping subscriptions (Insights) ===
   const [overlaps, setOverlaps] = useState([]);
   const [overlapsLoading, setOverlapsLoading] = useState(false);
+  const [saveNowOpen, setSaveNowOpen] = useState(false);
+  const [saveNowMessage, setSaveNowMessage] = useState("");
+  const [saveNowProvider, setSaveNowProvider] = useState(null);
+
 
   // === Fetch overlapping services + savings ===
   useEffect(() => {
@@ -727,15 +719,15 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       <Section title={t("overlaps.title", "Overlapping Services & Savings")}>
         {/* === Total Savings Summary === */}
         {hasPremiumAccess && (totalAnnualSavings > 0 || totalMonthlySavings > 0) && (
-          <div className="mb-4 rounded-lg border border-green-500/40 
-                  bg-green-50 dark:bg-green-900/10 
+          <div className="mb-4 rounded-lg border border-orange-500/40 
+                  bg-orange-50 dark:bg-[#0e1420]
                   p-4 text-center space-y-1">
 
             <div className="text-sm text-green-700 dark:text-green-400">
               {t("overlaps.total_savings", "Your potential savings")}
             </div>
 
-            <div className="text-lg font-semibold text-green-800 dark:text-green-300">
+            <div className="text-lg font-semibold text-orange-800 dark:text-orange-300">
               {totalMonthlySavings.toFixed(2)} {overlaps[0]?.currency || "EUR"} / month
             </div>
 
@@ -753,7 +745,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                         `${v.toFixed(2)} ${overlaps[0]?.currency || "EUR"} / month`
                       }
                     />
-                    <Bar dataKey="value" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="value" fill="#ffa500" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -784,95 +776,17 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
             {/* BLUR LAYER */}
             <div className={!hasPremiumAccess ? "blur-sm select-none pointer-events-none" : ""}>
               <div className="space-y-3">
-                {overlaps.map((group) => (
-                  <div
-                    key={group.group}
-                    className="rounded-lg border border-gray-300 dark:border-gray-800/70 
-                         bg-white dark:bg-[#0e1420] p-3"
-                  >
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">
-                      {group.group}
-                    </div>
-
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {group.items.map((i) => i.name).join(" vs ")}
-                    </div>
-
-                    {/* Recommended to keep */}
-                    {group.keep && (
-                      <span className="inline-flex items-center gap-1">
-                        {t("overlaps.recommended_keep", "Recommended to keep")}: {group.keep.name}
-                        <span
-                          title={t(
-                            "overlaps.recommended_tooltip",
-                            "This is the cheapest option in this category."
-                          )}
-                          className="cursor-help text-gray-400"
-                        >
-                          ⓘ
-                        </span>
-                      </span>
-
-                    )}
-
-                    {group.potentialSavings > 0 && (
-                      <div className="mt-2 space-y-0.5">
-                        {/* Monthly savings */}
-                        <div className="text-sm font-medium text-green-600">
-                          {t(
-                            "overlaps.savings_monthly",
-                            "You could save {{amount}} / month"
-                          ).replace(
-                            "{{amount}}",
-                            `${group.potentialSavings.toFixed(2)} ${group.currency}`
-                          )}
-                        </div>
-
-                        {/* Annual savings */}
-                        <div className="text-xs text-green-700 dark:text-green-500">
-                          {t(
-                            "overlaps.savings_annual",
-                            "{{amount}} / year"
-                          ).replace(
-                            "{{amount}}",
-                            `${(group.potentialSavings * 12).toFixed(2)} ${group.currency}`
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Save now action */}
-                    {hasPremiumAccess && (
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          onClick={() =>
-                            alert(
-                              t(
-                                "overlaps.save_now_hint",
-                                "Tip: Cancel the more expensive subscription directly in the provider’s app or website."
-                              )
-                            )
-                          }
-                          className="text-xs px-3 py-1 rounded-full 
-                 border border-[#ED7014] text-[#ED7014]
-                 hover:bg-[#ED7014] hover:text-white
-                 transition"
-                        >
-                          {t("overlaps.save_now", "Save now")}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* AI explanation */}
-                    {group.potentialSavings > 0 && (
-                      <div className="mt-2 text-xs text-gray-700 dark:text-gray-400 italic">
-                        {explainOverlap(group, t)}
-                      </div>
-                    )}
+                <OverlappingSavings
+                  overlaps={overlaps}
+                  hasPremiumAccess={hasPremiumAccess}
+                  onSaveNow={({ provider, message }) => {
+                    setSaveNowProvider(provider);
+                    setSaveNowMessage(message);
+                    setSaveNowOpen(true);
+                  }}
+                />
 
 
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -909,6 +823,85 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
       <SubscriptionOptimizer subscriptions={subscriptions} currency={currency} rates={rates} />
       <InsightsSummary data={data} currency={currency} />
+
+      {/* Save Now Modal */}
+      {saveNowOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center 
+                 bg-black/60 backdrop-blur-sm"
+          >
+            <div
+              className="w-full max-w-md mx-4 rounded-2xl 
+                   bg-white dark:bg-[#0e1420] 
+                   border border-gray-300 dark:border-gray-800 
+                   shadow-2xl p-6 relative"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setSaveNowOpen(false);
+                  setSaveNowProvider(null);
+                }}
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {t("overlaps.save_now", "Save now")}
+              </h3>
+
+              <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+                {saveNowMessage}
+              </p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setSaveNowOpen(false)}
+                  className="px-4 py-2 rounded-full 
+                       bg-gray-200 dark:bg-gray-800 
+                       text-gray-800 dark:text-gray-100 
+                       text-sm"
+                >
+                  {t("common.close", "Close")}
+                </button>
+
+                {saveNowProvider?.cancelUrl ? (
+                  <a
+                    href={saveNowProvider.cancelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2 rounded-full 
+               bg-[#ED7014] text-white 
+               text-sm font-medium 
+               hover:opacity-90"
+                  >
+                    {t("overlaps.open_provider", "Open {{provider}}")
+                      .replace("{{provider}}", saveNowProvider.name)}
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSaveNowOpen(false);
+                      window.location.href = "/settings";
+                    }}
+                    className="px-5 py-2 rounded-full 
+               bg-[#ED7014] text-white 
+               text-sm font-medium 
+               hover:opacity-90"
+                  >
+                    {t("overlaps.manage_subscriptions", "Manage subscriptions")}
+                  </button>
+                )}
+
+              </div>
+            </div>
+          </div>,
+          document.getElementById("modal-root")
+        )}
+
 
     </div>
   );
