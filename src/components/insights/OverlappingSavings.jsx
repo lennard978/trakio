@@ -4,7 +4,7 @@ import { resolveProviderLink } from "../../utils/providerLinks";
 import { useTranslation } from "react-i18next";
 import { explainOverlap } from "../../utils/overlapExplanation";
 import SubscriptionComparisonBars from "./SubscriptionComparisonBars";
-import SubscriptionPriceHistoryLines from "./SubscriptionPriceHistoryLines";
+import PriceChangeSummary from "./PriceChangeSummary";
 
 /**
  * Props:
@@ -83,9 +83,9 @@ export default function OverlappingSavings({
               }))}
               keepName={group.keep?.name}
             />
-            <SubscriptionPriceHistoryLines
+
+            <PriceChangeSummary
               subscriptions={historySubscriptions}
-              keepName={group.keep?.name}
               currency={group.currency}
             />
 
