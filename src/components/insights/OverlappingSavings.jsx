@@ -3,6 +3,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { resolveProviderLink } from "../../utils/providerLinks";
 import { useTranslation } from "react-i18next";
 import { explainOverlap } from "../../utils/overlapExplanation";
+import SubscriptionComparisonBars from "./SubscriptionComparisonBars";
 
 /**
  * Props:
@@ -68,6 +69,8 @@ export default function OverlappingSavings({
               {group.items.map((i) => i.name).join(" vs ")}
             </div>
 
+
+
             {/* Recommended tooltip */}
             {group.keep && (
               <span
@@ -80,6 +83,15 @@ export default function OverlappingSavings({
                 <InformationCircleIcon className="w-4 h-4" />
               </span>
             )}
+
+            <SubscriptionComparisonBars
+              items={group.items.map((i) => ({
+                name: i.name,
+                price: i.price,
+                currency: i.currency || group.currency || "EUR",
+              }))}
+              recommendedName={group.keep?.name}
+            />
 
             {/* Savings */}
             {group.potentialSavings > 0 && (
