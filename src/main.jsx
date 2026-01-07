@@ -21,13 +21,13 @@ import { registerSW } from "virtual:pwa-register";
 import HardErrorBoundary
   from "./components/HardErrorBoundary.jsx";
 // Register PWA Service Worker asynchronously after render
-window.addEventListener("load", () => {
-  registerSW({ immediate: true });
-});
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  registerSW({ immediate: true });
-}
-
+// window.addEventListener("load", () => {
+//   registerSW({ immediate: true });
+// });
+// if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+//   registerSW({ immediate: true });
+// }
+registerSW({ immediate: true });
 ReactDOM.createRoot(document.getElementById("root")).render(
   <HardErrorBoundary>
     <AppProviders>
