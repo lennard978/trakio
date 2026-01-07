@@ -1,16 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import { usePremium } from "../hooks/usePremium";
 import { useTranslation } from "react-i18next";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import { useToast } from "../context/ToastContext";
-import { MONTHLY_FACTOR } from "../utils/frequency";
-import {
-  getCurrentMonthSpending,
-  getCurrentYearSpending,
-  getCurrentMonthDue,
-  getCurrentYearDue,
-} from "../utils/budget";
-
+import { getCurrentMonthSpending } from "../utils/budget";
 
 export default function MonthlyBudget({
   subscriptions,
@@ -28,27 +22,36 @@ export default function MonthlyBudget({
   });
 
   const [input, setInput] = useState(budget ?? "");
-  const [autoReset, setAutoReset] = useState(() => {
-    return localStorage.getItem("budget_auto_reset") === "1";
-  });
+  const [autoReset, setAutoReset] = useState(() => localStorage.getItem("budget_auto_reset") === "1");
 
-  const spent = useMemo(() => {
-    return getCurrentMonthSpending(subscriptions, currency, rates, convert);
-  }, [subscriptions, currency, rates, convert]);
+  const spent = useMemo(
+    () => getCurrentMonthSpending(subscriptions, currency, rates, convert),
+    [subscriptions, currency, rates, convert]
+  );
 
   const remaining = budget != null ? budget - spent : null;
+  const percentUsed = budget != null && budget > 0 ? Math.min(100, (spent / budget) * 100) : null;
 
-  const percentUsed =
-    budget != null && budget > 0 ? Math.min(100, (spent / budget) * 100) : null;
-
-  const saveBudget = () => {
+  // Save Budget
+  const saveBudget = useCallback(() => {
     const value = Number(input);
-    if (Number.isNaN(value) || value <= 0) return;
+    if (!Number.isFinite(value) || value <= 0) {
+      showToast(t("budget_invalid") || "Please enter a valid positive number", "error");
+      return;
+    }
     localStorage.setItem("monthly_budget", String(value));
     setBudget(value);
-  };
+    showToast(t("budget_saved") || "Budget saved successfully", "success");
+  }, [input, t, showToast]);
 
-  // Handle auto-reset every 1st of month
+  // Toggle Auto-Reset
+  const handleToggleReset = useCallback(() => {
+    const newValue = !autoReset;
+    setAutoReset(newValue);
+    localStorage.setItem("budget_auto_reset", newValue ? "1" : "0");
+  }, [autoReset]);
+
+  // Handle Auto-Reset on 1st of Month
   useEffect(() => {
     if (!autoReset) return;
 
@@ -61,12 +64,11 @@ export default function MonthlyBudget({
       setInput("");
       localStorage.removeItem("monthly_budget");
       localStorage.setItem("budget_last_reset", currentMonth);
+      showToast(t("budget_reset_toast") || "Monthly budget has been reset", "info");
     }
-    showToast("Monthly budget has been reset", "info");
+  }, [autoReset, showToast, t]);
 
-  }, [autoReset, showToast]);
-
-  // Sync on storage update
+  // Sync Budget Across Tabs
   useEffect(() => {
     const sync = () => {
       const v = localStorage.getItem("monthly_budget");
@@ -74,16 +76,9 @@ export default function MonthlyBudget({
       setInput(v ? Number(v) : "");
       setAutoReset(localStorage.getItem("budget_auto_reset") === "1");
     };
-
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
-
-  const handleToggleReset = () => {
-    const newValue = !autoReset;
-    setAutoReset(newValue);
-    localStorage.setItem("budget_auto_reset", newValue ? "1" : "0");
-  };
 
   return (
     <div
@@ -122,12 +117,12 @@ export default function MonthlyBudget({
         </button>
       </div>
 
-      {/* Budget info */}
+      {/* Budget Info */}
       <div className="text-sm space-y-2">
         <div className="flex justify-between text-gray-600 dark:text-gray-300">
           <span>{t("budget_spent")}</span>
           <span>
-            {currency} {spent.toFixed(2)}
+            {currency} {(Number(spent) || 0).toFixed(2)}
           </span>
         </div>
 
@@ -136,24 +131,34 @@ export default function MonthlyBudget({
             <div className="flex justify-between font-medium text-gray-800 dark:text-gray-100">
               <span>{t("budget_remaining")}</span>
               <span className={remaining < 0 ? "text-red-500" : ""}>
-                {currency} {remaining.toFixed(2)}
+                {currency} {(Number(remaining) || 0).toFixed(2)}
               </span>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress Bar */}
             <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-800 mt-1 overflow-hidden">
               <div
                 className={`h-2 transition-all duration-700 ease-out ${percentUsed < 90
-                  ? "bg-green-500"
-                  : percentUsed <= 100
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                    ? "bg-green-500"
+                    : percentUsed <= 100
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                   }`}
-                style={{ width: `${percentUsed}%` }}
+                style={{
+                  width: `${percentUsed}%`,
+                  transition: "width 0.7s ease-in-out",
+                }}
               />
             </div>
 
-            {/* Alert */}
+            {/* Progress Percent */}
+            {percentUsed !== null && (
+              <div className="flex justify-end text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {percentUsed.toFixed(0)}%
+              </div>
+            )}
+
+            {/* Alerts */}
             {percentUsed >= 90 && percentUsed < 100 && (
               <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                 ⚠️ {t("budget_alert_high")}
@@ -162,7 +167,7 @@ export default function MonthlyBudget({
 
             {percentUsed >= 100 && (
               <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                ❗ {t("budget_alert_high")}
+                ❗ {t("budget_alert_exceeded")}
               </div>
             )}
           </>
@@ -192,3 +197,10 @@ export default function MonthlyBudget({
     </div>
   );
 }
+
+MonthlyBudget.propTypes = {
+  subscriptions: PropTypes.array.isRequired,
+  currency: PropTypes.string.isRequired,
+  rates: PropTypes.object,
+  convert: PropTypes.func,
+};

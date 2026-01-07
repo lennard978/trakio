@@ -1,7 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+
+// App
 import App from "./App.jsx";
 import "./index.css";
+import "./i18n.js";
 
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
@@ -13,38 +16,24 @@ import "@fontsource/inter-tight/600.css";
 import "@fontsource/inter-tight/700.css";
 
 import { BrowserRouter } from "react-router-dom";
-import { ToastProvider } from "./context/ToastContext";
-import { AuthProvider } from "./hooks/useAuth";
-import { PremiumProvider } from "./context/PremiumContext";
-import { ThemeProvider } from "./context/ThemeContext";
-import { CurrencyProvider } from "./context/CurrencyContext";
-import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import "./i18n.js";
-const Router = BrowserRouter;
-
+import { AppProviders } from "./context/AppProviders";
 import { registerSW } from "virtual:pwa-register";
-import HardErrorBoundary from "./components/HardErrorBoundary";
-
-registerSW({ immediate: true });
-
-// document.documentElement.classList.add("ready");
+import HardErrorBoundary
+  from "./components/HardErrorBoundary.jsx";
+// Register PWA Service Worker asynchronously after render
+window.addEventListener("load", () => {
+  registerSW({ immediate: true });
+});
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  registerSW({ immediate: true });
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <PremiumProvider>
-              <Router >
-                <CurrencyProvider>
-                  <App />
-                </CurrencyProvider>
-              </Router>
-            </PremiumProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
+  <HardErrorBoundary>
+    <AppProviders>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AppProviders>
+  </HardErrorBoundary>
 );

@@ -1,20 +1,57 @@
+// src/utils/spending.js
 import { getNormalizedPayments } from "./payments";
 
-/**
- * Total amount paid this month.
- */
-export function getCurrentMonthSpending(subs, currency, rates, convert) {
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+function isSameMonth(date, year, month) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false;
+  return date.getFullYear() === year && date.getMonth() === month;
+}
+
+function isSameYear(date, year) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return false;
+  return date.getFullYear() === year;
+}
+
+function safeNumber(n) {
+  const v = Number(n);
+  return Number.isFinite(v) ? v : 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Total amount paid this month                                       */
+/* ------------------------------------------------------------------ */
+
+export function getCurrentMonthSpending(
+  subs = [],
+  currency,
+  rates,
+  convert
+) {
+  if (!Array.isArray(subs)) return 0;
+
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
 
   let total = 0;
+
   subs.forEach((s) => {
-    const payments = getNormalizedPayments(s, currency, rates, convert);
+    if (!s) return;
+
+    let payments = [];
+    try {
+      payments = getNormalizedPayments(s, currency, rates, convert) || [];
+    } catch {
+      return;
+    }
+
     payments.forEach((p) => {
       const d = new Date(p.date);
-      if (d.getFullYear() === y && d.getMonth() === m) {
-        total += p.amount;
+      if (isSameMonth(d, y, m)) {
+        total += safeNumber(p.amount);
       }
     });
   });
@@ -22,20 +59,37 @@ export function getCurrentMonthSpending(subs, currency, rates, convert) {
   return Number(total.toFixed(2));
 }
 
-/**
- * Total amount paid this year.
- */
-export function getCurrentYearSpending(subs, currency, rates, convert) {
+/* ------------------------------------------------------------------ */
+/* Total amount paid this year                                        */
+/* ------------------------------------------------------------------ */
+
+export function getCurrentYearSpending(
+  subs = [],
+  currency,
+  rates,
+  convert
+) {
+  if (!Array.isArray(subs)) return 0;
+
   const now = new Date();
   const y = now.getFullYear();
 
   let total = 0;
+
   subs.forEach((s) => {
-    const payments = getNormalizedPayments(s, currency, rates, convert);
+    if (!s) return;
+
+    let payments = [];
+    try {
+      payments = getNormalizedPayments(s, currency, rates, convert) || [];
+    } catch {
+      return;
+    }
+
     payments.forEach((p) => {
       const d = new Date(p.date);
-      if (d.getFullYear() === y) {
-        total += p.amount;
+      if (isSameYear(d, y)) {
+        total += safeNumber(p.amount);
       }
     });
   });
@@ -43,48 +97,92 @@ export function getCurrentYearSpending(subs, currency, rates, convert) {
   return Number(total.toFixed(2));
 }
 
-/**
- * Total amount *due* (unpaid) this month.
- */
-export function getCurrentMonthDue(subs, currency, rates, convert) {
+/* ------------------------------------------------------------------ */
+/* Total amount due (unpaid) this month                                */
+/* ------------------------------------------------------------------ */
+
+export function getCurrentMonthDue(
+  subs = [],
+  currency,
+  rates,
+  convert
+) {
+  if (!Array.isArray(subs)) return 0;
+
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
 
   let total = 0;
+
   subs.forEach((s) => {
-    const payments = getNormalizedPayments(s, currency, rates, convert);
-    const hasPaidThisMonth = payments.some((p) => {
-      const d = new Date(p.date);
-      return d.getFullYear() === y && d.getMonth() === m;
-    });
+    if (!s || typeof convert !== "function") return;
+
+    let payments = [];
+    try {
+      payments = getNormalizedPayments(s, currency, rates, convert) || [];
+    } catch {
+      return;
+    }
+
+    const hasPaidThisMonth = payments.some((p) =>
+      isSameMonth(new Date(p.date), y, m)
+    );
 
     if (!hasPaidThisMonth) {
-      total += convert(s.price, s.currency, currency, rates);
+      try {
+        total += safeNumber(
+          convert(s.price, s.currency, currency, rates)
+        );
+      } catch {
+        /* ignore conversion failures */
+      }
     }
   });
 
   return Number(total.toFixed(2));
 }
 
-/**
- * Total amount *due* (unpaid) this year.
- * Optional — only includes subs not paid at all this year.
- */
-export function getCurrentYearDue(subs, currency, rates, convert) {
+/* ------------------------------------------------------------------ */
+/* Total amount due (unpaid) this year                                 */
+/* Only includes subs not paid at all this year                        */
+/* ------------------------------------------------------------------ */
+
+export function getCurrentYearDue(
+  subs = [],
+  currency,
+  rates,
+  convert
+) {
+  if (!Array.isArray(subs)) return 0;
+
   const now = new Date();
   const y = now.getFullYear();
 
   let total = 0;
+
   subs.forEach((s) => {
-    const payments = getNormalizedPayments(s, currency, rates, convert);
-    const hasPaidThisYear = payments.some((p) => {
-      const d = new Date(p.date);
-      return d.getFullYear() === y;
-    });
+    if (!s || typeof convert !== "function") return;
+
+    let payments = [];
+    try {
+      payments = getNormalizedPayments(s, currency, rates, convert) || [];
+    } catch {
+      return;
+    }
+
+    const hasPaidThisYear = payments.some((p) =>
+      isSameYear(new Date(p.date), y)
+    );
 
     if (!hasPaidThisYear) {
-      total += convert(s.price, s.currency, currency, rates);
+      try {
+        total += safeNumber(
+          convert(s.price, s.currency, currency, rates)
+        );
+      } catch {
+        /* ignore conversion failures */
+      }
     }
   });
 

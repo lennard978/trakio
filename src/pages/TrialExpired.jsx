@@ -4,48 +4,66 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePremium } from "../hooks/usePremium";
 
+// UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+
+/**
+ * TrialExpired
+ * - Shown when free trial has ended
+ * - Guides user to upgrade or continue in read-only mode
+ */
 export default function TrialExpired() {
   const { t } = useTranslation();
   const premium = usePremium();
   const navigate = useNavigate();
 
   return (
-    <div className="flex justify-center mt-16 px-4">
-      <div className="
-        max-w-md w-full p-8 rounded-xl shadow-lg
-        bg-white dark:bg-gray-900
-        border border-gray-200 dark:border-gray-800
-        text-center
-      ">
-        <h1 className="text-2xl font-semibold mb-4">
-          {t("trial_expired_title")}
-        </h1>
+    <main className="flex justify-center mt-16 px-4">
+      <section
+        className="max-w-md w-full"
+        aria-labelledby="trial-expired-title"
+      >
+        <Card className="p-8 text-center space-y-6">
+          <header className="space-y-3">
+            <h1
+              id="trial-expired-title"
+              className="text-2xl font-semibold"
+            >
+              {t("trial_expired_title")}
+            </h1>
 
-        <p className="mb-6 leading-relaxed text-sm text-gray-700 dark:text-gray-200">
-          {t("trial_expired_message")}
-        </p>
+            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-200">
+              {t("trial_expired_message")}
+            </p>
+          </header>
 
-        <button
-          disabled={premium.loading}
-          onClick={() => navigate("/premium")}
-          className="
-            w-full py-2 mb-4
-            bg-blue-600 text-white font-medium rounded-md
-            hover:bg-blue-700 transition active:scale-95
-            disabled:opacity-50
-          "
-        >
-          {t("trial_expired_button")}
-        </button>
+          {/* Primary CTA */}
+          <SettingButton
+            variant="primary"
+            disabled={premium.loading}
+            onClick={() => navigate("/premium")}
+            className="w-full"
+          >
+            {t("trial_expired_button")}
+          </SettingButton>
 
-        <Link
-          to="/dashboard"
-          className="text-blue-600 dark:text-blue-300 hover:underline text-sm"
-        >
-          {t("trial_expired_continue_read_only")}
-        </Link>
+          {/* Secondary action */}
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("trial_expired_readonly_hint", {
+              defaultValue:
+                "You can continue using the app in read-only mode.",
+            })}
+          </p>
 
-      </div>
-    </div>
+          <Link
+            to="/dashboard"
+            className="text-sm text-blue-600 dark:text-blue-300 hover:underline"
+          >
+            {t("trial_expired_continue_read_only")}
+          </Link>
+        </Card>
+      </section>
+    </main>
   );
 }

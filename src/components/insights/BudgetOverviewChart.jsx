@@ -14,6 +14,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import PropTypes from "prop-types";
 import {
   getCurrentMonthSpending,
   getCurrentYearSpending,
@@ -21,12 +22,12 @@ import {
   getCurrentYearDue,
 } from "../../utils/budget";
 
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
 import InsightsSummary from "./InsightsSummary";
 import {
-  ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, ChartBarIcon, InformationCircleIcon
+  ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, ChartBarIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
@@ -36,7 +37,6 @@ import SubscriptionOptimizer from "./SubscriptionOptimizer";
 import { getAnnualCost } from '../../utils/annualCost';
 import { usePremium } from "../../hooks/usePremium";
 import { createPortal } from "react-dom";
-import { resolveProviderLink } from "../../utils/providerLinks";
 import OverlappingSavings from "./OverlappingSavings";
 
 const COLORS = [
@@ -86,7 +86,7 @@ function PieCenterLabel({ viewBox, title, value }) {
 // === Animated Number Counter ===
 function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 2, duration = 1 }) {
   const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (latest) => latest.toFixed(decimals));
+  // const rounded = useTransform(motionValue, (latest) => latest.toFixed(decimals));
   const [display, setDisplay] = useState("0");
 
   useEffect(() => {
@@ -245,10 +245,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
 
 
-  const trends = spendingData.map(d => ({ label: d.month, total: d.value }));
-  const prev = trends[trends.length - 2]?.total ?? 0;
-  const curr = trends[trends.length - 1]?.total ?? 0;
-  const growthRate = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
+  // const trends = spendingData.map(d => ({ label: d.month, total: d.value }));
+  // const prev = trends[trends.length - 2]?.total ?? 0;
+  // const curr = trends[trends.length - 1]?.total ?? 0;
+  // const growthRate = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
 
 
   const frequencies = {};
@@ -906,3 +906,34 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     </div>
   );
 }
+BudgetOverviewChart.propTypes = {
+  // List of subscriptions (typically fetched from an API or context)
+  subscriptions: PropTypes.array.isRequired,
+
+  // Exchange rates (used for currency conversion)
+  rates: PropTypes.object.isRequired,
+};
+
+Stat.propTypes = {
+  label: PropTypes.string.isRequired, // Label text to display
+  value: PropTypes.node.isRequired,   // Value to display (could be a string, number, or any renderable node)
+};
+Section.propTypes = {
+  title: PropTypes.string,           // Optional title text
+  children: PropTypes.node.isRequired,  // Content inside the section
+};
+PieCenterLabel.propTypes = {
+  viewBox: PropTypes.shape({
+    cx: PropTypes.number.isRequired,  // X position of the pie chart's center
+    cy: PropTypes.number.isRequired,  // Y position of the pie chart's center
+  }).isRequired,
+  title: PropTypes.string.isRequired,  // The title to display at the center
+  value: PropTypes.string.isRequired,  // The value to display at the center
+};
+AnimatedNumber.propTypes = {
+  value: PropTypes.number.isRequired,    // The target number value to animate to
+  prefix: PropTypes.string,               // Optional prefix to display before the value
+  suffix: PropTypes.string,               // Optional suffix to display after the value
+  decimals: PropTypes.number,             // Optional number of decimal places (default is 2)
+  duration: PropTypes.number,             // Optional animation duration (default is 1 second)
+};

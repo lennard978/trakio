@@ -1,3 +1,6 @@
+// src/components/ui/PaymentMethodIcon.jsx
+import React from "react";
+import PropTypes from "prop-types";
 import {
   FaCcVisa,
   FaCcMastercard,
@@ -7,21 +10,46 @@ import {
   FaCcAmex,
 } from "react-icons/fa";
 
-export default function PaymentMethodIcon({ method }) {
-  switch (method?.toLowerCase()) {
+/**
+ * PaymentMethodIcon
+ * Renders a credit/payment method icon based on method string.
+ */
+export default function PaymentMethodIcon({ method, className = "" }) {
+  if (!method) return null;
+
+  const normalized = method.toLowerCase();
+
+  const iconProps = {
+    className: `inline-block text-lg ${className}`,
+    "aria-hidden": true,
+  };
+
+  switch (normalized) {
     case "visa":
-      return <FaCcVisa className="text-blue-600" />;
+      return <FaCcVisa {...iconProps} className={`${iconProps.className} text-blue-600`} />;
     case "mastercard":
-      return <FaCcMastercard className="text-red-600" />;
+      return <FaCcMastercard {...iconProps} className={`${iconProps.className} text-red-600`} />;
     case "paypal":
-      return <FaPaypal className="text-blue-400" />;
+      return <FaPaypal {...iconProps} className={`${iconProps.className} text-blue-400`} />;
     case "google pay":
-      return <FaGooglePay className="text-gray-800" />;
+    case "googlepay":
+      return <FaGooglePay {...iconProps} className={`${iconProps.className} text-gray-800`} />;
     case "apple pay":
-      return <FaApplePay className="text-gray-600" />;
+    case "applepay":
+      return <FaApplePay {...iconProps} className={`${iconProps.className} text-gray-600`} />;
     case "amex":
-      return <FaCcAmex className="text-indigo-600" />;
+    case "american express":
+      return <FaCcAmex {...iconProps} className={`${iconProps.className} text-indigo-600`} />;
     default:
       return null;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* PropTypes                                                          */
+/* ------------------------------------------------------------------ */
+
+PaymentMethodIcon.propTypes = {
+  method: PropTypes.string,
+  className: PropTypes.string,
+};

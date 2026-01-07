@@ -1,33 +1,47 @@
-// /src/pages/AccountDeleted.jsx
+// src/pages/AccountDeleted.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 export default function AccountDeleted() {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="max-w-md text-center space-y-4">
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-          Account deleted successfully
+          {t("account_deleted_title")}
         </h1>
 
         <p className="text-gray-600 dark:text-gray-300">
-          Your Trakio account and all associated personal data have been permanently deleted.
+          {t("account_deleted_message")}
         </p>
 
         <p className="text-gray-600 dark:text-gray-300">
-          Any active subscriptions have been cancelled and no further charges will be made.
+          {t("account_deleted_subscription_note")}
         </p>
 
-        <p className="text-sm text-gray-500">
-          If you have questions, contact{" "}
-          <a href="mailto:support@trakio.de" className="underline">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("account_deleted_support")}{" "}
+          <a
+            href="mailto:support@trakio.de"
+            className="underline hover:text-gray-700 dark:hover:text-gray-200"
+          >
             support@trakio.de
           </a>
         </p>
 
-        <a
-          href="/"
-          className="inline-block mt-4 px-4 py-2 rounded bg-orange-600 text-white"
+        <Link
+          to="/"
+          className="
+            inline-block mt-4 px-4 py-2
+            rounded bg-orange-600 text-white
+            hover:bg-orange-700 transition
+            active:scale-95
+          "
         >
-          Back to homepage
-        </a>
+          {t("account_deleted_back_home")}
+        </Link>
       </div>
     </div>
   );

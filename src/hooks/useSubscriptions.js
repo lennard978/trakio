@@ -37,6 +37,7 @@ export function useSubscriptions(user) {
             setSubscriptions(remote);
             await saveSubscriptionsLocal(remote);
           }
+          // eslint-disable-next-line no-unused-vars
         } catch (err) {
           console.warn("Backend fetch failed, using local cache");
         }

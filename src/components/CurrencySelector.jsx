@@ -1,53 +1,126 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+// src/components/ui/CurrencySelector.jsx
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
+import PropTypes from "prop-types";
 
-const supportedCurrencies = [
+/* ------------------------------------------------------------------ */
+/* Supported currencies                                               */
+/* ------------------------------------------------------------------ */
+
+export const SUPPORTED_CURRENCIES = [
   "EUR", "USD", "GBP", "CHF", "PLN", "SEK", "DKK", "NOK", "JPY",
   "CAD", "AUD", "NZD", "CZK", "HUF", "RON", "BGN", "RSD", "HRK",
   "BAM", "TRY", "CNY", "HKD", "SGD", "ZAR", "MXN", "BRL", "INR",
-  "KRW", "TWD", "THB", "PHP", "IDR", "MYR", "ILS", "AED"
+  "KRW", "TWD", "THB", "PHP", "IDR", "MYR", "ILS", "AED",
 ];
 
+const FLAG_MAP = {
+  USD: "🇺🇸",
+  EUR: "🇪🇺",
+  GBP: "🇬🇧",
+  JPY: "🇯🇵",
+  CAD: "🇨🇦",
+  AUD: "🇦🇺",
+  NZD: "🇳🇿",
+  CNY: "🇨🇳",
+  INR: "🇮🇳",
+  BRL: "🇧🇷",
+  SEK: "🇸🇪",
+  NOK: "🇳🇴",
+  DKK: "🇩🇰",
+  CHF: "🇨🇭",
+  PLN: "🇵🇱",
+  HUF: "🇭🇺",
+  CZK: "🇨🇿",
+  RON: "🇷🇴",
+  BGN: "🇧🇬",
+  SGD: "🇸🇬",
+  MXN: "🇲🇽",
+  ZAR: "🇿🇦",
+  KRW: "🇰🇷",
+  THB: "🇹🇭",
+  TWD: "🇹🇼",
+  PHP: "🇵🇭",
+  IDR: "🇮🇩",
+  MYR: "🇲🇾",
+  ILS: "🇮🇱",
+  AED: "🇦🇪",
+  TRY: "🇹🇷",
+  HKD: "🇭🇰",
+  RSD: "🇷🇸",
+  HRK: "🇭🇷",
+  BAM: "🇧🇦",
+};
+
 function getFlagEmoji(code) {
-  const map = {
-    USD: "🇺🇸", EUR: "🇪🇺", GBP: "🇬🇧", JPY: "🇯🇵", CAD: "🇨🇦", AUD: "🇦🇺", NZD: "🇳🇿",
-    CNY: "🇨🇳", INR: "🇮🇳", BRL: "🇧🇷", SEK: "🇸🇪", NOK: "🇳🇴", DKK: "🇩🇰", CHF: "🇨🇭",
-    PLN: "🇵🇱", HUF: "🇭🇺", CZK: "🇨🇿", RON: "🇷🇴", BGN: "🇧🇬", SGD: "🇸🇬", MXN: "🇲🇽",
-    ZAR: "🇿🇦", KRW: "🇰🇷", THB: "🇹🇭", TWD: "🇹🇼", PHP: "🇵🇭", IDR: "🇮🇩", MYR: "🇲🇾",
-    ILS: "🇮🇱", AED: "🇦🇪", TRY: "🇹🇷", HKD: "🇭🇰", RSD: "🇷🇸", HRK: "🇭🇷", BAM: "🇧🇦"
-  };
-  return map[code] || "🏳️";
+  return FLAG_MAP[code] || "🏳️";
 }
 
-export default function CurrencySelector({ value, onChange, onOpenChange }) {
-  const [open, setOpen] = useState(false);
+/* ------------------------------------------------------------------ */
+/* Component                                                          */
+/* ------------------------------------------------------------------ */
 
+export default function CurrencySelector({
+  value,
+  onChange,
+  onOpenChange,
+  disabled = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  const selected = value && SUPPORTED_CURRENCIES.includes(value)
+    ? value
+    : "EUR";
+
+  /* ---------- Notify parent of open state ---------- */
   useEffect(() => {
-    onOpenChange?.(open);
+    if (typeof onOpenChange === "function") {
+      onOpenChange(open);
+    }
   }, [open, onOpenChange]);
 
-  const containerRef = useRef(null);
-  const selected = value || "EUR";
-
+  /* ---------- Close on outside click ---------- */
   useEffect(() => {
+    if (!open) return;
+
     const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target)
+      ) {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    if (open) document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  /* ---------- Close on ESC ---------- */
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+    return () =>
+      document.removeEventListener("keydown", handleEsc);
+  }, [open]);
+
+  /* ---------- Select currency ---------- */
   const selectCurrency = useCallback(
     (currency) => {
+      if (!SUPPORTED_CURRENCIES.includes(currency)) return;
       onChange(currency);
       setOpen(false);
     },
@@ -58,31 +131,62 @@ export default function CurrencySelector({ value, onChange, onOpenChange }) {
     <div className="relative" ref={containerRef}>
       <button
         type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="flex gap-1 items-center px-3 py-2 justify-center
-        rounded-2xl
-        bg-white/20 dark:bg-black/20
-        backdrop-blur-xl
-        border border-white/30 dark:border-white/10
-        shadow-[0_8px_20px_rgba(0,0,0,0.25)]
-        transition-all active:scale-95"
+        className="
+          flex gap-1 items-center justify-center
+          px-3 py-2 rounded-2xl
+          bg-white/20 dark:bg-black/20
+          backdrop-blur-xl
+          border border-white/30 dark:border-white/10
+          shadow-[0_8px_20px_rgba(0,0,0,0.25)]
+          transition-all active:scale-95
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        "
       >
-        <span>{getFlagEmoji(selected)}</span>
-        <span>{selected}</span>
-        <span className={`form-arrow transition-transform ${open ? "rotate-180" : "rotate-0"}`}>▾</span>
+        <span aria-hidden>{getFlagEmoji(selected)}</span>
+        <span className="font-medium">{selected}</span>
+        <span
+          className={`transition-transform ${open ? "rotate-180" : "rotate-0"
+            }`}
+          aria-hidden
+        >
+          ▾
+        </span>
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-2 z-[60] bg-white dark:bg-gray-900 border rounded-xl shadow-xl max-h-64 overflow-y-auto">
-          {supportedCurrencies.map((code) => (
+        <div
+          role="listbox"
+          className="
+            absolute left-0 right-0 mt-2 z-[60]
+            bg-white dark:bg-gray-900
+            border border-gray-200 dark:border-gray-700
+            rounded-xl shadow-xl
+            max-h-64 overflow-y-auto
+          "
+        >
+          {SUPPORTED_CURRENCIES.map((code) => (
             <button
               key={code}
               type="button"
+              role="option"
+              aria-selected={selected === code}
               onClick={() => selectCurrency(code)}
-              className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 ${selected === code ? "bg-gray-50 dark:bg-gray-800" : ""
-                }`}
+              className={`
+                w-full px-4 py-3 text-left text-sm
+                hover:bg-gray-100 dark:hover:bg-gray-800
+                ${selected === code
+                  ? "bg-gray-50 dark:bg-gray-800 font-medium"
+                  : ""}
+              `}
             >
-              <span className="mr-2">{getFlagEmoji(code)}</span> {code}
+              <span className="mr-2" aria-hidden>
+                {getFlagEmoji(code)}
+              </span>
+              {code}
             </button>
           ))}
         </div>
@@ -90,3 +194,14 @@ export default function CurrencySelector({ value, onChange, onOpenChange }) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* PropTypes                                                          */
+/* ------------------------------------------------------------------ */
+
+CurrencySelector.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  onOpenChange: PropTypes.func,
+  disabled: PropTypes.bool,
+};

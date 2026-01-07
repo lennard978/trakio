@@ -1,30 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+// import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { usePremium } from "../hooks/usePremium";
+// import { usePremium } from "../hooks/usePremium";
 import SubscriptionStatusCard from "../components/premium/SubscriptionStatusCard";
 import { useCurrency } from "../context/CurrencyContext";
 import { useTheme } from "../hooks/useTheme";
-import { MoonIcon, LanguageIcon, DocumentTextIcon, StarIcon, ShareIcon, UserCircleIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
-import ThemeSwitch from "../components/ui/ThemeSwitch";
-import { startTransition } from "react";
-// UI
-import Card from "../components/ui/Card";
-import SettingButton from "../components/ui/SettingButton";
-import SettingsRow from "../components/ui/SettingsRow";
-import languages from "../utils/languages";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { persistSubscriptions } from "../utils/persistSubscriptions";
-import { loadSubscriptionsLocal } from "../utils/mainDB";
-import { toast } from "react-hot-toast";
-
 import {
+  MoonIcon,
+  LanguageIcon,
+  DocumentTextIcon,
+  ShareIcon,
+  UserCircleIcon,
+  BuildingOfficeIcon,
+  TrashIcon,
   GlobeAltIcon,
   ArrowDownTrayIcon,
   ShieldCheckIcon,
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
+import ThemeSwitch from "../components/ui/ThemeSwitch";
+import { startTransition } from "react";
+
+// UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+import SettingsRow from "../components/ui/SettingsRow";
+import languages from "../utils/languages";
+import { persistSubscriptions } from "../utils/persistSubscriptions";
+import { loadSubscriptionsLocal } from "../utils/mainDB";
+import { toast } from "react-hot-toast";
+
 import { CURRENCY_LABELS } from "../utils/currencyLabels";
 import {
   exportSubscriptionsCSV,
@@ -35,19 +42,49 @@ import { exportPaymentHistoryCSV } from "../utils/exportCSV";
 import SectionHeader from "../components/ui/SectionHeader";
 import { clearAllLocalData } from "../utils/mainDB";
 
+/* -------------------- Helpers (SSR-safe) -------------------- */
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+function isOnline() {
+  return isBrowser() && typeof navigator !== "undefined" && navigator.onLine;
+}
+
+function safeGetToken() {
+  if (!isBrowser()) return null;
+  try {
+    return localStorage.getItem("token");
+  } catch {
+    return null;
+  }
+}
+
+function safeUUID() {
+  if (isBrowser() && typeof crypto !== "undefined" && crypto?.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export default function Settings({ setActiveSheet }) {
   const { user, logout, loading } = useAuth();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  // const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  // const premium = usePremium();
   const { currency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
-  const { i18n } = useTranslation();
-  const currentLang = languages.find(l => l.code === i18n.language);
+
+  const currentLang = languages.find((l) => l.code === i18n.language);
+
   const [subscriptions, setSubscriptions] = useState([]);
   const [importPreview, setImportPreview] = useState(null);
   const [importFile, setImportFile] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
+
+  /* -------------------- Auth guards -------------------- */
 
   if (loading) {
     return (
@@ -58,42 +95,63 @@ export default function Settings({ setActiveSheet }) {
   }
 
   if (!user?.email) {
-    return <p className="text-center mt-10 text-gray-500">You are not logged in.</p>;
+    return (
+      <p className="text-center mt-10 text-gray-500">
+        {t("not_logged_in") || "You are not logged in."}
+      </p>
+    );
   }
 
-  const handleRate = () => {
-    window.open("https://trakio.de", "_blank");
-  };
+  /* -------------------- Rate / Share -------------------- */
+
+  // const handleRate = () => {
+  //   if (!isBrowser()) return;
+  //   window.open("https://trakio.de", "_blank");
+  // };
 
   const handleShare = async () => {
+    if (!isBrowser()) return;
+
     const shareData = {
       title: "Trakio",
       text: "I use Trakio to track all my subscriptions. Try it!",
       url: "https://trakio.de",
     };
 
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(shareData.url);
-      alert("Link copied to clipboard");
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        alert("Link copied to clipboard");
+      }
+    } catch {
+      // user cancelled share – no need to show error
     }
   };
+
+  /* -------------------- Load subscriptions (local first) -------------------- */
 
   useEffect(() => {
     if (!user?.email) return;
 
+    let cancelled = false;
+
     (async () => {
-      // 1️⃣ Always load local first (offline-safe)
-      const local = await loadSubscriptionsLocal();
-      if (Array.isArray(local) && local.length) {
-        setSubscriptions(local);
+      try {
+        // 1️⃣ Always load local first (offline-safe)
+        const local = await loadSubscriptionsLocal();
+        if (!cancelled && Array.isArray(local) && local.length) {
+          setSubscriptions(local);
+        }
+      } catch (err) {
+        console.warn("Settings: local load failed", err);
       }
 
       // 2️⃣ Fetch remote only if online
-      if (navigator.onLine) {
+      if (isOnline()) {
         try {
-          const token = localStorage.getItem("token");
+          const token = safeGetToken();
           if (!token) return;
 
           const res = await fetch("/api/subscriptions", {
@@ -110,7 +168,11 @@ export default function Settings({ setActiveSheet }) {
 
           const data = await res.json();
 
-          if (Array.isArray(data.subscriptions) && data.subscriptions.length > 0) {
+          if (
+            !cancelled &&
+            Array.isArray(data.subscriptions) &&
+            data.subscriptions.length > 0
+          ) {
             setSubscriptions(data.subscriptions);
           } else {
             console.warn("Settings: remote empty, keeping local");
@@ -120,14 +182,20 @@ export default function Settings({ setActiveSheet }) {
         }
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.email]);
 
-
+  /* -------------------- CSV parsing -------------------- */
 
   function parseCSV(text) {
-    const lines = text.trim().split("\n");
+    const lines = String(text || "").trim().split("\n");
     if (lines.length < 2) return [];
+
     const headers = lines[0].split(",").map((h) => h.trim());
+
     return lines.slice(1).map((line) => {
       const values = [];
       let current = "";
@@ -138,8 +206,8 @@ export default function Settings({ setActiveSheet }) {
         const next = line[i + 1];
 
         if (char === '"' && inQuotes && next === '"') {
-          current += '"'; // Escaped quote
-          i++; // Skip next quote
+          current += '"';
+          i++;
         } else if (char === '"') {
           inQuotes = !inQuotes;
         } else if (char === "," && !inQuotes) {
@@ -150,27 +218,40 @@ export default function Settings({ setActiveSheet }) {
         }
       }
 
-      values.push(current); // Last value
+      values.push(current);
 
       const obj = {};
       headers.forEach((h, i) => {
-        obj[h] = values[i]?.trim().replace(/^"|"$/g, ""); // Remove surrounding quotes
+        obj[h] = values[i]?.trim().replace(/^"|"$/g, "");
       });
 
-      // Normalize data
-      obj.payments = [{
-        id: crypto.randomUUID(),
-        amount: parseFloat(obj.amount) || 0,
-        date: obj.paymentDate,
-        currency: obj.currency || "EUR"
-      }];
-      obj.price = parseFloat(obj.amount) || 0;
-      obj.color = obj.color || "rgba(255,255,255,0.9)";
+      // Normalize data (keep your conventions)
+      const amount = parseFloat(obj.amount) || 0;
+      const payDate = obj.paymentDate || obj.datePaid || obj.date || "";
 
-      return obj;
+      return {
+        ...obj,
+        id: obj.id || safeUUID(),
+        name: obj.name || obj.subscription || "",
+        category: (obj.category || "other").toLowerCase(),
+        currency: obj.currency || "EUR",
+        method: obj.method || "",
+        notify: obj.notify !== "false",
+        price: amount,
+        color: obj.color || "rgba(255,255,255,0.9)",
+        payments: [
+          {
+            id: safeUUID(),
+            amount,
+            date: payDate,
+            currency: obj.currency || "EUR",
+          },
+        ],
+      };
     });
   }
 
+  /* -------------------- Import CSV -------------------- */
 
   const handleImportCSV = async (file) => {
     if (!file) return;
@@ -183,7 +264,11 @@ export default function Settings({ setActiveSheet }) {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = safeGetToken();
+    if (!token) {
+      alert("Please log in again.");
+      return;
+    }
 
     // 🔁 Refetch subscriptions from backend (avoid stale state)
     const res = await fetch("/api/subscriptions", {
@@ -196,16 +281,22 @@ export default function Settings({ setActiveSheet }) {
     });
 
     const backend = await res.json();
-    const current = Array.isArray(backend.subscriptions) ? backend.subscriptions : [];
+    const current = Array.isArray(backend.subscriptions)
+      ? backend.subscriptions
+      : [];
 
-    // 🔍 Duplicate detection
+    // 🔍 Duplicate detection by payments (your approach)
     const existingPaymentIndex = new Set();
 
     current.forEach((s) => {
-      s.payments?.forEach((p) => {
+      (s.payments || []).forEach((p) => {
+        if (!p?.date) return;
+        const d = new Date(p.date);
+        if (Number.isNaN(d.getTime())) return;
+
         const key = [
           s.name,
-          new Date(p.date).toISOString().slice(0, 10),
+          d.toISOString().slice(0, 10),
           Number(p.amount).toFixed(2),
           p.currency || s.currency || "EUR",
         ].join("|");
@@ -214,16 +305,20 @@ export default function Settings({ setActiveSheet }) {
       });
     });
 
-    // ✅ Filter duplicates
     let duplicateCount = 0;
 
     const cleaned = parsed
       .map((s) => {
         const uniquePayments = [];
-        s.payments.forEach((p) => {
+
+        (s.payments || []).forEach((p) => {
+          if (!p?.date) return;
+          const d = new Date(p.date);
+          if (Number.isNaN(d.getTime())) return;
+
           const key = [
             s.name,
-            new Date(p.date).toISOString().slice(0, 10),
+            d.toISOString().slice(0, 10),
             Number(p.amount).toFixed(2),
             p.currency || s.currency || "EUR",
           ].join("|");
@@ -237,7 +332,7 @@ export default function Settings({ setActiveSheet }) {
 
         return { ...s, payments: uniquePayments };
       })
-      .filter((s) => s.payments.length > 0);
+      .filter((s) => (s.payments || []).length > 0);
 
     if (cleaned.length === 0) {
       alert("Nothing new to import (all payments were duplicates)");
@@ -247,92 +342,116 @@ export default function Settings({ setActiveSheet }) {
     setImportFile(cleaned);
     setImportPreview({
       subscriptions: cleaned.length,
-      payments: cleaned.reduce((sum, s) => sum + s.payments.length, 0),
+      payments: cleaned.reduce((sum, s) => sum + (s.payments?.length || 0), 0),
       duplicates: duplicateCount,
       sample: cleaned.slice(0, 3),
     });
   };
 
-
-  const {
-    isPremium,
-    trialEndDate,
-    hasActiveTrial,
-    trialExpired,
-    noTrial,
-    trialDaysLeft,
-    startTrial,
-    cancelTrial,
-  } = usePremium();
-
   /* ------------------------------------------------------------------
-   * Budget state (FIXED)
+   * Budget state (kept as in your file)
    * ------------------------------------------------------------------ */
+
   const [monthlyBudget, setMonthlyBudget] = useState(() => {
+    if (!isBrowser()) return null;
     const saved = localStorage.getItem("monthly_budget");
     return saved ? Number(saved) : null;
   });
 
   const [budgetAlertsEnabled, setBudgetAlertsEnabled] = useState(() => {
+    if (!isBrowser()) return false;
     return localStorage.getItem("budget_alerts_enabled") === "1";
   });
 
-  // Persist budget settings
   useEffect(() => {
-    if (monthlyBudget == null) {
-      localStorage.removeItem("monthly_budget");
-    } else {
-      localStorage.setItem("monthly_budget", String(monthlyBudget));
-    }
+    if (!isBrowser()) return;
 
-    localStorage.setItem(
-      "budget_alerts_enabled",
-      budgetAlertsEnabled ? "1" : "0"
-    );
+    try {
+      if (monthlyBudget == null) {
+        localStorage.removeItem("monthly_budget");
+      } else {
+        localStorage.setItem("monthly_budget", String(monthlyBudget));
+      }
+
+      localStorage.setItem(
+        "budget_alerts_enabled",
+        budgetAlertsEnabled ? "1" : "0"
+      );
+    } catch {
+      // ignore storage failures
+    }
   }, [monthlyBudget, budgetAlertsEnabled]);
 
   /* ------------------------------------------------------------------
-   * Stripe Customer Portal
+   * Stripe Customer Portal (kept)
    * ------------------------------------------------------------------ */
-  const handleManageSubscription = async () => {
-    const token = localStorage.getItem("token");
 
-    if (!token) {
-      alert("Please log in again.");
+  // const handleManageSubscription = async () => {
+  //   const token = safeGetToken();
+
+  //   if (!token) {
+  //     alert("Please log in again.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const res = await fetch("/api/stripe", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({ action: "portal" }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (!res.ok) {
+  //       throw new Error(data?.error || "Failed to open customer portal");
+  //     }
+
+  //     if (data?.url && isBrowser()) {
+  //       window.location.href = data.url;
+  //     }
+  //   } catch {
+  //     alert("Unable to open customer portal.");
+  //   }
+  // };
+
+  /* -------------------- Delete all subscriptions (FIXED) -------------------- */
+
+  const handleDeleteAllSubscriptions = async () => {
+    if (
+      !confirm(
+        t("settings_delete_all_subs_confirm") ||
+        "Are you sure you want to delete all subscriptions?"
+      )
+    )
       return;
-    }
 
     try {
-      const res = await fetch("/api/stripe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ action: "portal" }),
+      await persistSubscriptions({
+        email: user.email,
+        token: safeGetToken(),
+        subscriptions: [],
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to open customer portal");
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      // console.error("Customer portal error:", err);
-      alert("Unable to open customer portal.");
+      setSubscriptions([]);
+      toast.success("✅ All subscriptions deleted successfully.");
+    } catch (e) {
+      console.error("Delete all failed:", e);
+      toast.error("Failed to delete subscriptions.");
     }
   };
 
-  /* ------------------------------------------------------------------ */
+  /* -------------------- Render -------------------- */
 
   return (
     <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
       {/* TITLE */}
-      <h1 className="text-2xl font-bold text-gray-600 dark:text-gray-250">{t("settings_title") || "Settings"}</h1>
+      <h1 className="text-2xl font-bold text-gray-600 dark:text-gray-250">
+        {t("settings_title") || "Settings"}
+      </h1>
 
       {/* PREMIUM STATUS */}
       <section>
@@ -359,14 +478,17 @@ export default function Settings({ setActiveSheet }) {
       <section>
         <SectionHeader
           title={t("settings_section_preferences") || "Preferences"}
-          subtitle={t("settings_section_preferences_desc") || "Customize your experience"}
+          subtitle={
+            t("settings_section_preferences_desc") || "Customize your experience"
+          }
         />
         <Card className="space-y-1">
           <SettingsRow
             icon={<GlobeAltIcon className="w-6 h-6" />}
             title={t("settings_currency") || "Currency"}
             glow
-            description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"}`}
+            description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"
+              }`}
             onClick={() => {
               startTransition(() => {
                 setActiveSheet("currency");
@@ -380,12 +502,7 @@ export default function Settings({ setActiveSheet }) {
             title={t("settings_appearance") || "Appearance"}
             glow
             description={t(isDark ? "theme.dark" : "theme.light")}
-            right={
-              <ThemeSwitch
-                checked={isDark}
-                onChange={toggleTheme}
-              />
-            }
+            right={<ThemeSwitch checked={isDark} onChange={toggleTheme} />}
             accent="orange"
           />
 
@@ -395,9 +512,7 @@ export default function Settings({ setActiveSheet }) {
             title={t("settings_language") || "Language"}
             glow
             description={
-              currentLang
-                ? `${currentLang.emoji} ${currentLang.label}`
-                : i18n.language
+              currentLang ? `${currentLang.emoji} ${currentLang.label}` : i18n.language
             }
             onClick={() => {
               startTransition(() => {
@@ -412,13 +527,15 @@ export default function Settings({ setActiveSheet }) {
       <section>
         <SectionHeader
           title={t("settings_section_data_management") || "Data Management"}
-          subtitle={t("settings_section_data_management_desc") || "You can export or delete your data at any time."}
+          subtitle={
+            t("settings_section_data_management_desc") ||
+            "You can export or delete your data at any time."
+          }
         />
         <Card className="space-y-1">
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title={t("settings_export_subs") || "Download subscriptions"}
-            // premium
             glow
             description={t("settings_export_subs_desc") || "Export all subscriptions as CSV"}
             onClick={() => {
@@ -430,26 +547,26 @@ export default function Settings({ setActiveSheet }) {
             }}
             accent="blue"
           />
+
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title={t("settings_export_history") || "Download payment history"}
             description={t("settings_export_history_desc") || "Export all past payments as CSV"}
-            // premium
             glow
             accent="blue"
             onClick={() => {
               if (!subscriptions.length) {
-                alert(t("no_data_to_export") || "No payement history to export.");
+                alert(t("no_data_to_export") || "No payment history to export.");
                 return;
               }
-              exportSubscriptionsCSV(subscriptions);
+              exportPaymentHistoryCSV(subscriptions);
             }}
           />
+
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title={t("settings_export_summary") || "Download annual summary"}
             description={t("settings_export_summary_desc") || "Yearly totals per subscription"}
-            // premium
             glow
             accent="blue"
             onClick={() => {
@@ -457,16 +574,19 @@ export default function Settings({ setActiveSheet }) {
                 alert(t("no_data_to_export") || "No annual history to export.");
                 return;
               }
-              exportSubscriptionsCSV(subscriptions);
+              exportAnnualSummaryCSV(subscriptions);
             }}
           />
+
           <SettingsRow
             icon={<ArrowDownTrayIcon className="w-6 h-6" />}
             title={t("settings_export_all") || "Download full data"}
             accent="blue"
-            // premium
             glow
-            description={t("settings_export_all_desc") || "All your subscriptions, payments and settings as JSON"}
+            description={
+              t("settings_export_all_desc") ||
+              "All your subscriptions, payments and settings as JSON"
+            }
             onClick={() =>
               exportFullJSON({
                 user,
@@ -488,6 +608,7 @@ export default function Settings({ setActiveSheet }) {
             accent="blue"
             onClick={() => fileInputRef.current?.click()}
           />
+
           <input
             type="file"
             accept=".csv"
@@ -495,30 +616,20 @@ export default function Settings({ setActiveSheet }) {
             className="hidden"
             onChange={(e) => handleImportCSV(e.target.files?.[0])}
           />
+
           <SettingsRow
             icon={<TrashIcon className="w-6 h-6" />}
-            title={t("settings_delete_all_subs")}
-            description={t("settings_delete_all_subs_desc") || "Permanently delete all your subscriptions"}
+            title={t("settings_delete_all_subs") || "Delete all subscriptions"}
+            description={
+              t("settings_delete_all_subs_desc") ||
+              "Permanently delete all your subscriptions"
+            }
             accent="red"
             glow
-            onClick={async () => {
-              if (!confirm(t("settings_delete_all_subs_confirm") || "Are you sure you want to delete all subscriptions?")) return;
-              const merged = [...subscriptions, ...importFile];
-
-              await persistSubscriptions({
-                email: user.email,
-                token: localStorage.getItem("token"),
-                subscriptions: merged,
-              });
-
-              setSubscriptions(merged);
-
-              alert("✅ All subscriptions deleted successfully.");
-            }}
+            onClick={handleDeleteAllSubscriptions}
           />
         </Card>
       </section>
-
 
       {/* ===================== PRIVACY & SECURITY ===================== */}
       <section>
@@ -531,9 +642,13 @@ export default function Settings({ setActiveSheet }) {
             icon={<ShieldCheckIcon className="w-6 h-6" />}
             title={t("settings_privacy_policy") || "Privacy Policy"}
             glow
-            description={t("settings_privacy_desc") || "How we collect, process and protect your data (GDPR)"}
+            description={
+              t("settings_privacy_desc") ||
+              "How we collect, process and protect your data (GDPR)"
+            }
             to="/datenschutz"
-            accent="green" />
+            accent="green"
+          />
 
           <SettingsRow
             icon={<BuildingOfficeIcon className="w-6 h-6" />}
@@ -541,7 +656,8 @@ export default function Settings({ setActiveSheet }) {
             description={t("settings_impressum_desc") || "Company information and legal disclosure"}
             to="/impressum"
             glow
-            accent="green" />
+            accent="green"
+          />
 
           <SettingsRow
             icon={<DocumentTextIcon className="w-6 h-6" />}
@@ -560,6 +676,7 @@ export default function Settings({ setActiveSheet }) {
             glow
             accent="green"
           />
+
           <SettingsRow
             icon={<TrashIcon className="w-6 h-6 text-red-500" />}
             title={t("settings_delete_account") || "Delete account permanently"}
@@ -580,7 +697,7 @@ export default function Settings({ setActiveSheet }) {
               if (!confirmed) return;
 
               try {
-                const token = localStorage.getItem("token");
+                const token = safeGetToken();
 
                 const res = await fetch("/api/user", {
                   method: "POST",
@@ -597,19 +714,17 @@ export default function Settings({ setActiveSheet }) {
                 }
 
                 await clearAllLocalData();
-
                 toast.success("Account deleted successfully");
 
-                // Prevent back navigation into stale state
-                window.location.replace("/account-deleted");
+                if (isBrowser()) {
+                  window.location.replace("/account-deleted");
+                }
               } catch {
                 toast.error("Unexpected error. Please try again.");
               }
             }}
           />
-
         </Card>
-
       </section>
 
       {/* ===================== HELP & SUPPORT ===================== */}
@@ -617,7 +732,7 @@ export default function Settings({ setActiveSheet }) {
         <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
           {t("settings_section_support") || "Help & Support"}
         </h2>
-        {/* Intro */}
+
         <Card className="space-y-1">
           <SettingsRow
             icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
@@ -632,14 +747,16 @@ export default function Settings({ setActiveSheet }) {
             }}
           />
 
-          {/* <SettingsRow
+          {/*
+          <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
             title={t("settings_rate") || "Rate Trakio"}
             description={t("settings_rate_desc") || "Help us improve by leaving a review"}
             onClick={handleRate}
             accent="purple"
             glow
-          /> */}
+          />
+          */}
 
           <SettingsRow
             icon={<ShareIcon className="w-6 h-6" />}
@@ -649,11 +766,10 @@ export default function Settings({ setActiveSheet }) {
             accent="purple"
             glow
           />
-
         </Card>
       </section>
 
-      {/* LOGOUT + BACK */}
+      {/* LOGOUT */}
       <Card>
         <div className="flex flex-col gap-3">
           <SettingButton variant="danger" onClick={logout}>
@@ -662,39 +778,67 @@ export default function Settings({ setActiveSheet }) {
         </div>
       </Card>
 
+      {/* -------------------- Import Preview Modal -------------------- */}
       {importPreview && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
             <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
-              {t("import_preview_title")}
+              {t("import_preview_title") || "Import Preview"}
             </h3>
+
             <div className="text-sm space-y-1 mb-3 text-gray-700 dark:text-gray-300">
-              <div>{t("import_preview_subscriptions")}: <b>{importPreview.subscriptions}</b></div>
-              <div>{t("import_preview_payments")}: <b>{importPreview.payments}</b></div>
+              <div>
+                {t("import_preview_subscriptions") || "Subscriptions"}:{" "}
+                <b>{importPreview.subscriptions}</b>
+              </div>
+              <div>
+                {t("import_preview_payments") || "Payments"}:{" "}
+                <b>{importPreview.payments}</b>
+              </div>
               {importPreview.duplicates > 0 && (
                 <div className="text-orange-600 dark:text-orange-400">
-                  {t("import_preview_duplicates")}: <b>{importPreview.duplicates}</b>
+                  {t("import_preview_duplicates") || "Duplicates"}:{" "}
+                  <b>{importPreview.duplicates}</b>
                 </div>
               )}
             </div>
+
             <div className="flex justify-end gap-2">
               <button
+                onClick={() => {
+                  setImportPreview(null);
+                  setImportFile(null);
+                }}
+                className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+              >
+                {t("cancel") || "Cancel"}
+              </button>
+
+              <button
                 onClick={async () => {
-                  const token = localStorage.getItem("token");
+                  const token = safeGetToken();
 
                   try {
-                    // Save only new cleaned subscriptions
+                    // Merge current subs + imported file
+                    const next = [
+                      ...(Array.isArray(subscriptions) ? subscriptions : []),
+                      ...(Array.isArray(importFile) ? importFile : []),
+                    ];
+
                     await persistSubscriptions({
                       email: user.email,
-                      token: localStorage.getItem("token"),
-                      subscriptions: importFile,
+                      token,
+                      subscriptions: next,
                     });
 
-                    setSubscriptions(importFile);
+                    setSubscriptions(next);
 
-                    alert(t("import_success_message") === "import_success_message" ? "Import successful!" : t("import_success_message"));
-                  } catch (err) {
-                    // console.error("Import failed", err);
+                    alert(
+                      t("import_success_message") === "import_success_message"
+                        ? "Import successful!"
+                        : t("import_success_message")
+                    );
+                  } catch {
                     alert(t("import_failed_message") || "Import failed. Please try again.");
                   }
 
@@ -705,12 +849,16 @@ export default function Settings({ setActiveSheet }) {
               >
                 {t("confirm_import") || "Confirm Import"}
               </button>
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
+
+/* -------------------- PropTypes -------------------- */
+
+Settings.propTypes = {
+  setActiveSheet: PropTypes.func.isRequired,
+};

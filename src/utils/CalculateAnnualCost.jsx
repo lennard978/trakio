@@ -1,4 +1,4 @@
-function calculateAnnualCost(subscriptions, currency, rates, convert) {
+export default function calculateAnnualCost(subscriptions, currency, rates, convert) {
   return subscriptions.reduce((sum, sub) => {
     const price = Number(sub.price || 0);
     if (!price || !sub.frequency) return sum;

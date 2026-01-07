@@ -22,8 +22,6 @@ export async function setPremiumRecord(userId, record) {
     lastUpdated: Date.now(),
   };
 
-  console.log("📦 Saving premium record for", userId, JSON.stringify(merged, null, 2));
-
   await kv.set(premiumKey(userId), merged);
   return merged;
 }

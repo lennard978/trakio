@@ -619,5 +619,25 @@
 	"category.shopping": "Shopping",
 	"category.fitness": "Fitness",
 	"category.bills": "Bills",
-	"category.other": "Other"
+	"category.other": "Other",
+	"plan_comparison": {
+		"title": "Free vs Premium",
+		"free": "Free",
+		"premium": "Premium",
+		"aria_label": "Plan feature comparison table",
+		"features": {
+			"track": "Track subscriptions",
+			"upcoming": "Upcoming payments timeline",
+			"budget": "Monthly budget & progress",
+			"forgotten": "Forgotten subscription detection",
+			"price_alerts": "Price increase alerts",
+			"analytics": "Advanced analytics",
+			"export": "CSV export"
+		}
+	},
+	"account_deleted_title": "Account deleted successfully",
+	"account_deleted_message": "Your Trakio account and all associated personal data have been permanently deleted.",
+	"account_deleted_subscription_note": "Any active subscriptions have been cancelled and no further charges will be made.",
+	"account_deleted_support": "If you have questions, contact",
+	"account_deleted_back_home": "Back to homepage"
 }

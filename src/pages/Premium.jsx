@@ -1,217 +1,201 @@
+import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePremium } from "../hooks/usePremium";
-
-import PremiumFeatureRow from "../components/PremiumFeatureRow";
 import { useTranslation } from "react-i18next";
+
+// UI
+import Card from "../components/ui/Card";
+import SettingButton from "../components/ui/SettingButton";
+import PremiumFeatureRow from "../components/PremiumFeatureRow";
 
 export default function Premium() {
   const premium = usePremium();
   const navigate = useNavigate();
-  const [accepted, setAccepted] = useState(false);
   const { t } = useTranslation();
+  const [accepted, setAccepted] = useState(false);
+
   /* -------------------- Already Premium -------------------- */
   if (premium.isPremium) {
     return (
-      <div className="max-w-xl mx-auto mt-10 px-4 text-center">
-        <h1 className="text-3xl font-bold mb-3">
-          {t("premium_already_title")}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t("premium_already_message")}
-        </p>
+      <main className="max-w-xl mx-auto mt-12 px-4">
+        <Card className="text-center space-y-4 p-6">
+          <h1 className="text-2xl font-bold">
+            {t("premium_already_title")}
+          </h1>
 
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow"
-        >
-          {t("premium_go_to_dashboard")}
-        </button>
-      </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t("premium_already_message")}
+          </p>
+
+          <SettingButton
+            variant="primary"
+            onClick={() => navigate("/dashboard")}
+            className="w-full"
+          >
+            {t("premium_go_to_dashboard")}
+          </SettingButton>
+        </Card>
+      </main>
     );
   }
 
   /* -------------------- Upgrade Page -------------------- */
   return (
-    <div className="max-w-xl mx-auto mt-8 px-4 space-y-8">
+    <main className="max-w-xl mx-auto mt-8 px-4 space-y-8">
       {/* HEADER */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">
+      <header className="text-center space-y-2">
+        <h1 className="text-3xl font-bold">
           {t("premium_subscription")}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400 text-sm">
           {t("premium_subtitle")}
         </p>
-      </div>
+      </header>
 
       {/* VALUE PROPS */}
-      <div className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
-        <div className="flex gap-2 items-start">
-          <span>✔️</span>
-          <span>{t("premium_benefit_1")}</span>
-        </div>
-        <div className="flex gap-2 items-start">
-          <span>✔️</span>
-          <span>{t("premium_benefit_2")}</span>
-        </div>
-        <div className="flex gap-2 items-start">
-          <span>✔️</span>
-          <span>{t("premium_benefit_3")}</span>
-        </div>
-      </div>
+      <ul className="grid gap-3 text-sm text-gray-700 dark:text-gray-300">
+        {[1, 2, 3].map((i) => (
+          <li key={i} className="flex gap-2 items-start">
+            <span aria-hidden>✔️</span>
+            <span>{t(`premium_benefit_${i}`)}</span>
+          </li>
+        ))}
+      </ul>
 
       {/* FEATURES */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border dark:border-gray-800 p-5 space-y-3">
+      <Card className="space-y-3">
         <PremiumFeatureRow title={t("premium_feature_1")} free premium />
         <PremiumFeatureRow title={t("premium_feature_2")} premium />
         <PremiumFeatureRow title={t("premium_feature_3")} premium />
         <PremiumFeatureRow title={t("premium_feature_4")} premium />
         <PremiumFeatureRow title={t("premium_feature_5")} premium />
         <PremiumFeatureRow title={t("premium_feature_6")} premium />
-      </div>
+      </Card>
 
-
-      {/* LEGAL CONSENT – PREMIUM STYLE */}
-      <div className="
-  rounded-2xl border
-  bg-gray-50 dark:bg-gray-800/60
-  border-gray-200 dark:border-gray-700
-  p-4 space-y-3
-">
-        <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+      {/* LEGAL CONSENT */}
+      <fieldset
+        className="rounded-2xl border bg-gray-50 dark:bg-gray-800/60
+                   border-gray-200 dark:border-gray-700 p-4 space-y-3"
+      >
+        <legend className="text-sm font-medium text-gray-800 dark:text-gray-200">
           {t("premium_checkout_title")}
-        </div>
+        </legend>
 
-        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+        <p
+          id="premium-consent-text"
+          className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed"
+        >
           {t("premium_checkout_text")}
-          <a
-            href="/agb"
-            target="_blank"
-            className="underline font-medium"
-          >
-            {t("premium_checkout_terms") || "Terms of Service"}
+          <a href="/agb" target="_blank" className="underline font-medium">
+            {t("premium_checkout_terms")}
           </a>{" "}
-          and{" "}
-          <a
-            href="/datenschutz"
-            target="_blank"
-            className="underline font-medium"
-          >
-            {t("premium_checkout_privacy") || "Privacy Policy"}
+          {t("and")}{" "}
+          <a href="/datenschutz" target="_blank" className="underline font-medium">
+            {t("premium_checkout_privacy")}
           </a>.
           {t("premium_checkout_consent")}
         </p>
 
-        <label className="flex flex-col items-start gap-3 cursor-pointer">
-          <div className="flex flex-row gap-3">
-            <input
-              type="checkbox"
-              checked={accepted}
-              onChange={(e) => setAccepted(e.target.checked)}
-              className="mt-1 accent-orange-600"
-            />
-            {!accepted && (
-              <p className="text-xs dark:text-orange-400 mt-2">
-                {t("premium_accept") || "Please accept the terms to start your free trial."}
-              </p>
-            )}
-          </div>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={accepted}
+            aria-describedby="premium-consent-text"
+            onChange={(e) => setAccepted(e.target.checked)}
+            className="mt-1 accent-orange-600"
+          />
           <span className="text-xs text-gray-700 dark:text-gray-300">
             {t("premium_checkout_checkbox")}
           </span>
         </label>
 
-        <div className="text-[11px] text-gray-500 dark:text-gray-400">
+        {!accepted && (
+          <p className="text-xs text-orange-500">
+            {t("premium_accept")}
+          </p>
+        )}
+
+        <p className="text-[11px] text-gray-500 dark:text-gray-400">
           {t("premium_checkout_footer")}
-        </div>
-      </div>
+        </p>
+      </fieldset>
 
       {/* PRICING */}
-      <div className="grid gap-4">
+      <section className="grid gap-4">
         {/* YEARLY */}
-        <div className="
-  relative
-  rounded-2xl p-6 text-center
-  bg-blue-500/5 dark:bg-blue-500/10
-  border-2 border-orange-500
-  dark:border-orange-400 
-  shadow-xl dark:shadow-orange-500/10 hover:animate-[fadeIn_250ms_ease-out]">
-          <span className="
-    absolute -top-4 left-1/2 -translate-x-1/2
-    bg-orange-600 text-white
-    text-xs font-semibold
-    px-4 py-1 rounded-full
-    shadow
-  ">            {t("premium_best_value")}
+        <Card className="relative text-center border-2 border-orange-500 dark:border-orange-400">
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2
+                           bg-orange-600 text-white text-xs font-semibold
+                           px-4 py-1 rounded-full">
+            {t("premium_best_value")}
           </span>
 
-          <h3 className="font-semibold text-lg mt-2 text-orange-300">{t("premium_yearly_title")}</h3>
-          <div className="text-4xl font-bold mb-2 text-orange-400">{t("premium_yearly_price")}</div>
-          <p className="text-sm text-gray-600 mb-3 dark:text-gray-400">
+          <h3 className="font-semibold text-lg mt-4">
+            {t("premium_yearly_title")}
+          </h3>
+
+          <div className="text-4xl font-bold text-orange-400">
+            {t("premium_yearly_price")}
+          </div>
+
+          <p className="text-sm text-gray-500 mb-4">
             {t("premium_yearly_note")}
           </p>
 
-          <button
+          <SettingButton
+            variant="primary"
             disabled={!accepted || premium.loading || !premium.loaded}
             onClick={() => premium.startCheckout("yearly")}
-            className={`
-    w-full py-4 rounded-xl font-semibold text-lg
-    transition-all duration-150 ease-out
-    ${accepted
-                ? "bg-orange-400 dark:bg-orange-500 hover:scale-[1.015] hover:shadow-lg hover:shadow-orange-500/30 text-white"
-                : "bg-gray-600 text-gray-300 cursor-not-allowed"}
-    `}        >
+            className="w-full"
+          >
             {t("premium_yearly_button")}
-          </button>
+          </SettingButton>
 
           <p className="text-xs text-gray-400 mt-3">
             {t("premium_trial_note")}
           </p>
-        </div>
+        </Card>
+
         {/* MONTHLY */}
-        <div className="
-  border border-gray-700
-  rounded-2xl
-  p-5
-  text-center
-  opacity-90
-">            <h3 className="font-medium mb-1">
-            {t("premium_monthly_title")}</h3>
-          <div className="text-2xl font-semibold mb-1">
-            {t("premium_monthly_price")}</div>
+        <Card className="text-center opacity-90">
+          <h3 className="font-medium">
+            {t("premium_monthly_title")}
+          </h3>
+
+          <div className="text-2xl font-semibold">
+            {t("premium_monthly_price")}
+          </div>
+
           <p className="text-sm text-gray-500 mb-4">
             {t("premium_monthly_note")}
           </p>
 
-          <button
+          <SettingButton
+            variant="neutral"
             disabled={!accepted || premium.loading || !premium.loaded}
             onClick={() => premium.startCheckout("monthly")}
-            className={`
-      w-full py-3 rounded-xl font-medium
-      transition
-      ${accepted
-                ? "bg-gray-700 hover:bg-gray-600 text-white"
-                : "bg-gray-600 text-gray-300 cursor-not-allowed"}
-    `}         >
+            className="w-full"
+          >
             {t("premium_monthly_button")}
-          </button>
+          </SettingButton>
 
           <p className="text-xs text-gray-500 mt-2">
             {t("premium_trial_note")}
           </p>
-          <p className="text-xs text-gray-500 mt-2">
+
+          <p className="text-xs text-gray-500">
             {t("premium_trial_auto_renew")}
           </p>
-        </div>
-      </div>
+        </Card>
+      </section>
 
       {/* TRUST */}
-      <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
-        <div>• {t("premium_trust_1")}</div>
-        <div>• {t("premium_trust_2")}</div>
-        <div>• {t("premium_trust_3")}</div>
-        <div>• {t("premium_trust_4")}</div>
-      </div>
-    </div>
+      <footer className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i}>• {t(`premium_trust_${i}`)}</div>
+        ))}
+      </footer>
+    </main>
   );
 }

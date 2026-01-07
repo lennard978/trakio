@@ -1,6 +1,4 @@
-import React, { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { computeNextRenewal } from "../utils/renewal";
+import React, { useMemo, useCallback, useState } from "react";
 import { getAnnualCost } from "../utils/annualCost";
 import useNotifications from "../hooks/useNotifications";
 import { useAuth } from "../hooks/useAuth";
@@ -15,121 +13,242 @@ import MonthlyBudget from "../components/MonthlyBudget";
 import ForgottenSubscriptions from "../components/ForgottenSubscriptions";
 import SubscriptionItem from "../components/SubscriptionItem";
 import EmptyDashboardState from "../components/dasboard/EmptyDashboardState";
-
 import SummaryCards from "../components/dasboard/SummaryCards";
-import DashboardLoading from "../components/dasboard/DashboardLoading";
+import DashboardLoading from "../components/dasboard/DashboardLoading.jsx";
 import OfflineNotice from "../components/dasboard/OfflineNotice";
+import DashboardFilterUI from "../components/DashboardFilterUI";
+
+import { computeNextRenewal } from "../utils/renewal";
 
 export default function Dashboard() {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const premium = usePremium();
   const { currency } = useCurrency();
   const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
-
   const { subscriptions, loading, persist } = useSubscriptions(user);
+
   const preferredCurrency = premium.isPremium ? currency : "EUR";
+
+  /* ---------------- Filters ---------------- */
+
+  const [filters, setFilters] = useState({
+    year: "",
+    category: "",
+    paymentMethod: "",
+    currency: "",
+    sortBy: "next",
+  });
+
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  /* ---------------- Notifications ---------------- */
 
   useNotifications(subscriptions);
 
-  const hasSubscriptions = subscriptions.length > 0;
+  const hasSubscriptions =
+    Array.isArray(subscriptions) && subscriptions.length > 0;
 
-  const previousMonthTotal = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+  /* ---------------- Derived / Filtered List ---------------- */
 
-    return subscriptions.reduce((sum, s) => {
+  const filteredSubscriptions = useMemo(() => {
+    let list = [...subscriptions];
+
+    // Category
+    if (filters.category) {
+      list = list.filter(
+        (s) => (s.category || "").toLowerCase() === filters.category
+      );
+    }
+
+    // Payment method
+    if (filters.paymentMethod) {
+      list = list.filter(
+        (s) =>
+          (s.method || "").toLowerCase() ===
+          filters.paymentMethod.toLowerCase()
+      );
+    }
+
+    // Currency (original subscription currency)
+    if (filters.currency) {
+      list = list.filter(
+        (s) => (s.currency || "").toUpperCase() === filters.currency
+      );
+    }
+
+    // Year (based on payments)
+    if (filters.year) {
+      const y = Number(filters.year);
+      list = list.filter(
+        (s) =>
+          Array.isArray(s.payments) &&
+          s.payments.some(
+            (p) => new Date(p.date).getFullYear() === y
+          )
+      );
+    }
+
+    // Sorting
+    switch (filters.sortBy) {
+      case "price":
+        list.sort(
+          (a, b) => Number(b.price || 0) - Number(a.price || 0)
+        );
+        break;
+
+      case "name":
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+
+      case "next":
+      default:
+        list.sort((a, b) => {
+          const na = computeNextRenewal(a.payments || [], a.frequency);
+          const nb = computeNextRenewal(b.payments || [], b.frequency);
+          return (na || Infinity) - (nb || Infinity);
+        });
+    }
+
+    return list;
+  }, [subscriptions, filters]);
+
+  /* ---------------- Monthly / Annual Stats ---------------- */
+
+  const getPaymentsForMonth = useCallback((subs, month, year) => {
+    return subs.reduce((sum, s) => {
       if (!Array.isArray(s.payments)) return sum;
-
-      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-      const lastMonthPayments = s.payments.filter((p) => {
-        const d = new Date(p.date);
-        return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
-      });
-
-      return sum + lastMonthPayments.reduce((sub, p) => sub + Number(p.amount || s.price || 0), 0);
-    }, 0);
-  }, [subscriptions]);
-
-  const totalMonthly = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    return subscriptions.reduce((sum, s) => {
-      if (!Array.isArray(s.payments)) return sum;
-
       const payments = s.payments.filter((p) => {
-        const date = new Date(p.date);
-        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        const d = new Date(p.date);
+        return d.getMonth() === month && d.getFullYear() === year;
       });
-
-      return sum + payments.reduce((total, p) => total + Number(p.amount || 0), 0);
+      return (
+        sum +
+        payments.reduce(
+          (sub, p) => sub + Number(p.amount || s.price || 0),
+          0
+        )
+      );
     }, 0);
-  }, [subscriptions]);
+  }, []);
+
+  const now = new Date();
+  const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+  const prevYear =
+    now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+  const previousMonthTotal = useMemo(
+    () => getPaymentsForMonth(subscriptions, prevMonth, prevYear),
+    [subscriptions, getPaymentsForMonth, prevMonth, prevYear]
+  );
+
+  const totalMonthly = useMemo(
+    () => getPaymentsForMonth(subscriptions, now.getMonth(), now.getFullYear()),
+    [subscriptions, getPaymentsForMonth, now]
+  );
 
   const monthlyChange = useMemo(() => {
     if (!previousMonthTotal || previousMonthTotal === 0) return null;
     return ((totalMonthly - previousMonthTotal) / previousMonthTotal) * 100;
   }, [totalMonthly, previousMonthTotal]);
 
-  const annualCost = useMemo(() => getAnnualCost(subscriptions), [subscriptions]);
+  const annualCost = useMemo(
+    () => (Array.isArray(subscriptions) ? getAnnualCost(subscriptions) : 0),
+    [subscriptions]
+  );
+
+  /* ---------------- Actions ---------------- */
+
+  const handleDelete = useCallback(
+    (id) => persist(subscriptions.filter((s) => s.id !== id)),
+    [subscriptions, persist]
+  );
+
+  const handleMarkPaid = useCallback(
+    (id, date) => {
+      const updated = subscriptions.map((s) => {
+        if (s.id !== id) return s;
+        const payments = Array.isArray(s.payments) ? s.payments : [];
+        if (payments.some((p) => p.date === date)) return s;
+
+        return {
+          ...s,
+          payments: [
+            ...payments,
+            {
+              id: `${Date.now()}-${Math.random()
+                .toString(16)
+                .slice(2)}`,
+              date,
+              amount: s.price,
+              currency: s.currency || "EUR",
+            },
+          ],
+        };
+      });
+      persist(updated);
+    },
+    [subscriptions, persist]
+  );
+
+  const summaryProps = useMemo(
+    () => ({
+      currency: preferredCurrency,
+      totalMonthly,
+      annualCost,
+      monthlyChange,
+    }),
+    [preferredCurrency, totalMonthly, annualCost, monthlyChange]
+  );
+
+  /* ---------------- Render ---------------- */
 
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <TrialBanner />
 
-      {loading && !navigator.onLine && <OfflineNotice />}
+      {loading &&
+        typeof navigator !== "undefined" &&
+        !navigator.onLine && <OfflineNotice />}
+
       {loading ? (
         <DashboardLoading />
       ) : hasSubscriptions ? (
         <>
-          <SummaryCards
-            currency={preferredCurrency}
-            totalMonthly={totalMonthly}
-            annualCost={annualCost}
-            monthlyChange={monthlyChange}
+          <SummaryCards {...summaryProps} />
+
+          {/* ✅ FILTERS – placed before filtered content */}
+          <DashboardFilterUI
+            {...filters}
+            onChange={handleFilterChange}
           />
 
-          <UpcomingPayments subscriptions={subscriptions} currency={preferredCurrency} />
-          <MonthlyBudget subscriptions={subscriptions} currency={preferredCurrency} />
-          {premium.isPremium && <ForgottenSubscriptions subscriptions={subscriptions} />}
+          <UpcomingPayments
+            subscriptions={filteredSubscriptions}
+            currency={preferredCurrency}
+          />
+
+          <MonthlyBudget
+            subscriptions={filteredSubscriptions}
+            currency={preferredCurrency}
+          />
+
+          {premium.isPremium && (
+            <ForgottenSubscriptions
+              subscriptions={filteredSubscriptions}
+            />
+          )}
 
           <div className="space-y-2 mt-2">
-            {subscriptions.map((sub) => (
+            {filteredSubscriptions.map((sub) => (
               <SubscriptionItem
                 key={sub.id}
                 item={sub}
                 theme={theme}
                 currency={preferredCurrency}
-                onDelete={(id) => persist(subscriptions.filter((s) => s.id !== id))}
-                onMarkPaid={(id, date) => {
-                  const updated = subscriptions.map((s) => {
-                    if (s.id !== id) return s;
-
-                    const payments = Array.isArray(s.payments) ? s.payments : [];
-                    if (payments.some((p) => p.date === date)) return s;
-
-                    return {
-                      ...s,
-                      payments: [
-                        ...payments,
-                        {
-                          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-                          date,
-                          amount: s.price,
-                          currency: s.currency || "EUR",
-                        },
-                      ],
-                    };
-                  });
-
-                  persist(updated);
-                }}
+                onDelete={handleDelete}
+                onMarkPaid={handleMarkPaid}
               />
             ))}
           </div>

@@ -17,9 +17,11 @@ export default function Signup() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
     if (!email.trim()) {
       showToast(t("error_required"), "error");
@@ -32,17 +34,24 @@ export default function Signup() {
     }
 
     if (password.length < 8) {
-      showToast("Password must be at least 8 characters", "error"); // or update i18n
+      showToast(t("error_password_min_length"), "error");
       return;
     }
+
+    setSubmitting(true);
 
     try {
       await signup(email, password);
       showToast(t("toast_signup_success"), "success");
       navigate("/dashboard");
     } catch (err) {
-      showToast(t("signup_failed") || "Signup failed", "error");
-      console.error(err);
+      showToast(t("signup_failed"), "error");
+
+      if (import.meta.env.DEV) {
+        console.error("Signup failed:", err);
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -61,6 +70,7 @@ export default function Signup() {
               </label>
               <input
                 type="email"
+                autoComplete="email"
                 className="
                   w-full px-3 py-2 rounded-xl
                   bg-white/80 dark:bg-gray-900/60
@@ -72,6 +82,7 @@ export default function Signup() {
                 placeholder={t("signup_email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
               />
             </div>
 
@@ -81,6 +92,7 @@ export default function Signup() {
               </label>
               <input
                 type="password"
+                autoComplete="new-password"
                 className="
                   w-full px-3 py-2 rounded-xl
                   bg-white/80 dark:bg-gray-900/60
@@ -92,11 +104,18 @@ export default function Signup() {
                 placeholder={t("signup_password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting}
               />
             </div>
 
-            <SettingButton type="submit" variant="primary">
-              {t("signup_button")}
+            <SettingButton
+              type="submit"
+              variant="primary"
+              disabled={submitting}
+            >
+              {submitting
+                ? t("signup_button_loading")
+                : t("signup_button")}
             </SettingButton>
           </form>
 

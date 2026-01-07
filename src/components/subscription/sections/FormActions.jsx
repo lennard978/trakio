@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import SettingButton from "../../ui/SettingButton";
 
 /**
@@ -35,6 +36,7 @@ export default function FormActions({
           type="button"
           variant="danger"
           onClick={onDelete}
+          aria-label={t("button_delete")}
         >
           {t("button_delete")}
         </SettingButton>
@@ -52,3 +54,21 @@ export default function FormActions({
     </div>
   );
 }
+
+FormActions.propTypes = {
+  isEdit: PropTypes.bool.isRequired,
+  hasUndo: PropTypes.bool,
+
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
+  onUndo: PropTypes.func,
+
+  t: PropTypes.func.isRequired
+};
+
+FormActions.defaultProps = {
+  hasUndo: false,
+  onDelete: undefined,
+  onUndo: undefined
+};

@@ -1,21 +1,37 @@
-export function getAnnualCost(subscriptions = []) {
-  return subscriptions.reduce((sum, s) => {
-    const price = Number(s.price || 0);
-    if (!price || !s.frequency) return sum;
+// src/utils/getAnnualCost.js
 
-    switch (s.frequency) {
-      case "weekly":
-        return sum + price * 52;
-      case "biweekly":
-        return sum + price * 26;
-      case "monthly":
-        return sum + price * 12;
-      case "quarterly":
-        return sum + price * 4;
-      case "yearly":
-        return sum + price;
-      default:
-        return sum;
-    }
+/**
+ * getAnnualCost
+ *
+ * Calculates total annual cost for a list of subscriptions.
+ * Defensive against malformed data.
+ *
+ * @param {Array} subscriptions
+ * @returns {number} annual total (rounded to 2 decimals)
+ */
+export function getAnnualCost(subscriptions = []) {
+  if (!Array.isArray(subscriptions)) return 0;
+
+  const MULTIPLIERS = {
+    weekly: 52,
+    biweekly: 26,
+    monthly: 12,
+    quarterly: 4,
+    yearly: 1,
+  };
+
+  const total = subscriptions.reduce((sum, s) => {
+    if (!s) return sum;
+
+    const price = Number(s.price);
+    const freq = s.frequency;
+
+    if (!Number.isFinite(price) || price <= 0) return sum;
+    if (!MULTIPLIERS[freq]) return sum;
+
+    return sum + price * MULTIPLIERS[freq];
   }, 0);
+
+  // Ensure stable currency math
+  return Number(total.toFixed(2));
 }

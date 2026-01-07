@@ -1,7 +1,8 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { XMarkIcon, CheckIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
 import languages from "../../utils/languages";
-import React, { useEffect, useMemo, useState } from "react";
 
 export default function LanguagePickerSheet({ onClose }) {
   const { i18n, t } = useTranslation();
@@ -17,6 +18,7 @@ export default function LanguagePickerSheet({ onClose }) {
     );
   }, [query]);
 
+  // Prevent background scroll
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -25,8 +27,20 @@ export default function LanguagePickerSheet({ onClose }) {
     };
   }, []);
 
+  // Close on Escape key
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start">
+    <div
+      className="fixed inset-0 z-50 flex items-start"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="language-picker-title"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -35,49 +49,42 @@ export default function LanguagePickerSheet({ onClose }) {
 
       {/* Sheet */}
       <div
-        className="
-  relative w-full
-  bg-white dark:bg-gray-900
-  rounded-t-[28px]
-  shadow-2xl
-  flex flex-col
-  animate-sheet-in
-  mt-2
-"
+        className="relative w-full bg-white dark:bg-gray-900 rounded-t-[28px] shadow-2xl flex flex-col animate-sheet-in mt-2"
         style={{
           height: "calc(100dvh - env(safe-area-inset-bottom))",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         {/* Handle */}
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-2 select-none">
           <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
         </div>
 
         {/* Header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{t("settings_language_select")}</h2>
+            <h2 id="language-picker-title" className="text-lg font-semibold">
+              {t("settings_language_select")}
+            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t("settings_language_select_subtitle")}
             </p>
           </div>
-          <button onClick={onClose}>
+          <button onClick={onClose} aria-label={t("close") || "Close"}>
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
         {/* Search */}
         <div className="px-5 pb-3">
-          <div className="flex items-center gap-2 px-4 py-3 rounded-2xl
-                          bg-gray-100 dark:bg-gray-800 border
-                          border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
             <input
               value={query}
               autoFocus
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('search_lang' || "Search language…")}
+              placeholder={t("search_lang") || "Search language…"}
+              aria-label={t("search_lang") || "Search language"}
               className="bg-transparent w-full outline-none text-sm"
             />
           </div>
@@ -95,14 +102,10 @@ export default function LanguagePickerSheet({ onClose }) {
                   i18n.changeLanguage(lang.code);
                   onClose();
                 }}
-                className={`
-                  w-full flex items-center justify-between
-                  px-4 py-3 rounded-2xl mb-2 border transition
-                  ${active
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl mb-2 border transition ${active
                     ? "bg-orange-50 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700"
                     : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                  }
-                `}
+                  }`}
               >
                 <div className="flex gap-3 items-center">
                   <span className="text-lg">{lang.emoji}</span>
@@ -112,14 +115,22 @@ export default function LanguagePickerSheet({ onClose }) {
                   </div>
                 </div>
 
-                {active && (
-                  <CheckIcon className="w-6 h-6 text-orange-600" />
-                )}
+                {active && <CheckIcon className="w-6 h-6 text-orange-600" />}
               </button>
             );
           })}
+
+          {filtered.length === 0 && (
+            <div className="text-center text-sm text-gray-400 mt-6">
+              {t("no_results") || "No languages found"}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+LanguagePickerSheet.propTypes = {
+  onClose: PropTypes.func.isRequired,
+};

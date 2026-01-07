@@ -1,6 +1,5 @@
 import React from "react";
-import SubscriptionForm from "../components/subscription/SubscriptionForm";
-
+import SubscriptionForm from '../components/subscription/SubscriptionForm'
 export default function AddEditSubscription() {
   return (
     <div>

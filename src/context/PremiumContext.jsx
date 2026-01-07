@@ -4,52 +4,60 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
+import PropTypes from "prop-types";
 import { useAuth } from "../hooks/useAuth";
 
 const PremiumContext = createContext(null);
 
 export function PremiumProvider({ children }) {
   const { user, token } = useAuth();
-  const isLoggedIn = !!user && !!token;
+  const isLoggedIn = Boolean(user && token);
 
   /* ------------------------------------------------------------------ */
-  /* Raw Stripe-backed state (DO NOT DERIVE LOGIC HERE)                  */
+  /* Raw Stripe-backed state (NO DERIVED LOGIC HERE)                     */
   /* ------------------------------------------------------------------ */
 
-  const [status, setStatus] = useState(null); // active | trialing | past_due | canceled
+  const [status, setStatus] = useState(null); // active | trialing | past_due | canceled | incomplete
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null); // unix seconds
   const [trialEnds, setTrialEnds] = useState(null); // unix seconds
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const mountedRef = useRef(true);
 
   /* ------------------------------------------------------------------ */
-  /* Reset on logout                                                     */
+  /* Mount / unmount safety                                             */
   /* ------------------------------------------------------------------ */
 
-  if (loading && !isLoggedIn) {
-    console.warn("PremiumProvider loading while logged out — forcing reset");
-    setLoading(false);
-  }
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const safeSet = (setter) => (value) => {
+    if (mountedRef.current) setter(value);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Reset on logout (STRICT)                                           */
+  /* ------------------------------------------------------------------ */
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setStatus(null);
-      setCurrentPeriodEnd(null);
-      setTrialEnds(null);
-      setCancelAtPeriodEnd(false);
-      setLoading(false); // ✅ IMPORTANT
+      safeSet(setStatus)(null);
+      safeSet(setCurrentPeriodEnd)(null);
+      safeSet(setTrialEnds)(null);
+      safeSet(setCancelAtPeriodEnd)(false);
+      safeSet(setLoading)(false);
     }
   }, [isLoggedIn]);
 
-
-  useEffect(() => {
-    if (status === "incomplete") {
-      refreshPremiumStatus();
-    }
-  }, [status]);
-
+  /* ------------------------------------------------------------------ */
+  /* Auth headers helper                                                */
+  /* ------------------------------------------------------------------ */
 
   const authHeaders = useCallback(() => {
     if (!token) return null;
@@ -60,80 +68,93 @@ export function PremiumProvider({ children }) {
     };
   }, [token]);
 
+  /* ------------------------------------------------------------------ */
+  /* Refresh premium from backend (Stripe truth)                        */
+  /* ------------------------------------------------------------------ */
 
-  /* ------------------------------------------------------------------ */
-  /* Refresh premium from backend (Stripe truth)                         */
-  /* ------------------------------------------------------------------ */
   const refreshPremiumStatus = useCallback(async () => {
-    if (!isLoggedIn) return null;
+    if (!isLoggedIn) return { status: null };
 
-    setLoading(true);
+    safeSet(setLoading)(true);
 
     try {
       const headers = authHeaders();
       if (!headers) {
-        setLoading(false);
-        return null;
+        safeSet(setLoading)(false);
+        return { status: null };
       }
+
       const res = await fetch("/api/user", {
         method: "POST",
         headers,
         body: JSON.stringify({ action: "get-status" }),
       });
 
-
       if (!res.ok) {
-        setLoading(false);
-        return null;
+        safeSet(setLoading)(false);
+        return { status: null };
       }
 
       const data = await res.json();
 
-      setStatus(data.status ?? null);
-      setCurrentPeriodEnd(
+      safeSet(setStatus)(data.status ?? null);
+      safeSet(setCurrentPeriodEnd)(
         typeof data.currentPeriodEnd === "number"
           ? data.currentPeriodEnd
           : null
       );
-      setTrialEnds(
-        typeof data.trialEnds === "number"
-          ? data.trialEnds
-          : null
+      safeSet(setTrialEnds)(
+        typeof data.trialEnds === "number" ? data.trialEnds : null
       );
-      setCancelAtPeriodEnd(!!data.cancelAtPeriodEnd);
+      safeSet(setCancelAtPeriodEnd)(Boolean(data.cancelAtPeriodEnd));
 
-      setLoading(false);
+      safeSet(setLoading)(false);
       return data;
     } catch (err) {
-      console.error("Premium refresh failed:", err);
-      setLoading(false);
-      return null;
+      if (import.meta.env.DEV) {
+        console.error("Premium refresh failed:", err);
+      }
+      safeSet(setLoading)(false);
+      return { status: null };
     }
   }, [isLoggedIn, authHeaders]);
 
   /* ------------------------------------------------------------------ */
-  /* Auto refresh every 5 minutes                                        */
+  /* Auto-refresh on login + every 5 minutes                            */
   /* ------------------------------------------------------------------ */
 
   useEffect(() => {
     if (!isLoggedIn) return;
 
     refreshPremiumStatus();
-    const id = setInterval(refreshPremiumStatus, 5 * 60 * 1000);
+
+    const id = setInterval(
+      refreshPremiumStatus,
+      5 * 60 * 1000 // 5 minutes
+    );
 
     return () => clearInterval(id);
   }, [isLoggedIn, refreshPremiumStatus]);
 
-
-
   /* ------------------------------------------------------------------ */
-  /* Trial handling (still backend-authoritative)                        */
+  /* Recover from Stripe "incomplete"                                   */
   /* ------------------------------------------------------------------ */
 
-  const cancelTrial = async () => {
+  useEffect(() => {
+    if (status === "incomplete") {
+      refreshPremiumStatus();
+    }
+  }, [status, refreshPremiumStatus]);
+
+  /* ------------------------------------------------------------------ */
+  /* Trial handling                                                     */
+  /* ------------------------------------------------------------------ */
+
+  const cancelTrial = useCallback(async () => {
     if (!isLoggedIn) return false;
 
-    setLoading(true);
+    safeSet(setLoading)(true);
+
     try {
       const headers = authHeaders();
       if (!headers) return false;
@@ -146,42 +167,45 @@ export function PremiumProvider({ children }) {
 
       if (!res.ok) return false;
 
-      // 🔁 Always re-sync from Stripe
       await refreshPremiumStatus();
       return true;
+    } catch {
+      return false;
     } finally {
-      setLoading(false);
+      safeSet(setLoading)(false);
     }
-  };
-
+  }, [isLoggedIn, authHeaders, refreshPremiumStatus]);
 
   /* ------------------------------------------------------------------ */
-  /* Stripe checkout                                                     */
+  /* Stripe checkout                                                    */
   /* ------------------------------------------------------------------ */
 
-  const startCheckout = async (plan) => {
-    if (!isLoggedIn) return;
+  const startCheckout = useCallback(
+    async (plan) => {
+      if (!isLoggedIn) return;
 
-    setLoading(true);
-    try {
-      const headers = authHeaders();
-      if (!headers) return;
+      safeSet(setLoading)(true);
 
-      const res = await fetch("/api/stripe", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ action: "checkout", plan }),
-      });
+      try {
+        const headers = authHeaders();
+        if (!headers) return;
 
-      const data = await res.json();
-      if (data?.url) {
-        window.location.href = data.url;
+        const res = await fetch("/api/stripe", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ action: "checkout", plan }),
+        });
+
+        const data = await res.json();
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } finally {
+        safeSet(setLoading)(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    },
+    [isLoggedIn, authHeaders]
+  );
 
   /* ------------------------------------------------------------------ */
 
@@ -206,11 +230,15 @@ export function PremiumProvider({ children }) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Consumer hook                                                       */
+/* ------------------------------------------------------------------ */
+
 export function usePremiumContext() {
   const ctx = useContext(PremiumContext);
 
   if (!ctx) {
-    // SAFE fallback — prevents white screen
+    // SAFE fallback (ErrorBoundary-safe)
     return {
       status: null,
       currentPeriodEnd: null,
@@ -219,11 +247,13 @@ export function usePremiumContext() {
       loading: false,
       cancelTrial: async () => false,
       startCheckout: async () => { },
-      refreshPremiumStatus: async () => null,
+      refreshPremiumStatus: async () => ({ status: null }),
     };
   }
 
   return ctx;
 }
 
-
+PremiumProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};

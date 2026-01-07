@@ -1,19 +1,29 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { usePremiumContext } from "../context/PremiumContext";
 
 const SNAPSHOT_KEY = "premium_snapshot_v1";
 
+/* -------------------- Storage helpers -------------------- */
+
 function saveSnapshot(data) {
   try {
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({
-      ...data,
-      savedAt: Date.now(),
-    }));
-  } catch { }
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        SNAPSHOT_KEY,
+        JSON.stringify({
+          ...data,
+          savedAt: Date.now(),
+        })
+      );
+    }
+  } catch {
+    /* intentionally silent */
+  }
 }
 
 function loadSnapshot() {
   try {
+    if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(SNAPSHOT_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
@@ -21,58 +31,91 @@ function loadSnapshot() {
   }
 }
 
+function isOnline() {
+  return typeof navigator !== "undefined" && navigator.onLine;
+}
+
 /**
+ * usePremium
+ *
  * Authoritative premium resolver.
- * Frontend MUST NOT trust raw flags alone.
+ * UI components MUST rely on this hook only.
+ *
+ * Stable return shape guaranteed.
  */
 export function usePremium() {
-  const ctx = usePremiumContext?.() ?? null;
+  const ctx =
+    typeof usePremiumContext === "function"
+      ? usePremiumContext()
+      : null;
 
-  // ✅ NEVER throw here — return safe defaults instead
+  /* -------------------- Hard fallback (no provider) -------------------- */
   if (!ctx) {
     return {
       loaded: true,
-      isPremium: false,
-      status: null,
-      currentPeriodEnd: null,
-      trialEnds: null,
-      cancelAtPeriodEnd: false,
       loading: false,
 
-      // keep API stable
+      isPremium: false,
+      hasActiveTrial: false,
+      trialDaysLeft: null,
+
+      premiumEndsAt: null,
+      trialEndsAt: null,
+      trialEndDate: null,
+
+      status: null,
+      cancelAtPeriodEnd: false,
+      noTrial: true,
+
       startTrial: async () => false,
       cancelTrial: async () => false,
       startCheckout: async () => { },
-      refreshPremiumStatus: async () => null,
-
-      // any other fields your UI expects:
-      hasActiveTrial: false,
-      trialExpired: false,
-      noTrial: true,
-      trialDaysLeft: 0,
-      trialEndDate: null,
+      refreshPremiumStatus: async () => ({
+        status: null,
+      }),
     };
   }
 
-  // ✅ only destructure AFTER ctx is confirmed
   const {
     status,
     currentPeriodEnd,
     trialEnds,
     cancelAtPeriodEnd,
     loading,
+
     startTrial,
     cancelTrial,
     startCheckout,
-    refreshPremiumStatus,
+    refreshPremiumStatus: _refresh,
   } = ctx;
+
+  /* -------------------- Safe refresh wrapper -------------------- */
+  const refreshPremiumStatus = useCallback(async () => {
+    try {
+      const result = await _refresh();
+      return result ?? { status: null };
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error("refreshPremiumStatus failed:", err);
+      }
+      return { status: null };
+    }
+  }, [_refresh]);
+
+  /* -------------------- Derived premium state -------------------- */
   const premiumState = useMemo(() => {
     const now = Date.now();
 
-    // ---- OFFLINE FALLBACK (DISPLAY ONLY) ----
-    if (!navigator.onLine && !status && loading) {
+    /* ---------- Offline snapshot fallback ---------- */
+    if (!isOnline() && !status && loading) {
       const cached = loadSnapshot();
-      if (cached) return cached;
+      if (cached) {
+        return {
+          ...cached,
+          loaded: true,
+          loading: false,
+        };
+      }
     }
 
     const periodEndMs =
@@ -86,41 +129,46 @@ export function usePremium() {
         : null;
 
     const isPremium =
-      (status === "active" && periodEndMs && periodEndMs > now) ||
-      (status === "trialing" && trialEndMs && trialEndMs > now);
-
+      (status === "active" &&
+        periodEndMs &&
+        periodEndMs > now) ||
+      (status === "trialing" &&
+        trialEndMs &&
+        trialEndMs > now);
 
     const hasActiveTrial =
       status === "trialing" &&
       trialEndMs &&
       trialEndMs > now;
 
-    let trialDaysLeft = null;
-    if (hasActiveTrial) {
-      trialDaysLeft = Math.max(
+    const trialDaysLeft = hasActiveTrial
+      ? Math.max(
         0,
         Math.ceil((trialEndMs - now) / 86400000)
-      );
-    }
+      )
+      : null;
 
     const resolved = {
       isPremium,
       hasActiveTrial,
       trialDaysLeft,
+
       premiumEndsAt: periodEndMs
         ? new Date(periodEndMs).toISOString()
         : null,
+
       trialEndsAt: trialEndMs
         ? new Date(trialEndMs).toISOString()
         : null,
+
+      // legacy alias (kept intentionally)
       trialEndDate: trialEndMs
         ? new Date(trialEndMs).toISOString()
         : null,
     };
 
-
-    // ---- SAVE SNAPSHOT WHEN ONLINE ----
-    if (navigator.onLine && !loading) {
+    /* ---------- Persist snapshot when online & settled ---------- */
+    if (isOnline() && !loading) {
       saveSnapshot(resolved);
     }
 
@@ -128,11 +176,20 @@ export function usePremium() {
   }, [status, currentPeriodEnd, trialEnds, loading]);
 
   return {
-    ...ctx,
+    /* ---------- Raw context (controlled) ---------- */
+    status: status ?? null,
+    cancelAtPeriodEnd: Boolean(cancelAtPeriodEnd),
+
+    loaded: true,
+    loading: Boolean(loading),
+
+    /* ---------- Derived state ---------- */
     ...premiumState,
-    loading,
-    loaded: true, // ✅ REQUIRED
+
+    /* ---------- Actions ---------- */
+    startTrial,
+    cancelTrial,
+    startCheckout,
+    refreshPremiumStatus,
   };
-
 }
-

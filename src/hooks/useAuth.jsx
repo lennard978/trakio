@@ -1,33 +1,79 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+// src/context/AuthContext.jsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import PropTypes from "prop-types";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
+
+const USER_KEY = "user";
+const TOKEN_KEY = "token";
+const PREMIUM_SNAPSHOT_KEY = "premium_snapshot_v1";
+
+/* ------------------------------------------------------------------ */
+/* Provider                                                           */
+/* ------------------------------------------------------------------ */
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // ⬅️ NEW
+  const [loading, setLoading] = useState(true);
 
+  /* ---------- Load auth from storage ---------- */
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedToken = localStorage.getItem("token");
+    try {
+      if (typeof window === "undefined") return;
 
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
+      const savedUser = localStorage.getItem(USER_KEY);
+      const savedToken = localStorage.getItem(TOKEN_KEY);
+
+      if (savedUser && savedToken) {
+        setUser(JSON.parse(savedUser));
+        setToken(savedToken);
+      }
+    } catch {
+      // corrupted storage → ignore
+    } finally {
+      setLoading(false);
     }
-    setLoading(false); // ⬅️ Mark loading complete
-
   }, []);
 
-  const saveAuth = (user, token) => {
-    setUser(user);
-    setToken(token);
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", token);
-  };
+  /* ---------- Persist auth ---------- */
+  const saveAuth = useCallback((userData, tokenValue) => {
+    setUser(userData);
+    setToken(tokenValue);
 
-  // 🔒 Shared safe fetch
-  const callAuth = async (payload) => {
+    try {
+      localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      localStorage.setItem(TOKEN_KEY, tokenValue);
+    } catch {
+      // ignore storage failures
+    }
+  }, []);
+
+  /* ---------- Clear auth ---------- */
+  const clearAuth = useCallback(() => {
+    setUser(null);
+    setToken(null);
+
+    try {
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(PREMIUM_SNAPSHOT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  /* ------------------------------------------------------------------ */
+  /* Shared auth API caller                                             */
+  /* ------------------------------------------------------------------ */
+
+  const callAuth = useCallback(async (payload) => {
     const res = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -48,54 +94,106 @@ export function AuthProvider({ children }) {
     }
 
     return data;
-  };
+  }, []);
 
-  // ✅ Signup
-  const signup = async (email, password) => {
-    await callAuth({
-      action: "signup",
-      email,
-      password,
-    });
+  /* ------------------------------------------------------------------ */
+  /* Signup                                                            */
+  /* ------------------------------------------------------------------ */
 
-    // auto-login after successful signup
-    return login(email, password);
-  };
+  const signup = useCallback(
+    async (email, password) => {
+      await callAuth({
+        action: "signup",
+        email,
+        password,
+      });
 
-  // ✅ Login
-  const login = async (email, password) => {
-    const data = await callAuth({
-      action: "login",
-      email,
-      password,
-    });
+      // Auto-login after signup
+      return login(email, password);
+    },
+    [callAuth]
+  );
 
-    saveAuth(data.user, data.token);
-    return true;
-  };
+  /* ------------------------------------------------------------------ */
+  /* Login                                                             */
+  /* ------------------------------------------------------------------ */
 
-  async function logout() {
-    // 1️⃣ Clear auth
-    localStorage.removeItem("token");
+  const login = useCallback(
+    async (email, password) => {
+      const data = await callAuth({
+        action: "login",
+        email,
+        password,
+      });
 
-    // 2️⃣ Clear premium snapshot
-    localStorage.removeItem("premium_snapshot_v1");
+      saveAuth(data.user, data.token);
+      return true;
+    },
+    [callAuth, saveAuth]
+  );
 
-    // 3️⃣ Clear IndexedDB (subscriptions + queue)
-    indexedDB.deleteDatabase("trakio-db");
+  /* ------------------------------------------------------------------ */
+  /* Logout                                                            */
+  /* ------------------------------------------------------------------ */
 
-    // 4️⃣ Reload app cleanly
+  const logout = useCallback(async () => {
+    clearAuth();
+
+    // Clear IndexedDB (subscriptions, queue, etc.)
+    try {
+      indexedDB.deleteDatabase("trakio-db");
+    } catch {
+      /* ignore */
+    }
+
+    // Hard reload ensures clean app state
     window.location.href = "/";
-  }
+  }, [clearAuth]);
 
+  /* ------------------------------------------------------------------ */
 
   return (
-    <AuthContext.Provider value={{ user, token, signup, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        signup,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* PropTypes                                                          */
+/* ------------------------------------------------------------------ */
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+/* ------------------------------------------------------------------ */
+/* Consumer hook                                                       */
+/* ------------------------------------------------------------------ */
+
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+
+  if (!ctx) {
+    // SAFE fallback – prevents white screens
+    return {
+      user: null,
+      token: null,
+      loading: false,
+      signup: async () => false,
+      login: async () => false,
+      logout: async () => { },
+    };
+  }
+
+  return ctx;
 }

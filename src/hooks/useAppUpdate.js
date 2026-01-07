@@ -7,36 +7,78 @@ export function useAppUpdate() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker.getRegistration().then((reg) => {
-      if (!reg) return;
+    let reg;
+    let onUpdateFound;
 
-      if (reg.waiting) {
-        setWaitingWorker(reg.waiting);
+    const handleAppInstalled = () => {
+      console.log("✅ App successfully installed or updated!");
+      setWaitingWorker(null);
+      setUpdateAvailable(false);
+    };
+
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (!registration) return;
+      reg = registration;
+
+      // Handle already waiting worker (i.e., update already downloaded)
+      if (registration.waiting) {
+        setWaitingWorker(registration.waiting);
         setUpdateAvailable(true);
       }
 
-      reg.addEventListener("updatefound", () => {
-        const worker = reg.installing;
-        if (!worker) return;
+      // Handle new updates found
+      onUpdateFound = () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
 
-        worker.addEventListener("statechange", () => {
-          if (
-            worker.state === "installed" &&
-            navigator.serviceWorker.controller
-          ) {
-            setWaitingWorker(worker);
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            setWaitingWorker(newWorker);
             setUpdateAvailable(true);
+            console.log("[SW] Update available and ready.");
           }
         });
-      });
+      };
+
+      registration.addEventListener("updatefound", onUpdateFound);
     });
+
+    // Listen for installed event
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    // Periodic update checks (every 6 hours)
+    const interval = setInterval(() => {
+      navigator.serviceWorker.getRegistration().then((reg) => reg?.update());
+    }, 1000 * 60 * 60 * 6);
+
+    return () => {
+      if (reg && onUpdateFound) reg.removeEventListener("updatefound", onUpdateFound);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+      clearInterval(interval);
+    };
   }, []);
 
+  // Manually apply the waiting update
   const applyUpdate = () => {
+    if (!waitingWorker) {
+      console.warn("[SW] No waiting worker found.");
+      return;
+    }
+
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      () => window.location.reload(),
+      { once: true } // ✅ ensures single reload
+    );
+  };
+
+  // Automatically apply update without banner
+  const autoUpdate = () => {
     if (!waitingWorker) return;
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
     window.location.reload();
   };
 
-  return { updateAvailable, applyUpdate };
+  return { updateAvailable, applyUpdate, autoUpdate };
 }

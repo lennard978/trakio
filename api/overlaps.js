@@ -101,7 +101,7 @@ export default async function handler(req, res) {
 
   // Only return groups with 2+ items
   const overlaps = Object.entries(grouped)
-    .filter(([_, items]) => items.length >= 2)
+    .filter(([items]) => items.length >= 2)
     .map(([group, items]) => {
       // Sort by price ascending
       const sorted = [...items].sort((a, b) => a.price - b.price);

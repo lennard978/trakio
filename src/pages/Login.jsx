@@ -17,9 +17,11 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
     if (!email.trim()) {
       showToast(t("error_required"), "error");
@@ -31,14 +33,20 @@ export default function Login() {
       return;
     }
 
+    setSubmitting(true);
 
     try {
       await login(email, password);
       showToast(t("toast_login_success"), "success");
       navigate("/dashboard");
     } catch (err) {
-      showToast(t("login_failed") || "Login failed", "error");
-      console.error(err);
+      showToast(t("login_failed"), "error");
+
+      if (import.meta.env.DEV) {
+        console.error("Login failed:", err);
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -57,6 +65,7 @@ export default function Login() {
               </label>
               <input
                 type="email"
+                autoComplete="email"
                 className="
                   w-full px-3 py-2 rounded-xl
                   bg-white/80 dark:bg-gray-900/60
@@ -65,9 +74,10 @@ export default function Login() {
                   focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
-                placeholder="you@example.com"
+                placeholder={t("login_email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
               />
             </div>
 
@@ -77,6 +87,7 @@ export default function Login() {
               </label>
               <input
                 type="password"
+                autoComplete="current-password"
                 className="
                   w-full px-3 py-2 rounded-xl
                   bg-white/80 dark:bg-gray-900/60
@@ -85,14 +96,21 @@ export default function Login() {
                   focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500
                   transition
                 "
-                placeholder="••••••••"
+                placeholder={t("login_password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting}
               />
             </div>
 
-            <SettingButton type="submit" variant="primary">
-              {t("button_log_in")}
+            <SettingButton
+              type="submit"
+              variant="primary"
+              disabled={submitting}
+            >
+              {submitting
+                ? t("login_button_loading")
+                : t("button_log_in")}
             </SettingButton>
           </form>
 

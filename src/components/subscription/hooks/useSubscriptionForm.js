@@ -3,6 +3,7 @@ import { loadSubscriptionsLocal } from "../../../utils/mainDB";
 import { persistSubscriptions } from "../../../utils/persistSubscriptions";
 import { setPremiumIntent } from "../../../utils/premiumIntent";
 import { CATEGORY_INTENSITY_DEFAULT } from "../constants";
+import { subscriptionCatalog } from "../../../data/subscriptionCatalog";
 
 /* -------------------- Utilities -------------------- */
 
@@ -13,18 +14,93 @@ function normalizeDateString(d) {
   return dt.toISOString().slice(0, 10);
 }
 
-const uuid = () => crypto.randomUUID();
+function uuid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+/**
+ * Normalize user-entered subscription name for matching.
+ * - lowercase
+ * - trim
+ * - collapse whitespace
+ * - remove common punctuation
+ */
+function normalizeName(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[()[\]{}.,!?:;"'`~]/g, "");
+}
+
+/**
+ * Deterministic catalog matcher.
+ * Returns best match or null.
+ */
+function matchCatalog(nameRaw) {
+  const q = normalizeName(nameRaw);
+  if (!q) return null;
+
+  let best = null;
+
+  for (const entry of subscriptionCatalog) {
+    const matchList = Array.isArray(entry.match) ? entry.match : [];
+    const name = normalizeName(entry.name);
+
+    // direct contains checks
+    const candidates = [
+      name,
+      ...matchList.map((m) => normalizeName(m)),
+    ].filter(Boolean);
+
+    let hit = false;
+
+    for (const c of candidates) {
+      // exact
+      if (q === c) {
+        hit = true;
+        break;
+      }
+      // substring (e.g. "spotify family" should match "spotify")
+      if (q.includes(c) || c.includes(q)) {
+        hit = true;
+        break;
+      }
+    }
+
+    if (!hit) continue;
+
+    const score = Number(entry.confidence) || 0;
+
+    if (!best || score > best.confidence) {
+      best = {
+        name: entry.name,
+        icon: entry.icon || null,
+        category: entry.category || "other",
+        confidence: score,
+      };
+    }
+  }
+
+  return best;
+}
 
 /* -------------------- Hook -------------------- */
 
 export function useSubscriptionForm({
   id,
   email,
-  user,
   premium,
   navigate,
   showToast,
-  t
+  t,
 }) {
   /* ---------- State ---------- */
 
@@ -47,15 +123,18 @@ export function useSubscriptionForm({
 
   const [originalSnapshot, setOriginalSnapshot] = useState(null);
 
-  const token = localStorage.getItem("token");
+  // 🔒 Manual override locks (prevents smart engine from overwriting user intent)
+  const [categoryLocked, setCategoryLocked] = useState(false);
+  const [iconLocked, setIconLocked] = useState(false);
+
+  const token = isBrowser() ? localStorage.getItem("token") : null;
 
   const advancedFrequencies = useMemo(
     () => ["quarterly", "semiannual", "nine_months", "biennial", "triennial"],
     []
   );
 
-  const limitReached =
-    !id && !premium.isPremium && subscriptions.length >= 5;
+  const limitReached = !id && !premium.isPremium && subscriptions.length >= 5;
 
   const requiresPremiumInterval =
     !premium.isPremium && advancedFrequencies.includes(frequency);
@@ -67,10 +146,15 @@ export function useSubscriptionForm({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: token ? `Bearer ${token}` : "",
       },
       body: JSON.stringify({ action: "get", email }),
     });
+
+    if (!res.ok) {
+      throw new Error(`Fetch failed (${res.status})`);
+    }
+
     const data = await res.json();
     return Array.isArray(data.subscriptions) ? data.subscriptions : [];
   };
@@ -93,11 +177,13 @@ export function useSubscriptionForm({
         if (local.length) list = local;
 
         // 2️⃣ Backend if online
-        if (navigator.onLine) {
+        if (isBrowser() && navigator.onLine) {
           try {
             const remote = await kvGet();
             if (remote.length) list = remote;
-          } catch { }
+          } catch {
+            // silent fallback to local
+          }
         }
 
         if (cancelled) return;
@@ -115,9 +201,7 @@ export function useSubscriptionForm({
 
         /* ---------- Edit Mode ---------- */
         if (id) {
-          const existing = migrated.find(
-            (s) => String(s.id) === String(id)
-          );
+          const existing = migrated.find((s) => String(s.id) === String(id));
 
           if (!existing) {
             showToast(t("error_not_found"), "error");
@@ -143,6 +227,10 @@ export function useSubscriptionForm({
               CATEGORY_INTENSITY_DEFAULT.other
           );
 
+          // In edit mode, lock smart changes by default
+          setCategoryLocked(true);
+          setIconLocked(true);
+
           const lastPayment =
             Array.isArray(existing.payments) && existing.payments.length
               ? [...existing.payments]
@@ -153,6 +241,10 @@ export function useSubscriptionForm({
               : normalizeDateString(existing.datePaid);
 
           setDatePaid(lastPayment ?? "");
+        } else {
+          // In add mode, allow smart suggestions initially
+          setCategoryLocked(false);
+          setIconLocked(false);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -163,6 +255,59 @@ export function useSubscriptionForm({
       cancelled = true;
     };
   }, [email, id]);
+
+  /* ---------- Smart Categorization (Add Mode Only) ---------- */
+
+  useEffect(() => {
+    if (id) return; // never auto-change in edit mode
+
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const match = matchCatalog(trimmed);
+    if (!match) return;
+
+    // Confidence thresholds:
+    // - >= 90 => safe to auto-apply category + icon
+    // - 80-89 => apply only if fields are still default/empty and not locked
+    const conf = match.confidence || 0;
+
+    // category
+    if (!categoryLocked) {
+      const canApplyCategory =
+        conf >= 90 || (conf >= 80 && (category === "other" || !category));
+
+      if (canApplyCategory && match.category) {
+        setCategory(match.category);
+        setGradientIntensity(
+          CATEGORY_INTENSITY_DEFAULT[match.category] ??
+          CATEGORY_INTENSITY_DEFAULT.other
+        );
+      }
+    }
+
+    // icon
+    if (!iconLocked) {
+      const canApplyIcon =
+        conf >= 90 || (conf >= 80 && (!icon || icon === null));
+
+      if (canApplyIcon && match.icon) {
+        setIcon(match.icon);
+      }
+    }
+  }, [id, name, category, icon, categoryLocked, iconLocked]);
+
+  /* ---------- Wrap setters to detect manual overrides ---------- */
+
+  const setCategoryWithLock = (next) => {
+    setCategoryLocked(true);
+    setCategory(next);
+  };
+
+  const setIconWithLock = (next) => {
+    setIconLocked(true);
+    setIcon(next);
+  };
 
   /* ---------- Submit ---------- */
 
@@ -186,7 +331,7 @@ export function useSubscriptionForm({
     }
 
     const priceNum = Number(price);
-    if (!price || isNaN(priceNum) || priceNum <= 0) {
+    if (!price || Number.isNaN(priceNum) || priceNum <= 0) {
       showToast(t("error_price_invalid"), "error");
       return;
     }
@@ -233,11 +378,9 @@ export function useSubscriptionForm({
               .at(-1)?.i
             : null;
 
-          const lastPayment = lastPaymentIndex != null
-            ? existingPayments[lastPaymentIndex]
-            : null;
+          const lastPayment =
+            lastPaymentIndex != null ? existingPayments[lastPaymentIndex] : null;
 
-          // 1️⃣ Date changed → add new payment
           if (paid && normalizeDateString(lastPayment?.date) !== paid) {
             existingPayments.push({
               id: uuid(),
@@ -245,13 +388,7 @@ export function useSubscriptionForm({
               amount: priceNum,
               currency,
             });
-          }
-
-          // 2️⃣ Same date, price changed → update last payment
-          else if (
-            lastPayment &&
-            Number(lastPayment.amount) !== priceNum
-          ) {
+          } else if (lastPayment && Number(lastPayment.amount) !== priceNum) {
             existingPayments[lastPaymentIndex] = {
               ...lastPayment,
               amount: priceNum,
@@ -259,8 +396,6 @@ export function useSubscriptionForm({
             };
           }
 
-
-          // de-dup
           const uniq = new Map();
           for (const p of existingPayments) {
             if (!p?.date) continue;
@@ -343,12 +478,10 @@ export function useSubscriptionForm({
   const handleDelete = async () => {
     if (!id) return;
 
-    if (!confirm(t("confirm_delete_subscription"))) return;
+    if (isBrowser() && !confirm(t("confirm_delete_subscription"))) return;
 
     try {
-      const updated = subscriptions.filter(
-        (s) => String(s.id) !== String(id)
-      );
+      const updated = subscriptions.filter((s) => String(s.id) !== String(id));
 
       await persistSubscriptions({
         email,
@@ -388,8 +521,7 @@ export function useSubscriptionForm({
     }
   };
 
-  /* ---------- Exposed API ---------- */
-  /* ---------- Change detection ---------- */
+  /* ---------- Change Detection ---------- */
 
   const hasChanges = useMemo(() => {
     if (!originalSnapshot) return false;
@@ -406,11 +538,13 @@ export function useSubscriptionForm({
       gradientIntensity: Number(s.gradientIntensity) || 0,
       datePaid: normalizeDateString(s.datePaid),
       payments: Array.isArray(s.payments)
-        ? s.payments.map((p) => ({
-          date: normalizeDateString(p.date),
-          amount: Number(p.amount) || 0,
-          currency: p.currency ?? "",
-        }))
+        ? [...s.payments]
+          .map((p) => ({
+            date: normalizeDateString(p.date),
+            amount: Number(p.amount) || 0,
+            currency: p.currency ?? "",
+          }))
+          .sort((a, b) => String(a.date).localeCompare(String(b.date)))
         : [],
     });
 
@@ -451,28 +585,44 @@ export function useSubscriptionForm({
 
     name,
     setName,
+
     price,
     setPrice,
     frequency,
     setFrequency,
+
     category,
-    setCategory,
+    // ✅ use locked setter to respect manual overrides
+    setCategory: setCategoryWithLock,
+
     method,
     setMethod,
+
     datePaid,
     setDatePaid,
+
     notify,
     setNotify,
+
     currency,
     setCurrency,
+
     color,
     setColor,
+
     icon,
-    setIcon,
+    // ✅ use locked setter to respect manual overrides
+    setIcon: setIconWithLock,
+
     gradientIntensity,
     setGradientIntensity,
-    originalSnapshot, // ✅ ADD THIS LINE
-    hasChanges, // ✅ NEW
+
+    // Expose locks if you want to debug later (safe to keep)
+    categoryLocked,
+    iconLocked,
+
+    originalSnapshot,
+    hasChanges,
 
     handleSubmit,
     handleDelete,

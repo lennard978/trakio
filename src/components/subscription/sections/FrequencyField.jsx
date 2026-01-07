@@ -1,5 +1,6 @@
 import React from "react";
-import FrequencySelector from "../../FrequencySelector";
+import PropTypes from "prop-types";
+import FrequencySelector from "./FrequencySelector";
 
 /**
  * FrequencyField
@@ -12,7 +13,7 @@ export default function FrequencyField({
   setFrequency,
   isPremium,
   onRequirePremium,
-  t
+  t,
 }) {
   return (
     <div>
@@ -29,3 +30,23 @@ export default function FrequencyField({
     </div>
   );
 }
+
+/* ------------------------------------
+   ✅ PropTypes
+------------------------------------ */
+FrequencyField.propTypes = {
+  /** Current selected frequency (e.g., "monthly") */
+  frequency: PropTypes.string.isRequired,
+
+  /** Setter function for frequency */
+  setFrequency: PropTypes.func.isRequired,
+
+  /** Whether the current user has premium access */
+  isPremium: PropTypes.bool.isRequired,
+
+  /** Callback triggered when user tries to select premium-only frequency */
+  onRequirePremium: PropTypes.func.isRequired,
+
+  /** i18n translation function */
+  t: PropTypes.func.isRequired,
+};

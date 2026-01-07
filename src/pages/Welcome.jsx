@@ -8,6 +8,11 @@ import { useTranslation } from "react-i18next";
 import Card from "../components/ui/Card";
 import SettingButton from "../components/ui/SettingButton";
 
+/**
+ * Welcome
+ * - Public landing page for unauthenticated users
+ * - Success confirmation for authenticated users
+ */
 export default function Welcome() {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -15,44 +20,65 @@ export default function Welcome() {
   // LOGGED-IN VIEW
   if (user) {
     return (
-      <div className="flex justify-center mt-12 px-4 pb-24">
-        <div className="max-w-md w-full">
-          <Card className="text-center">
-            <p className="mb-2 text-lg font-semibold text-orange-600">
-              {t("toast_login_success")}
+      <main className="flex justify-center mt-12 px-4 pb-24">
+        <section className="max-w-md w-full">
+          <Card className="text-center space-y-3">
+            <p className="text-lg font-semibold text-orange-600">
+              {t("welcome_back", {
+                defaultValue: "Welcome back! You’re logged in.",
+              })}
             </p>
 
-            <Link to="/dashboard" className="inline-block w-full">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t("welcome_back_hint", {
+                defaultValue: "You can continue managing your subscriptions.",
+              })}
+            </p>
+
+            <Link to="/dashboard" className="inline-block w-full pt-2">
               <SettingButton variant="primary">
-                {t("success_back")}
+                {t("success_back", { defaultValue: "Go to dashboard" })}
               </SettingButton>
             </Link>
           </Card>
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   // PUBLIC VIEW
   return (
-    <div className="flex justify-center mt-12 px-4 pb-24">
-      <div className="max-w-lg w-full">
-        <Card>
-          <h1 className="text-3xl font-bold mb-3 text-center tracking-tight">
-            {t("welcome_title")}
-          </h1>
+    <main className="flex justify-center mt-12 px-4 pb-24">
+      <section className="max-w-lg w-full">
+        <Card className="space-y-6">
+          <header className="text-center space-y-3">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {t("welcome_title")}
+            </h1>
 
-          <p className="text-center text-base text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-            {t("welcome_message")}
+            <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+              {t("welcome_message")}
+            </p>
+          </header>
+
+          {/* Value proposition */}
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            {t("welcome_value_proposition", {
+              defaultValue:
+                "Track, analyze, and optimize all your subscriptions in one place.",
+            })}
           </p>
 
-          {/* Premium-style value line */}
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">
-            {t("welcome_value_proposition") ||
-              "Track, analyze, and optimize all your subscriptions in one place."}
+          {/* Trust signals */}
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500">
+            {t("welcome_trust_note", {
+              defaultValue:
+                "No credit card required · Privacy-first · Built for EU users",
+            })}
           </p>
 
-          <div className="flex justify-center gap-3">
+          {/* Actions */}
+          <div className="flex justify-center gap-3 pt-2">
             <Link to="/login">
               <SettingButton
                 variant="primary"
@@ -72,7 +98,7 @@ export default function Welcome() {
             </Link>
           </div>
         </Card>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

@@ -1,5 +1,6 @@
 // src/components/ui/SettingButton.jsx
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function SettingButton({
   children,
@@ -7,6 +8,7 @@ export default function SettingButton({
   onClick,
   type = "button",
   className = "",
+  disabled = false,
 }) {
   const styles = {
     primary: `
@@ -40,9 +42,12 @@ export default function SettingButton({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`
-        w-full py-2 rounded-xl font-medium transition active:scale-95
-        backdrop-blur-md 
+        w-full py-2 rounded-xl font-medium transition
+        active:scale-95
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        backdrop-blur-md
         ${styles[variant]}
         ${className}
       `}
@@ -51,3 +56,21 @@ export default function SettingButton({
     </button>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* PropTypes                                                          */
+/* ------------------------------------------------------------------ */
+
+SettingButton.propTypes = {
+  children: PropTypes.node.isRequired,
+  variant: PropTypes.oneOf([
+    "primary",
+    "success",
+    "danger",
+    "neutral",
+  ]),
+  onClick: PropTypes.func,
+  type: PropTypes.oneOf(["button", "submit", "reset"]),
+  className: PropTypes.string,
+  disabled: PropTypes.bool,
+};

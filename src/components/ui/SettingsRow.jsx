@@ -1,4 +1,6 @@
+// src/components/ui/SettingsRow.jsx
 import React from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import {
   ChevronRightIcon,
@@ -6,7 +8,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 /**
- * Reusable row for settings lists
+ * SettingsRow
+ * Reusable row for settings lists (link, external link, or action row)
  */
 export default function SettingsRow({
   icon,
@@ -24,54 +27,62 @@ export default function SettingsRow({
     typeof href === "string" &&
     (href.startsWith("http") || href.startsWith("mailto:"));
 
-  const showChevron = !right && !isExternal;
+  const showChevron = !right && !isExternal && !href;
 
   const ACCENT_STYLES = {
-    orange: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-    blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-    green: "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-    purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-    indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
-    red: "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+    orange:
+      "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+    blue:
+      "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+    green:
+      "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+    purple:
+      "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+    indigo:
+      "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+    red:
+      "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400",
   };
 
   const GLOW_STYLE =
     "shadow-[0_0_0_1px_rgba(249,115,22,0.15),0_0_12px_rgba(249,115,22,0.25)]";
 
-
-  /* ---------- Shared Icon Wrapper ---------- */
+  /* ---------- Icon Wrapper ---------- */
   const IconWrapper = (
     <div
       className={`
-    relative flex items-center justify-center
-    w-10 h-10 rounded-xl shrink-0
-    transition-all duration-200 ease-out
-    group-hover:-translate-y-[1px]
-    group-hover:scale-[1.03]
-    group-hover:shadow-md
-+   ${ACCENT_STYLES[accent]}
-  `}
+        relative flex items-center justify-center
+        w-10 h-10 rounded-xl shrink-0
+        transition-all duration-200 ease-out
+        group-hover:-translate-y-[1px]
+        group-hover:scale-[1.03]
+        group-hover:shadow-md
+        ${ACCENT_STYLES[accent] || ACCENT_STYLES.orange}
+      `}
     >
       {icon}
       {premium && (
-        <span className="absolute -top-1 -left-1 text-xs">👑</span>
+        <span
+          className="absolute -top-1 -left-1 text-xs"
+          aria-label="Premium feature"
+        >
+          👑
+        </span>
       )}
     </div>
   );
 
+  const baseClasses = `
+    group w-full flex items-center gap-4 px-4 py-4
+    hover:bg-gray-50 dark:hover:bg-gray-800/50
+    transition rounded-xl
+    ${glow ? GLOW_STYLE : ""}
+  `;
+
   /* ---------- Internal navigation ---------- */
   if (to) {
     return (
-      <Link
-        to={to}
-        className={`
-  group w-full flex items-center gap-4 px-4 py-4
-  hover:bg-gray-50 dark:hover:bg-gray-800/50
-  transition rounded-xl
-+ ${glow ? GLOW_STYLE : ""}
-`}
-
-      >
+      <Link to={to} className={baseClasses}>
         {IconWrapper}
 
         <div className="flex-1 text-left">
@@ -100,13 +111,7 @@ export default function SettingsRow({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`
-  group w-full flex items-center gap-4 px-4 py-4
-  hover:bg-gray-50 dark:hover:bg-gray-800/50
-  transition rounded-xl
-+ ${glow ? GLOW_STYLE : ""}
-`}
-
+        className={baseClasses}
       >
         {IconWrapper}
 
@@ -127,7 +132,7 @@ export default function SettingsRow({
     );
   }
 
-  /* ---------- Button row ---------- */
+  /* ---------- Action row ---------- */
   return (
     <div
       role={onClick ? "button" : undefined}
@@ -139,13 +144,7 @@ export default function SettingsRow({
           onClick();
         }
       }}
-      className={`
-  group w-full flex items-center gap-4 px-4 py-4
-  hover:bg-gray-50 dark:hover:bg-gray-800/50
-  transition rounded-xl
-+ ${glow ? GLOW_STYLE : ""}
-`}
-
+      className={baseClasses}
     >
       {IconWrapper}
 
@@ -167,3 +166,27 @@ export default function SettingsRow({
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* PropTypes                                                          */
+/* ------------------------------------------------------------------ */
+
+SettingsRow.propTypes = {
+  icon: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  onClick: PropTypes.func,
+  href: PropTypes.string,
+  to: PropTypes.string,
+  premium: PropTypes.bool,
+  right: PropTypes.node,
+  accent: PropTypes.oneOf([
+    "orange",
+    "blue",
+    "green",
+    "purple",
+    "indigo",
+    "red",
+  ]),
+  glow: PropTypes.bool,
+};

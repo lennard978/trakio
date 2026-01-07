@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import {
   Routes,
@@ -12,13 +13,13 @@ import CurrencyPickerSheet from "./components/settings/CurrencyPickerSheet";
 import LanguagePickerSheet from "./components/settings/LanguagePickerSheet";
 
 import { useAuth } from "./hooks/useAuth";
-import { usePremium } from "./hooks/usePremium";
 
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { flushQueue } from "./utils/offlineQueue";
+import toast from "react-hot-toast";
 
 /* -------------------- Lazy Pages -------------------- */
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -36,62 +37,60 @@ const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const Premium = lazy(() => import("./pages/Premium"));
 const Widerrufsbelehrung = lazy(() => import("./pages/Widerrufsbelehrung"));
 const HelpSupportSheet = lazy(() => import("./components/help/HelpSupportSheet"));
+const AGB = lazy(() => import("./pages/AGB"));
+const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
 
-import { useCurrency } from "./context/CurrencyContext";
-import AGB from "./pages/AGB";
 import InstallBanner from "./components/InstallBanner";
-import { useTranslation } from "react-i18next";
 import { useAppUpdate } from "./hooks/useAppUpdate";
 import AppUpdateBanner from "./components/AppUpdateBanner";
-import AccountDeleted from "./pages/AccountDeleted";
-
-/* -------------------- Loading -------------------- */
-function LoadingSkeleton() {
-  return (
-    <div className="w-full py-10 flex flex-col items-center gap-4">
-      <div className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
-      <div className="w-40 h-4 bg-gray-300/60 dark:bg-gray-700/60 rounded animate-pulse" />
-    </div>
-  );
-}
-
-/* -------------------- Auth Guard -------------------- */
-function ProtectedRoute({ children }) {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/" replace />;
-  return children;
-}
-
-/* -------------------- Trial Guard -------------------- */
-function TrialGuard({ children }) {
-  const premium = usePremium();
-
-  if (premium.trialExpired && !premium.isPremium) {
-    return <TrialExpired />;
-  }
-  return children;
-}
+import DashboardLoading from "./components/dasboard/DashboardLoading";
+import OfflineNotice from "./components/dasboard/OfflineNotice";
+import ProtectedRoute from "./components/ProtectedRoute";
+import TrialGuard from "./components/TrialGuard";
+import HardErrorBoundary from './components/HardErrorBoundary'
+import NotFound from "./pages/NotFound";
 
 /* -------------------- App -------------------- */
 export default function App() {
   const { user } = useAuth();
   const [activeSheet, setActiveSheet] = useState(null);
   const location = useLocation();
-  const { t } = useTranslation();
   const { updateAvailable, applyUpdate } = useAppUpdate();
 
-  /* Currency */
-  const { currency, setCurrency } = useCurrency();
-
   useEffect(() => {
-    const onOnline = () => {
+    const syncIfOnline = async () => {
       const token = localStorage.getItem("token");
-      if (token) flushQueue(); // ✅ guard
+      const isOnline = navigator.onLine;
+
+      if (token && isOnline && user) {
+        try {
+          await flushQueue();
+          toast.success("All offline changes synced!");
+        } catch (error) {
+          console.error("Queue flush failed:", error);
+          toast.error("Some changes couldn't be synced. Retrying soon.");
+        }
+
+      }
     };
 
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, []);
+    const onOffline = () => {
+      toast("You are offline. Changes will be synced once you reconnect.", {
+        icon: "⚠️",
+      });
+    };
+
+    // Run once and attach listeners
+    syncIfOnline();
+    window.addEventListener("online", syncIfOnline);
+    window.addEventListener("offline", onOffline);
+
+    return () => {
+      window.removeEventListener("online", syncIfOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, [user]);
+
 
   return (
     <div
@@ -101,101 +100,56 @@ export default function App() {
         text-gray-900 dark:text-gray-100
       "
     >
-      <Toaster position="top-center" />
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#333",
+            color: "#fff",
+          },
+        }}
+      />
       <Analytics />
       <InstallBanner />
       {/* MAIN */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
-          <Suspense fallback={<LoadingSkeleton />}>
-            <Routes location={location} key={location.pathname}>
-              <Route
-                path="/"
-                element={
-                  user ? (
-                    <Navigate to="/dashboard" replace />
-                  ) : (
-                    <AnimatedPage><Welcome /></AnimatedPage>
-                  )
-                }
-              />
-              <Route path="/premium" element={<AnimatedPage><Premium /></AnimatedPage>} />
-              <Route path="/success" element={<AnimatedPage><Success /></AnimatedPage>} />
-              <Route path="/cancel" element={<AnimatedPage><Cancel /></AnimatedPage>} />
-              <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
-              <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
-              <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
-              <Route path="/widerruf" element={<Widerrufsbelehrung />} />
-              <Route path="/account-deleted" element={<AccountDeleted />} />
+          <HardErrorBoundary>
+            <Suspense fallback={<DashboardLoading />}>
+              <Routes location={location}>
+                {/* Public */}
+                <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <AnimatedPage><Welcome /></AnimatedPage>} />
+                <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Login /></AnimatedPage>} />
+                <Route path="/signup" element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>} />
 
-              <Route
-                path="/login"
-                element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Login /></AnimatedPage>}
-              />
-              <Route
-                path="/signup"
-                element={user ? <Navigate to="/dashboard" /> : <AnimatedPage><Signup /></AnimatedPage>}
-              />
+                {/* Authenticated */}
+                <Route path="/dashboard" element={<ProtectedRoute><AnimatedPage><Dashboard /></AnimatedPage></ProtectedRoute>} />
+                <Route path="/add" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
+                <Route path="/edit/:id" element={<ProtectedRoute><AnimatedPage><AddEditSubscription /></AnimatedPage></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><AnimatedPage><Settings setActiveSheet={setActiveSheet} /></AnimatedPage></ProtectedRoute>} />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <AnimatedPage>
-                      <Dashboard currency={currency} />
-                    </AnimatedPage>
-                  </ProtectedRoute>
-                }
-              />
+                {/* Premium */}
+                <Route path="/insights" element={<ProtectedRoute><TrialGuard><AnimatedPage><InsightsPage /></AnimatedPage></TrialGuard></ProtectedRoute>} />
+                <Route path="/trial-expired" element={<AnimatedPage><TrialExpired /></AnimatedPage>} />
+                <Route path="/premium" element={<ProtectedRoute><AnimatedPage><Premium /></AnimatedPage></ProtectedRoute>} />
+                <Route path="/success" element={<ProtectedRoute>  <AnimatedPage><Success /></AnimatedPage> </ProtectedRoute>} />
+                <Route path="/cancel" element={<ProtectedRoute><AnimatedPage><Cancel /></AnimatedPage></ProtectedRoute>} />
 
-              <Route
-                path="/insights"
-                element={
-                  <ProtectedRoute>
-                    <TrialGuard>
-                      <AnimatedPage>
-                        <InsightsPage />
-                      </AnimatedPage>
-                    </TrialGuard>
-                  </ProtectedRoute>
-                }
-              />
+                {/* Legal */}
+                <Route path="/impressum" element={<AnimatedPage><Impressum /></AnimatedPage>} />
+                <Route path="/datenschutz" element={<AnimatedPage><Datenschutz /></AnimatedPage>} />
+                <Route path="/agb" element={<AnimatedPage><AGB /></AnimatedPage>} />
+                <Route path="/widerruf" element={<Widerrufsbelehrung />} />
+                <Route path="/account-deleted" element={<AccountDeleted />} />
 
-              <Route
-                path="/add"
-                element={
-                  <ProtectedRoute>
-                    <AnimatedPage><AddEditSubscription /></AnimatedPage>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/edit/:id"
-                element={
-                  <ProtectedRoute>
-                    <AnimatedPage><AddEditSubscription /></AnimatedPage>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <AnimatedPage>
-                      <Settings setActiveSheet={setActiveSheet} />
-                    </AnimatedPage>
-                  </ProtectedRoute>
-                }
-              />
-
-
-
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Suspense>
+                {/* Catch-All */}
+                <Route path="*" element={navigator.onLine ? (<AnimatedPage><NotFound /></AnimatedPage>) : (<AnimatedPage><OfflineNotice /></AnimatedPage>)} />
+              </Routes>
+            </Suspense>
+          </HardErrorBoundary>
         </AnimatePresence>
+
       </main>
 
       {/* FLOATING TAB BAR */}

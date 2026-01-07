@@ -1,8 +1,9 @@
+import React, { useEffect } from "react";
 import { XMarkIcon, QuestionMarkCircleIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import HelpAccordion from "./HelpAccordion";
 import { HELP_FAQ } from "../../data/helpFaq";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
 
 export default function HelpSupportSheet({ onClose }) {
   const { t } = useTranslation();
@@ -14,8 +15,22 @@ export default function HelpSupportSheet({ onClose }) {
     return () => (document.body.style.overflow = prev);
   }, []);
 
+  // close on Escape key
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start">
+    <div
+      className="fixed inset-0 z-50 flex items-start"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-support-title"
+    >
       {/* backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -39,19 +54,21 @@ export default function HelpSupportSheet({ onClose }) {
         }}
       >
         {/* handle */}
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-2 select-none">
           <div className="w-10 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
         </div>
 
         {/* header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{t('help') || "Help & Support"}</h2>
+            <h2 id="help-support-title" className="text-lg font-semibold">
+              {t('help') || "Help & Support"}
+            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('find_answer') || "Find answers or contact us"}
             </p>
           </div>
-          <button onClick={onClose}>
+          <button onClick={onClose} aria-label={t('close') || "Close"}>
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
@@ -61,8 +78,7 @@ export default function HelpSupportSheet({ onClose }) {
           {/* intro */}
           <div className="text-center space-y-2">
             <div className="flex justify-center">
-              <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/40
-                              flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
                 <QuestionMarkCircleIcon className="w-7 h-7 text-orange-600" />
               </div>
             </div>
@@ -85,13 +101,17 @@ export default function HelpSupportSheet({ onClose }) {
                 answer={t(item.a)}
               />
             ))}
+            {HELP_FAQ.length === 0 && (
+              <div className="text-center text-sm text-gray-400 mt-4">
+                {t("no_faqs") || "No help topics available."}
+              </div>
+            )}
           </div>
 
           {/* contact */}
           <div className="pt-4 text-center space-y-3">
             <div className="flex justify-center">
-              <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/40
-                              flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
                 <EnvelopeIcon className="w-7 h-7 text-orange-600" />
               </div>
             </div>
@@ -121,3 +141,7 @@ export default function HelpSupportSheet({ onClose }) {
     </div>
   );
 }
+
+HelpSupportSheet.propTypes = {
+  onClose: PropTypes.func.isRequired,
+};

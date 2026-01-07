@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
 import { forecastSpend } from "../utils/forecast";
 import useBudgetAlerts from "../hooks/useBudgetAlerts";
 
@@ -14,23 +15,107 @@ import Card from "../components/ui/Card";
 import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import PremiumGuard from "../components/premium/PremiumGuard";
 import PaymentAccordion from "../components/insights/PaymentAccordion";
-import {
-  getCurrentMonthSpending,
-} from "../utils/budget";
+
+// import { getCurrentMonthSpending } from "../utils/budget";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
-import { loadSubscriptionsLocal } from "../utils/mainDB";
-import { saveSubscriptionsLocal } from "../utils/mainDB";
+import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const email = user?.email;
+
+  const { user, token } = useAuth();
   const premium = usePremium();
   const { currency } = useCurrency();
 
+  const email = user?.email;
+
   const [subscriptions, setSubscriptions] = useState([]);
   const [rates, setRates] = useState(null);
+
+  /* ------------------------------------------------------------------ */
+  /* FX Rates                                                           */
+  /* ------------------------------------------------------------------ */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRates() {
+      try {
+        const res = await fetch("https://api.exchangerate.host/latest");
+        const data = await res.json();
+        if (!cancelled && data?.rates) {
+          setRates(data.rates);
+        }
+      } catch {
+        // silently fail – app still works in base currency
+      }
+    }
+
+    loadRates();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /* ------------------------------------------------------------------ */
+  /* Premium gate                                                       */
+  /* ------------------------------------------------------------------ */
+
+  useEffect(() => {
+    if (!premium.loaded || premium.loading) return;
+    if (!premium.isPremium) {
+      navigate("/dashboard");
+    }
+  }, [premium.loaded, premium.loading, premium.isPremium, navigate]);
+
+  /* ------------------------------------------------------------------ */
+  /* Load subscriptions (offline-first)                                 */
+  /* ------------------------------------------------------------------ */
+
+  useEffect(() => {
+    if (!email) return;
+
+    let cancelled = false;
+
+    (async () => {
+      // 1️⃣ local
+      const local = await loadSubscriptionsLocal();
+      if (!cancelled && local.length) {
+        setSubscriptions(local);
+      }
+
+      // 2️⃣ backend
+      if (navigator.onLine && token) {
+        try {
+          const res = await fetch("/api/subscriptions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ action: "get", email }),
+          });
+
+          const data = await res.json();
+          if (!cancelled && Array.isArray(data.subscriptions)) {
+            setSubscriptions(data.subscriptions);
+            await saveSubscriptionsLocal(data.subscriptions);
+          }
+        } catch {
+          /* offline / ignored */
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [email, token]);
+
+  /* ------------------------------------------------------------------ */
+  /* Delete payment                                                     */
+  /* ------------------------------------------------------------------ */
 
   const deletePayment = async (subId, paymentId) => {
     const updated = subscriptions.map((s) =>
@@ -39,67 +124,35 @@ export default function InsightsPage() {
         : s
     );
 
-    // 1️⃣ Update UI
     setSubscriptions(updated);
-
-    // 2️⃣ Persist local truth (CRITICAL)
     await saveSubscriptionsLocal(updated);
 
-    // 3️⃣ Trigger sync (online or queued)
     await persistSubscriptions({
       email,
-      token: localStorage.getItem("token"),
+      token,
       subscriptions: updated,
     });
   };
 
-  // ✅ Now it's safe to use them in hooks
-  const actualSpent = useMemo(() => {
-    return getCurrentMonthSpending(subscriptions, currency, rates, convert);
-  }, [subscriptions, currency, rates, convert]);
-
-  const monthlyBudget = Number(localStorage.getItem("monthly_budget"));
-
-  useEffect(() => {
-    if (premium.loaded && !premium.isPremium) {
-      navigate("/dashboard");
-    }
-  }, [premium.loaded, premium.isPremium, navigate]);
-
-  useEffect(() => {
-    if (!email) return;
-
-    (async () => {
-      // 1️⃣ local first
-      const local = await loadSubscriptionsLocal();
-      if (local.length) setSubscriptions(local);
-
-      // 2️⃣ backend if online
-      if (navigator.onLine) {
-        try {
-          const res = await fetch("/api/subscriptions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ action: "get", email }),
-          });
-
-          const data = await res.json();
-          if (Array.isArray(data.subscriptions)) {
-            setSubscriptions(data.subscriptions);
-          }
-        } catch { }
-      }
-    })();
-  }, [email]);
+  /* ------------------------------------------------------------------ */
+  /* Derived data                                                       */
+  /* ------------------------------------------------------------------ */
 
   const now = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
+
+  // const actualSpent = useMemo(() => {
+  //   if (!rates) return 0;
+  //   return getCurrentMonthSpending(
+  //     subscriptions,
+  //     currency,
+  //     rates,
+  //     convert
+  //   );
+  // }, [subscriptions, currency, rates]);
 
   const forecast30 = useMemo(() => {
     if (!rates) return null;
@@ -108,39 +161,37 @@ export default function InsightsPage() {
       fromDate: now,
       toDate: new Date(now.getTime() + 30 * 86400000),
       rates,
-      convert: (amount, from) => convert(amount, from, currency, rates),
+      convert: (amount, from) =>
+        convert(amount, from, currency, rates),
     });
   }, [subscriptions, rates, now, currency]);
 
+  /* ------------------------------------------------------------------ */
+  /* Alerts                                                             */
+  /* ------------------------------------------------------------------ */
+
   useBudgetAlerts({
     forecast30,
+    currency,
     isPremium: premium.isPremium,
   });
 
+  /* ------------------------------------------------------------------ */
+  /* Render                                                             */
+  /* ------------------------------------------------------------------ */
 
   return (
     <div className="max-w-4xl mx-auto p-2 pb-6 space-y-4">
-      {/* Budget Warning */}
-      {/* {premium.isPremium &&
-        monthlyBudget &&
-        actualSpent > monthlyBudget && (
-          <div className="p-3 rounded-lg bg-red-100 dark:bg-[#2b0b0b]/80 border border-red-300 dark:border-red-800/50 text-red-700 dark:text-red-300 text-sm text-center shadow-inner dark:shadow-red-900/30">
-            {t("budget_exceeded", {
-              spend: actualSpent.toFixed(2),
-              budget: monthlyBudget.toFixed(2),
-            })}
-          </div>
-        )} */}
-
       <PremiumGuard>
-        <BudgetOverviewChart subscriptions={subscriptions} rates={rates} />
+        <Card interactive>
+          <BudgetOverviewChart
+            subscriptions={subscriptions}
+            rates={rates}
+          />
+        </Card>
       </PremiumGuard>
-      {/* Payment History */}
-      <Card
-        className="mt-6 p-5 rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
-        border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
-        hover:border-[#ed7014]/60 hover:shadow-[#ed7014]/20 transition-all duration-300"
-      >
+
+      <Card interactive>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
           {t("insights_payment_history")}
         </h2>

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * NotifyField
@@ -6,16 +7,12 @@ import React from "react";
  *
  * PURE UI COMPONENT
  */
-export default function NotifyField({
-  notify,
-  setNotify,
-  t
-}) {
+export default function NotifyField({ notify, setNotify, t }) {
   return (
     <div className="flex items-center gap-2">
       <input
         type="checkbox"
-        checked={notify}
+        checked={!!notify}
         onChange={(e) => setNotify(e.target.checked)}
         className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
       />
@@ -25,3 +22,13 @@ export default function NotifyField({
     </div>
   );
 }
+
+NotifyField.propTypes = {
+  notify: PropTypes.bool,
+  setNotify: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
+};
+
+NotifyField.defaultProps = {
+  notify: false
+};
