@@ -1,79 +1,33 @@
-// src/context/AuthContext.jsx
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import PropTypes from "prop-types";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
-const AuthContext = createContext(null);
-
-const USER_KEY = "user";
-const TOKEN_KEY = "token";
-const PREMIUM_SNAPSHOT_KEY = "premium_snapshot_v1";
-
-/* ------------------------------------------------------------------ */
-/* Provider                                                           */
-/* ------------------------------------------------------------------ */
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // ⬅️ NEW
 
-  /* ---------- Load auth from storage ---------- */
   useEffect(() => {
-    try {
-      if (typeof window === "undefined") return;
+    const savedUser = localStorage.getItem("user");
+    const savedToken = localStorage.getItem("token");
 
-      const savedUser = localStorage.getItem(USER_KEY);
-      const savedToken = localStorage.getItem(TOKEN_KEY);
-
-      if (savedUser && savedToken) {
-        setUser(JSON.parse(savedUser));
-        setToken(savedToken);
-      }
-    } catch {
-      // corrupted storage → ignore
-    } finally {
-      setLoading(false);
+    if (savedUser && savedToken) {
+      setUser(JSON.parse(savedUser));
+      setToken(savedToken);
     }
+    setLoading(false); // ⬅️ Mark loading complete
+
   }, []);
 
-  /* ---------- Persist auth ---------- */
-  const saveAuth = useCallback((userData, tokenValue) => {
-    setUser(userData);
-    setToken(tokenValue);
+  const saveAuth = (user, token) => {
+    setUser(user);
+    setToken(token);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("token", token);
+  };
 
-    try {
-      localStorage.setItem(USER_KEY, JSON.stringify(userData));
-      localStorage.setItem(TOKEN_KEY, tokenValue);
-    } catch {
-      // ignore storage failures
-    }
-  }, []);
-
-  /* ---------- Clear auth ---------- */
-  const clearAuth = useCallback(() => {
-    setUser(null);
-    setToken(null);
-
-    try {
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(PREMIUM_SNAPSHOT_KEY);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  /* ------------------------------------------------------------------ */
-  /* Shared auth API caller                                             */
-  /* ------------------------------------------------------------------ */
-
-  const callAuth = useCallback(async (payload) => {
+  // 🔒 Shared safe fetch
+  const callAuth = async (payload) => {
     const res = await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -94,106 +48,54 @@ export function AuthProvider({ children }) {
     }
 
     return data;
-  }, []);
+  };
 
-  /* ------------------------------------------------------------------ */
-  /* Signup                                                            */
-  /* ------------------------------------------------------------------ */
+  // ✅ Signup
+  const signup = async (email, password) => {
+    await callAuth({
+      action: "signup",
+      email,
+      password,
+    });
 
-  const signup = useCallback(
-    async (email, password) => {
-      await callAuth({
-        action: "signup",
-        email,
-        password,
-      });
+    // auto-login after successful signup
+    return login(email, password);
+  };
 
-      // Auto-login after signup
-      return login(email, password);
-    },
-    [callAuth]
-  );
+  // ✅ Login
+  const login = async (email, password) => {
+    const data = await callAuth({
+      action: "login",
+      email,
+      password,
+    });
 
-  /* ------------------------------------------------------------------ */
-  /* Login                                                             */
-  /* ------------------------------------------------------------------ */
+    saveAuth(data.user, data.token);
+    return true;
+  };
 
-  const login = useCallback(
-    async (email, password) => {
-      const data = await callAuth({
-        action: "login",
-        email,
-        password,
-      });
+  async function logout() {
+    // 1️⃣ Clear auth
+    localStorage.removeItem("token");
 
-      saveAuth(data.user, data.token);
-      return true;
-    },
-    [callAuth, saveAuth]
-  );
+    // 2️⃣ Clear premium snapshot
+    localStorage.removeItem("premium_snapshot_v1");
 
-  /* ------------------------------------------------------------------ */
-  /* Logout                                                            */
-  /* ------------------------------------------------------------------ */
+    // 3️⃣ Clear IndexedDB (subscriptions + queue)
+    indexedDB.deleteDatabase("trakio-db");
 
-  const logout = useCallback(async () => {
-    clearAuth();
-
-    // Clear IndexedDB (subscriptions, queue, etc.)
-    try {
-      indexedDB.deleteDatabase("trakio-db");
-    } catch {
-      /* ignore */
-    }
-
-    // Hard reload ensures clean app state
+    // 4️⃣ Reload app cleanly
     window.location.href = "/";
-  }, [clearAuth]);
+  }
 
-  /* ------------------------------------------------------------------ */
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        signup,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, token, signup, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* PropTypes                                                          */
-/* ------------------------------------------------------------------ */
-
-AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
-/* ------------------------------------------------------------------ */
-/* Consumer hook                                                       */
-/* ------------------------------------------------------------------ */
-
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-
-  if (!ctx) {
-    // SAFE fallback – prevents white screens
-    return {
-      user: null,
-      token: null,
-      loading: false,
-      signup: async () => false,
-      login: async () => false,
-      logout: async () => { },
-    };
-  }
-
-  return ctx;
+  return useContext(AuthContext);
 }
