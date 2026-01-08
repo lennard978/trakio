@@ -25,6 +25,7 @@ import { useSubscriptionForm } from "./hooks/useSubscriptionForm";
 // Constants
 import { subscriptionCatalog } from "../../data/subscriptionCatalog";
 import { PRESET_COLORS, PAYMENT_METHODS } from "./constants";
+import DashboardLoading from "../dasboard/DashboardLoading";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
@@ -86,13 +87,7 @@ export default function SubscriptionForm() {
 
   if (form.loading) {
     return (
-      <div className="max-w-2xl mx-auto mt-4 px-4 pb-2">
-        <Card>
-          <div className="py-8 text-center text-sm">
-            {t("loading")}
-          </div>
-        </Card>
-      </div>
+      <DashboardLoading />
     );
   }
 
