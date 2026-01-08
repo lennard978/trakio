@@ -38,6 +38,13 @@ export default function InsightsPage() {
   /* ------------------------------------------------------------------ */
 
   useEffect(() => {
+    if (!premium.loaded || premium.loading) return;
+    if (!premium.isPremium) {
+      navigate("/dashboard");
+    }
+  }, [premium.loaded, premium.loading, premium.isPremium, navigate]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadRates() {
