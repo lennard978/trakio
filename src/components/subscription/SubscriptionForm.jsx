@@ -25,7 +25,7 @@ import { useSubscriptionForm } from "./hooks/useSubscriptionForm";
 // Constants
 import { subscriptionCatalog } from "../../data/subscriptionCatalog";
 import { PRESET_COLORS, PAYMENT_METHODS } from "./constants";
-import DashboardLoading from "../dasboard/DashboardLoading";
+import SubscriptionLoading from "./SubscriptionLoading";
 
 export default function SubscriptionForm() {
   const navigate = useNavigate();
@@ -87,7 +87,7 @@ export default function SubscriptionForm() {
 
   if (form.loading) {
     return (
-      <DashboardLoading />
+      <SubscriptionLoading />
     );
   }
 
