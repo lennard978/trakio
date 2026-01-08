@@ -109,7 +109,7 @@ export default function SubscriptionForm() {
           backdropFilter: "blur(14px)",
         }}
       >
-        <div className="rounded-3xl bg-white/80 dark:bg-gray-900/60 backdrop-blur-xl">
+        <div className="rounded-3xl bg-white/30 dark:bg-gray-900/60 backdrop-blur-xl">
           <Card transparent>
             <h1 className="text-2xl font-bold mb-2 py-4">
               {id ? t("edit_title") : t("add_title")}

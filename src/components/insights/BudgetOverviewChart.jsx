@@ -22,131 +22,41 @@ import {
   getCurrentYearDue,
 } from "../../utils/budget";
 
-import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
+import { motion } from "framer-motion";
 import { useCurrency } from "../../context/CurrencyContext";
 import { convert as convertUtil } from "../../utils/currency";
 import InsightsSummary from "./InsightsSummary";
-import {
-  ArrowTrendingUpIcon, ArrowPathIcon, StarIcon, AdjustmentsVerticalIcon, ChartBarIcon
-} from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
-import { getCurrencyFlag } from "../../utils/currencyFlags";
 import { getNormalizedPayments } from "../../utils/payments";
 import SmartForecastCard from "./SmartForecastCard";
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
 import { getAnnualCost } from '../../utils/annualCost';
 import { usePremium } from "../../hooks/usePremium";
-import { createPortal } from "react-dom";
+// import { createPortal } from "react-dom";
 import OverlappingSavings from "./OverlappingSavings";
+import Stat from "./Stat";
+import Section from "./Section";
+import PieCenterLabel from "./PieCenterLabel";
+// import AnimatedNumber from "./AnimatedNumber";
+import BudgetUsageBar from "./BudgetUsageBar";
+import InsightsTabs from "./InsightsTabs";
+import OverviewStatsGrid from "./OverviewStatsGrid";
+// import SpendingRangeSelector from "./SpendingRangeSelector";
+import useOverlapsInsights from "./hooks/useOverlapsInsights";
+import SaveNowModal from "./SaveNowModal";
+import SpendingOverTimeSection from "./SpendingOverTimeSection";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
   "#8B5CF6", "#10B981", "#F43F5E"
 ];
 
-const Stat = ({ label, value }) => (
-  <div className="flex justify-between text-sm py-1 border-b border-gray-300 dark:border-gray-800/60">
-    <span className="text-gray-700 dark:text-gray-300">{label}</span>
-    <span className="font-medium text-gray-900 dark:text-gray-100">{value}</span>
-  </div>
-);
-
-
-// ✨ Glossy gradient section container with light/dark mode
-const Section = ({ title, children }) => {
-  return (
-    <div className="rounded-xl bg-gradient-to-b from-white to-gray-100 dark:from-[#0e1420] dark:to-[#1a1f2a]
-      border border-gray-300 dark:border-gray-800/70 shadow-md dark:shadow-inner dark:shadow-[#141824]
-      transition-all duration-300 hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60 p-4 mb-4">
-      {title && (
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700/60 pb-2 mb-3">
-          {title}
-        </h3>
-      )}
-      {children}
-    </div>
-  );
-};
-
-
-function PieCenterLabel({ viewBox, title, value }) {
-  const { cx, cy } = viewBox;
-  return (
-    <>
-      <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" className="fill-gray-600 dark:fill-gray-400 text-xs">
-        {title}
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle" className="fill-gray-900 dark:fill-gray-100 text-base font-semibold">
-        {value}
-      </text>
-    </>
-  );
-}
-
-// === Animated Number Counter ===
-function AnimatedNumber({ value, prefix = "", suffix = "", decimals = 2, duration = 1 }) {
-  const motionValue = useMotionValue(0);
-  // const rounded = useTransform(motionValue, (latest) => latest.toFixed(decimals));
-  const [display, setDisplay] = useState("0");
-
-  useEffect(() => {
-    const controls = animate(motionValue, value, {
-      duration,
-      ease: "easeOut",
-      onUpdate: (latest) => setDisplay(latest.toFixed(decimals)),
-    });
-    return controls.stop;
-  }, [value]);
-
-  return (
-    <motion.span className="tabular-nums font-bold text-gray-900 dark:text-gray-100">
-      {prefix}{display}{suffix}
-    </motion.span>
-  );
-}
-
 export default function BudgetOverviewChart({ subscriptions, rates }) {
   const [activeTab, setActiveTab] = useState("General");
   const [activeRange, setActiveRange] = useState("6M");
-  // === Overlapping subscriptions (Insights) ===
-  const [overlaps, setOverlaps] = useState([]);
-  const [overlapsLoading, setOverlapsLoading] = useState(false);
   const [saveNowOpen, setSaveNowOpen] = useState(false);
   const [saveNowMessage, setSaveNowMessage] = useState("");
   const [saveNowProvider, setSaveNowProvider] = useState(null);
-
-
-  // === Fetch overlapping services + savings ===
-  useEffect(() => {
-    if (!Array.isArray(subscriptions) || subscriptions.length === 0) {
-      setOverlaps([]);
-      return;
-    }
-
-    const run = async () => {
-      try {
-        setOverlapsLoading(true);
-
-        const res = await fetch("/api/overlaps", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subscriptions }),
-        });
-
-        if (!res.ok) throw new Error("Overlap fetch failed");
-
-        const data = await res.json();
-        setOverlaps(Array.isArray(data.overlaps) ? data.overlaps : []);
-      } catch (err) {
-        console.error("Overlap detection failed", err);
-        setOverlaps([]);
-      } finally {
-        setOverlapsLoading(false);
-      }
-    };
-
-    run();
-  }, [subscriptions]);
 
   const { currency } = useCurrency();
   const { t } = useTranslation();
@@ -161,30 +71,18 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     return v ? Number(v) : null;
   });
 
+  const {
+    overlaps,
+    overlapsLoading,
+    totalMonthlySavings,
+    totalAnnualSavings,
+    savingsChartData,
+    overlapCurrency,
+  } = useOverlapsInsights({ subscriptions });
+
   const annualCost = useMemo(() => {
     return getAnnualCost(subscriptions, currency, rates, convert);
   }, [subscriptions, currency, rates]);
-
-  // === Total annual savings (aggregated) ===
-  const totalAnnualSavings = useMemo(() => {
-    if (!Array.isArray(overlaps) || overlaps.length === 0) return 0;
-
-    return overlaps.reduce((sum, group) => {
-      if (!group.potentialSavings || group.potentialSavings <= 0) return sum;
-      return sum + group.potentialSavings * 12;
-    }, 0);
-  }, [overlaps]);
-
-  // === Total monthly savings (aggregated) ===
-  const totalMonthlySavings = useMemo(() => {
-    if (!Array.isArray(overlaps) || overlaps.length === 0) return 0;
-
-    return overlaps.reduce((sum, group) => {
-      if (!group.potentialSavings || group.potentialSavings <= 0) return sum;
-      return sum + group.potentialSavings;
-    }, 0);
-  }, [overlaps]);
-
 
   const TABS = useMemo(() => [
     { key: "General", label: t("tabs.general") },
@@ -355,9 +253,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   const avgPerSub = subscriptions.length ? (total / subscriptions.length).toFixed(2) : "0.00";
   const percentUsed = budget ? ((total / budget) * 100).toFixed(1) : "0.0"; // ✅
 
-  const cardContainer = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } } };
-  const cardItem = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } };
-
   useEffect(() => {
     const sync = () => {
       const v = localStorage.getItem("monthly_budget");
@@ -367,188 +262,35 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     return () => window.removeEventListener("storage", sync);
   }, []);
 
-  const savingsChartData = useMemo(() => {
-    if (!Array.isArray(overlaps)) return [];
-
-    return overlaps
-      .filter(g => g.potentialSavings > 0)
-      .map(g => ({
-        name: g.group,
-        value: Number(g.potentialSavings.toFixed(2)),
-      }));
-  }, [overlaps]);
-
-
   return (
     <div className="space-y-4">
       {/* Overview */}
       <Section title={t("sections.overview")}>
-        <motion.div variants={cardContainer} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          {[
-            // === Summary metrics ===
-            {
-              label: t("stats.monthly_spend"), value: (
-                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
-                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                  <AnimatedNumber
-                    value={Number(data.totalThisMonth ?? 0)}
-                    decimals={2}
-                    prefix={`${currency} `}
-                  />
-                </span>
-              ),
-              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-purple-500" />,
-            },
-            {
-              label: t("stats.annual_cost"),
-              value: (
-                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
-                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                  <AnimatedNumber
-                    value={Number(annualCost ?? 0)}
-                    decimals={2}
-                    prefix={`${currency} `}
-                  />
-                </span>
-              ),
-              icon: <ArrowPathIcon className="w-5 h-5 text-pink-600" />,
-            },
-            {
-              label: t("stats.top_category"),
-              icon: <StarIcon className="w-5 h-5 text-green-600" />,
-              value: (
-                <span className="flex flex-col mt-2 font-bold text-gray-900 dark:text-gray-100">
-                  {topCategory ? (
-                    <>
-                      <span className="truncate">{topCategory[0]}</span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                        <AnimatedNumber
-                          value={Number(topCategory[1]) || 0}
-                          decimals={2}
-                          prefix={`${currency} `}
-                        />
-                      </span>
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </span>
-              ),
-            },
-            {
-              label: t("stats.avg_per_subscription"),
-              icon: <AdjustmentsVerticalIcon className="w-5 h-5 text-pink-600" />,
-              value: (
-                <span className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100">
-                  <span className="text-xl">{getCurrencyFlag(currency)}</span>
-                  <AnimatedNumber
-                    value={Number(avgPerSub) || 0}
-                    decimals={2}
-                    prefix={`${currency} `}
-                  />
-                </span>
-              ),
-            },
-            {
-              label: t("stats.active_subscriptions"),
-              value: (
-                <span className="font-bold text-gray-900 dark:text-gray-100">
-                  {subscriptions?.length ?? 0}
-                </span>
-              ),
-              icon: <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" />,
-            },
-            // === Existing Overview metrics ===
-            {
-              label: t("stats.growth_rate"),
-              icon: <ChartBarIcon className="w-5 h-5 text-blue-600" />,
-              value: (() => {
-                const hasTrend = data.trends?.length > 1;
-                const growth = Number(data?.growthRate) || 0;
-                const isIncrease = growth > 0;
-                if (!hasTrend) return <span className="text-gray-500">—</span>;
-                const arrow = isIncrease ? "↑" : "↓";
-                const color = isIncrease ? "text-orange-400" : "text-green-400";
-                return (
-                  <div className="flex items-center gap-2">
-                    <span className={`${color} font-bold`}>
-                      {arrow} <AnimatedNumber value={Math.abs(growth)} suffix="%" decimals={1} />
-                    </span>
-                    <div className="h-5 w-16">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data.trends}>
-                          <Line
-                            type="monotone"
-                            dataKey="total"
-                            stroke={data.isIncrease ? "#ED7014" : "#22c55e"}
-                            strokeWidth={2}
-                            dot={false}
-                            animationDuration={600}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                );
-              })(),
-            },
+        <OverviewStatsGrid
+          currency={currency}
+          data={data}
+          annualCost={annualCost}
+          avgPerSub={avgPerSub}
+          subscriptionsCount={subscriptions.length}
+          topCategory={topCategory}
+        />
 
-          ].map((item, idx) => (
-            <motion.div
-              key={idx}
-              variants={cardItem}
-              className="flex flex-col justify-between p-3 rounded-lg 
-    bg-gradient-to-b from-white to-gray-100 dark:from-[#1a1f2a] dark:to-[#0e1420]
-    border border-gray-300 dark:border-gray-800/70 hover:border-[#ed7014]/60 
-    shadow-sm dark:shadow-inner dark:shadow-[#141824] transition-all duration-300 
-    h-full min-h-[88px]"
-            >
-              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-400">
-                {item.icon && <span>{item.icon}</span>}
-                {item.label}
-              </div>
-              {item.value}
-            </motion.div>
-          ))}
-
-        </motion.div>
 
         {/* Budget usage */}
-        <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-700 dark:text-gray-400 mb-1">
-            <span>{t("budget.usage")}</span>
-            <span>{percentUsed}%</span>
-          </div>
-          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-            <motion.div
-              className="h-2 rounded-full bg-[#ED7014]"
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(percentUsed, 100)}%` }}
-              transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
-            />
-          </div>
-        </div>
+        <BudgetUsageBar
+          label={t("budget.usage")}
+          percentUsed={percentUsed}
+        />
       </Section>
 
       {/* === Charts & Forecast === */}
       <Section title={t("spending_overview", { currency })}>
-        <div className="flex flex-wrap justify-center mb-3 space-x-2">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1 mb-2 rounded-full text-sm font-medium transition-all duration-300 
-      ${activeTab === tab.key
-                  ? "bg-[#ED7014] text-white shadow-md shadow-[#ed7014]/30"
-                  : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/30 hover:text-white"
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <InsightsTabs
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
 
-        </div>
 
         <div className="w-full min-h-[260px]">
           <ResponsiveContainer width="100%" aspect={1.6}>
@@ -628,87 +370,18 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       </Section>
 
       {/* Spending Over Time */}
-      <Section title={t("spending_over_time")}>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between mb-3"
-        >
-          <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("projection.title", { range: activeRange })}</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 max-w-md">
-              💡 {t("spending_projection.description")}
-            </p>
-          </div>
+      <SpendingOverTimeSection
+        title={t("spending_over_time")}
+        description={t("spending_projection.description")}
+        currency={currency}
+        activeRange={activeRange}
+        onRangeChange={setActiveRange}
+        spendingData={spendingData}
+        animatedData={animatedData}
+        isIncrease={data.isIncrease}
+        t={t}
+      />
 
-          <div className="flex space-x-2 mt-3 md:mt-0">
-            {["1M", "3M", "6M", "12M"].map((range) => (
-              <motion.button
-                key={range}
-                whileTap={{ scale: 0.9 }}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 250, damping: 18 }}
-                onClick={() => setActiveRange(range)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 
-                ${activeRange === range
-                    ? "bg-[#ED7014] text-white shadow-md shadow-[#ed7014]/40"
-                    : "bg-gray-200 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 hover:bg-[#ed7014]/40 hover:text-white"
-                  }`}
-              >
-                {t(`range.${range}`)}
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
-        <div className="relative w-full h-[200px] overflow-hidden">
-          <motion.div
-            key={`pulse-${activeRange}`}
-            initial={{ opacity: 0.8, scale: 0.95 }}
-            animate={{ opacity: 0, scale: 1.3 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className={`absolute inset-0 rounded-xl blur-2xl pointer-events-none 
-            ${data.isIncrease ? "bg-[#ed7014]/10" : "bg-green-500/10"}`}
-          />
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeRange}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.45, ease: "easeInOut" }}
-              className="absolute inset-0"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={animatedData.length ? animatedData : spendingData}>
-                  <XAxis dataKey="month" stroke="#aaa" fontSize={12} tickLine={false} axisLine={{ stroke: "#333" }} />
-                  <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                    formatter={(v) => [`${currency} ${v.toFixed(2)}`, t("common.spending")]}
-                    contentStyle={{
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      color: "#000",
-                      borderRadius: "6px",
-                      border: "1px solid rgba(0,0,0,0.1)",
-                    }}
-                    wrapperStyle={{ backdropFilter: "blur(8px)" }}
-                  />
-                  <Bar dataKey="animatedValue" radius={[10, 10, 10, 10]} fill="url(#barGradient)" isAnimationActive={false} />
-                  <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ED7014" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#5a2b06" stopOpacity={0.8} />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </Section>
 
       {/* Achievements + Summary */}
       {/* 3️⃣ Behavioral & motivational feedback */}
@@ -720,18 +393,18 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         {hasPremiumAccess && (totalAnnualSavings > 0 || totalMonthlySavings > 0) && (
           <div className="mb-4 rounded-lg border border-orange-500/40 
                   bg-orange-50 dark:bg-[#0e1420]
-                  p-4 text-center space-y-1">
+                  p-2 text-center space-y-1">
 
             <div className="text-sm text-green-700 dark:text-green-400">
               {t("overlaps.total_savings", "Your potential savings")}
             </div>
 
             <div className="text-lg font-semibold text-orange-800 dark:text-orange-300">
-              {totalMonthlySavings.toFixed(2)} {overlaps[0]?.currency || "EUR"} / month
+              {totalMonthlySavings.toFixed(2)} {overlapCurrency} / month
             </div>
 
             <div className="text-sm text-green-700 dark:text-green-400">
-              {totalAnnualSavings.toFixed(2)} {overlaps[0]?.currency || "EUR"} / year
+              {totalAnnualSavings.toFixed(2)} {overlapCurrency} / year
             </div>
             {hasPremiumAccess && savingsChartData.length > 0 && (
               <div className="mb-6 h-52">
@@ -740,9 +413,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip
-                      formatter={(v) =>
-                        `${v.toFixed(2)} ${overlaps[0]?.currency || "EUR"} / month`
-                      }
+                      formatter={(v) => `${v.toFixed(2)} ${overlapCurrency} / month`}
                     />
                     <Bar dataKey="value" fill="#ffa500" radius={[6, 6, 0, 0]} />
                   </BarChart>
@@ -752,8 +423,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
           </div>
         )}
-
-
         {/* Loading state */}
         {overlapsLoading && (
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -785,8 +454,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                     setSaveNowOpen(true);
                   }}
                 />
-
-
               </div>
             </div>
 
@@ -825,83 +492,16 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       <InsightsSummary data={data} currency={currency} />
 
       {/* Save Now Modal */}
-      {saveNowOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center 
-                 bg-black/60 backdrop-blur-sm"
-          >
-            <div
-              className="w-full max-w-md mx-4 rounded-2xl 
-                   bg-white dark:bg-[#0e1420] 
-                   border border-gray-300 dark:border-gray-800 
-                   shadow-2xl p-6 relative"
-            >
-              {/* Close button */}
-              <button
-                onClick={() => {
-                  setSaveNowOpen(false);
-                  setSaveNowProvider(null);
-                }}
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-200"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                {t("overlaps.save_now", "Save now")}
-              </h3>
-
-              <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">
-                {saveNowMessage}
-              </p>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setSaveNowOpen(false)}
-                  className="px-4 py-2 rounded-full 
-                       bg-gray-200 dark:bg-gray-800 
-                       text-gray-800 dark:text-gray-100 
-                       text-sm"
-                >
-                  {t("common.close", "Close")}
-                </button>
-
-                {saveNowProvider?.cancelUrl ? (
-                  <a
-                    href={saveNowProvider.cancelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2 rounded-full 
-               bg-[#ED7014] text-white 
-               text-sm font-medium 
-               hover:opacity-90"
-                  >
-                    {t("overlaps.open_provider", "Open {{provider}}")
-                      .replace("{{provider}}", saveNowProvider.name)}
-                  </a>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setSaveNowOpen(false);
-                      window.location.href = "/settings";
-                    }}
-                    className="px-5 py-2 rounded-full 
-               bg-[#ED7014] text-white 
-               text-sm font-medium 
-               hover:opacity-90"
-                  >
-                    {t("overlaps.manage_subscriptions", "Manage subscriptions")}
-                  </button>
-                )}
-
-              </div>
-            </div>
-          </div>,
-          document.getElementById("modal-root")
-        )}
-
+      <SaveNowModal
+        open={saveNowOpen}
+        onClose={() => {
+          setSaveNowOpen(false);
+          setSaveNowProvider(null);
+        }}
+        provider={saveNowProvider}
+        message={saveNowMessage}
+        t={t}
+      />
 
     </div>
   );
@@ -914,26 +514,3 @@ BudgetOverviewChart.propTypes = {
   rates: PropTypes.object.isRequired,
 };
 
-Stat.propTypes = {
-  label: PropTypes.string.isRequired, // Label text to display
-  value: PropTypes.node.isRequired,   // Value to display (could be a string, number, or any renderable node)
-};
-Section.propTypes = {
-  title: PropTypes.string,           // Optional title text
-  children: PropTypes.node.isRequired,  // Content inside the section
-};
-PieCenterLabel.propTypes = {
-  viewBox: PropTypes.shape({
-    cx: PropTypes.number.isRequired,  // X position of the pie chart's center
-    cy: PropTypes.number.isRequired,  // Y position of the pie chart's center
-  }).isRequired,
-  title: PropTypes.string.isRequired,  // The title to display at the center
-  value: PropTypes.string.isRequired,  // The value to display at the center
-};
-AnimatedNumber.propTypes = {
-  value: PropTypes.number.isRequired,    // The target number value to animate to
-  prefix: PropTypes.string,               // Optional prefix to display before the value
-  suffix: PropTypes.string,               // Optional suffix to display after the value
-  decimals: PropTypes.number,             // Optional number of decimal places (default is 2)
-  duration: PropTypes.number,             // Optional animation duration (default is 1 second)
-};

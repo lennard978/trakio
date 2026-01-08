@@ -43,6 +43,3 @@ PremiumGuard.propTypes = {
    Default Props
 ------------------------------------ */
 
-PremiumGuard.defaultProps = {
-  fallback: null,
-};

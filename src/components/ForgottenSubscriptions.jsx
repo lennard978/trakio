@@ -13,7 +13,7 @@ export default function ForgottenSubscriptions({ subscriptions }) {
 
   if (forgotten.length === 0) {
     return (
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400 italic mb-4">
+      <div className="text-center text-sm text-gray-500 dark:text-gray-400 italic my-4">
         {t("no_forgotten_subs") || "No forgotten subscriptions — great job!"}
       </div>
     );

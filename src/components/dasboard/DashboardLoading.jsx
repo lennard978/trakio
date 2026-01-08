@@ -11,7 +11,7 @@ export default function DashboardLoading() {
     >
       <LoadingSpinner size="lg" />
       <p className="text-gray-600 dark:text-gray-300 text-sm mt-4">
-        Loading dashboard...
+        Loading Dashboard...
       </p>
     </div>
   );

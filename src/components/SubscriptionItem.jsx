@@ -157,15 +157,15 @@ export default function SubscriptionItem({
       deleteLabel={t("button_delete")}
     >
       {() => (
-        <div className="relative overflow-hidden rounded-3xl border shadow-lg dark:border-white/10">
+        <div className="relative overflow-hidden rounded-2xl border shadow-lg dark:border-white/10">
           <div
             className={`absolute inset-0 ${premium.isPremium ? "transition-all duration-500" : ""
               }`}
             style={gradientStyle}
           />
           <div className="relative z-10 p-5 backdrop-blur-xl">
-            <div className="flex justify-between items-start mb-1">
-              <div className="flex">
+            <div className="flex mb-1">
+              <div className="flex flex-grow">
                 <div className="flex flex-col items-center">
                   <HealthBadge {...subscriptionHealth(item)} />
                   <div className="p-2">
@@ -186,7 +186,7 @@ export default function SubscriptionItem({
                   </div>
                 </div>
 
-                <div className="ml-2">
+                <div className="ml-4 flex flex-col justify-center">
                   <div className="text-lg font-semibold text-black dark:text-gray-300">
                     {item.name}
                   </div>
@@ -198,7 +198,7 @@ export default function SubscriptionItem({
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col gap-1">
                 <CategoryChip category={item.category} />
                 {premium.isPremium && item.priceAlert && (
                   <PriceAlertBadge alert={item.priceAlert} />

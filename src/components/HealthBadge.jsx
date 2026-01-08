@@ -9,12 +9,12 @@ const COLORS = {
   gray: "bg-gray-500/15 text-gray-700 dark:text-gray-300 border-gray-500/30",
 };
 
-const ICONS = {
-  green: "✅",
-  yellow: "⚠️",
-  red: "❌",
-  gray: "⏸️",
-};
+// const ICONS = {
+//   green: "✅",
+//   yellow: "⚠️",
+//   red: "❌",
+//   gray: "⏸️",
+// };
 
 export default function HealthBadge({ label, color }) {
   if (!COLORS[color] && process.env.NODE_ENV === "development") {
@@ -31,9 +31,9 @@ export default function HealthBadge({ label, color }) {
       className={`px-2 py-0.5 text-xs font-medium rounded-lg border ${COLORS[color] || COLORS.gray}`}
     >
       <div className="flex flex-col justify-center items-center">
-        <div>
+        {/* <div>
           {ICONS[color]}
-        </div>
+        </div> */}
         <div>
           {label}
         </div>

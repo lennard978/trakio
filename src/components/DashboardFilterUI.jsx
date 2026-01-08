@@ -65,7 +65,7 @@ export default function DashboardFilterUI({
     "focus:outline-none focus:ring-2 focus:ring-orange-500/40";
 
   return (
-    <div className="flex flex-wrap gap-2 items-center mb-4">
+    <div className="flex flex-wrap gap-2 items-center">
       {/* Year */}
       <select
         value={year || ""}
@@ -178,12 +178,12 @@ DashboardFilterUI.propTypes = {
   currencies: PropTypes.arrayOf(PropTypes.string),
 };
 
-DashboardFilterUI.defaultProps = {
-  year: "",
-  category: "",
-  paymentMethod: "",
-  currency: "",
-  sortBy: "next",
-  years: undefined,
-  currencies: undefined,
-};
+// DashboardFilterUI.defaultProps = {
+//   year: "",
+//   category: "",
+//   paymentMethod: "",
+//   currency: "",
+//   sortBy: "next",
+//   years: undefined,
+//   currencies: undefined,
+// };

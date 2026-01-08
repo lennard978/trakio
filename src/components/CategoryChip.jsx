@@ -23,12 +23,12 @@ export default function CategoryChip({ category }) {
     <motion.div
       role="note"
       aria-label={t(`category.${key}`, key)}
-      className="px-3 py-1 text-xs font-semibold rounded-full capitalize backdrop-blur-md border border-white/40 shadow-md select-none cursor-default"
+      className="px-3 text-gray-700 py-1 text-xs font-semibold rounded-full capitalize backdrop-blur-md border border-white/40 shadow-md select-none cursor-default"
       style={{
         "--chip-color": color,
         background: `linear-gradient(145deg, ${color}, ${color}cc)`,
         boxShadow: `0 0 14px ${color}55`,
-        color: isBright ? "#111" : "#fff",
+        // color: isBright ? "#111" : "#fff",
       }}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}

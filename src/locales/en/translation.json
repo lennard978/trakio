@@ -639,5 +639,13 @@
 	"account_deleted_message": "Your Trakio account and all associated personal data have been permanently deleted.",
 	"account_deleted_subscription_note": "Any active subscriptions have been cancelled and no further charges will be made.",
 	"account_deleted_support": "If you have questions, contact",
-	"account_deleted_back_home": "Back to homepage"
+	"account_deleted_back_home": "Back to homepage",
+	"filter_all_years": "Year",
+	"filter_all_categories": "Categories",
+	"filter_all_payment_methods": "Payment Method",
+	"filter_all_currencies": "Currencies",
+	"sort_next_payment": "Next Payment",
+	"no_upcoming_payments": "No upcoming Payments",
+	"no_forgotten_subs": "No forgoten Subscription",
+	"form_price_placeholder": "Ammount..."
 }
