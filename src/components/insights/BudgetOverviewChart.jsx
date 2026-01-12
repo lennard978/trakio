@@ -275,7 +275,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           topCategory={topCategory}
         />
 
-
         {/* Budget usage */}
         <BudgetUsageBar
           label={t("budget.usage")}
@@ -391,7 +390,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       <Section title={t("overlaps.title", "Overlapping Services & Savings")}>
         {/* === Total Savings Summary === */}
         {hasPremiumAccess && (totalAnnualSavings > 0 || totalMonthlySavings > 0) && (
-          <div className="mb-4 rounded-lg border border-orange-500/40 
+          <div className="mb-2 rounded-lg border border-orange-500/40 
                   bg-orange-50 dark:bg-[#0e1420]
                   p-2 text-center space-y-1">
 

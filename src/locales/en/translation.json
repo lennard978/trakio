@@ -647,5 +647,7 @@
 	"sort_next_payment": "Next Payment",
 	"no_upcoming_payments": "No upcoming Payments",
 	"no_forgotten_subs": "No forgoten Subscription",
-	"form_price_placeholder": "Ammount..."
+	"form_price_placeholder": "Ammount...",
+	"category_ai_tools": "AI Tools",
+	"ai_tools": "AI Tools"
 }
