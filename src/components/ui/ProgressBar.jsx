@@ -39,7 +39,7 @@ export default function ProgressBar({ progress, color = "#22c55e", onClick, days
   };
 
   return (
-    <div >
+    <div>
       <div
         data-no-swipe
         onClick={(e) => {
