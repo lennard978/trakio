@@ -27,7 +27,7 @@ export default function FloatingTabBar() {
     <motion.nav
       role="tablist"
       aria-label="Main Navigation"
-      className="fixed bottom-4 left-3 -translate-x-1/2 w-[95%] max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-xl shadow-black/10 backdrop-blur-md flex justify-around items-center py-3 z-50"
+      className="fixed bottom-4 left-3 -translate-x-1/2 w-[95%] max-w-screen-xl bg-white dark:bg-gray-900 rounded-3xl shadow-xl shadow-black/10 backdrop-blur-md flex justify-around items-center py-3 z-50"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
