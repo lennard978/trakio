@@ -11,7 +11,7 @@ import {
 import { ResponsiveContainer, LineChart, Line } from "recharts";
 import AnimatedNumber from "./AnimatedNumber";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
-import { getCategoryStyles } from "../../utils/categoryStyles";
+import { getCategoryStyles } from "../../utils/CategoryStyles";
 import { useTranslation } from "react-i18next";
 
 /**
