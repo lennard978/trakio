@@ -1,4 +1,4 @@
-import { CATEGORY_STYLES } from "./categoryStyles";
+import { CATEGORY_STYLES } from "./CategoryStyles";
 
 /**
  * Resolve category metadata safely

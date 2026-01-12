@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { CATEGORY_STYLES } from "../utils/CategoryStyles";
+
 import { PAYMENT_METHODS } from "../components/subscription/constants";
 import { SUPPORTED_CURRENCIES } from "./CurrencySelector";
 
