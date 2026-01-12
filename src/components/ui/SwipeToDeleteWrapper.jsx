@@ -14,6 +14,8 @@ export default function SwipeToDeleteWrapper({
   const [isOpen, setIsOpen] = useState(false);
   const [removed, setRemoved] = useState(false);
   const threshold = -80;
+  const [ignoreClick, setIgnoreClick] = useState(false);
+
 
   // Motion-based UI states
   const opacity = useTransform(x, [0, threshold], [0, 1]);
@@ -82,6 +84,16 @@ export default function SwipeToDeleteWrapper({
     );
   }
 
+  const handlePointerDown = (e) => {
+    // If pointer starts on interactive element, ignore the upcoming click
+    if (e.target.closest("[data-no-swipe]")) {
+      setIgnoreClick(true);
+    } else {
+      setIgnoreClick(false);
+    }
+  };
+
+
   return (
     <div className="relative mb-3 select-none" style={style}>
       {/* Background (delete state color) */}
@@ -117,8 +129,15 @@ export default function SwipeToDeleteWrapper({
         drag="x"
         dragConstraints={{ left: -120, right: 0 }}
         dragElastic={0.2}
+        onPointerDown={handlePointerDown}
         onDragEnd={handleDragEnd}
-        onClick={toggleSwipe}
+        onClick={() => {
+          if (ignoreClick) {
+            setIgnoreClick(false);
+            return;
+          }
+          toggleSwipe();
+        }}
         style={{ x }}
         className={`
           relative z-20 bg-white dark:bg-gray-900

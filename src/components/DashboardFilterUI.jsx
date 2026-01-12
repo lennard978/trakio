@@ -65,7 +65,7 @@ export default function DashboardFilterUI({
     "focus:outline-none focus:ring-2 focus:ring-orange-500/40";
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap gap-2 items-center mb-4">
       {/* Year */}
       <select
         value={year || ""}

@@ -39,9 +39,14 @@ export default function ProgressBar({ progress, color = "#22c55e", onClick, days
   };
 
   return (
-    <div className="relative flex-1">
+    <div >
       <div
-        onClick={handleClick}
+        data-no-swipe
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClick();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
         title={
           typeof daysLeft === "number"
             ? daysLeft >= 0

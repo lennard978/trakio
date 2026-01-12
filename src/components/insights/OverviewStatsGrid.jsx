@@ -11,6 +11,8 @@ import {
 import { ResponsiveContainer, LineChart, Line } from "recharts";
 import AnimatedNumber from "./AnimatedNumber";
 import { getCurrencyFlag } from "../../utils/currencyFlags";
+import { getCategoryStyles } from "../../utils/categoryStyles";
+import { useTranslation } from "react-i18next";
 
 /**
  * OverviewStatsGrid
@@ -59,13 +61,14 @@ export default function OverviewStatsGrid({
       transition: { duration: 0.5, ease: "easeOut" },
     },
   };
+  const { t } = useTranslation();
 
   return (
     <motion.div
       variants={cardContainer}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm"
     >
       {[
         {
@@ -101,7 +104,17 @@ export default function OverviewStatsGrid({
           icon: <StarIcon className="w-5 h-5 text-green-600" />,
           value: topCategory ? (
             <span className="flex flex-col mt-2 font-bold">
-              <span className="truncate">{topCategory[0]}</span>
+              {(() => {
+                const categoryKey = topCategory[0];
+                const styles = getCategoryStyles(categoryKey);
+                return (
+                  <span className="flex items-center gap-2 truncate">
+                    <span>{styles.icon}</span>
+                    {t(styles.label)}
+                  </span>
+
+                );
+              })()}
               <span className="flex items-center gap-2">
                 <span className="text-xl">{getCurrencyFlag(currency)}</span>
                 <AnimatedNumber

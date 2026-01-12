@@ -218,12 +218,6 @@ export default function Dashboard() {
         <>
           <SummaryCards {...summaryProps} />
 
-          {/* ✅ FILTERS – placed before filtered content */}
-          <DashboardFilterUI
-            {...filters}
-            onChange={handleFilterChange}
-          />
-
           <UpcomingPayments
             subscriptions={filteredSubscriptions}
             currency={preferredCurrency}
@@ -240,7 +234,13 @@ export default function Dashboard() {
             />
           )}
 
-          <div className="space-y-2 mt-2">
+          {/* ✅ FILTERS – placed before filtered content */}
+          <DashboardFilterUI
+            {...filters}
+            onChange={handleFilterChange}
+          />
+
+          <div className="space-y-2">
             {filteredSubscriptions.map((sub) => (
               <SubscriptionItem
                 key={sub.id}

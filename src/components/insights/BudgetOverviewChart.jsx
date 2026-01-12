@@ -45,6 +45,7 @@ import OverviewStatsGrid from "./OverviewStatsGrid";
 import useOverlapsInsights from "./hooks/useOverlapsInsights";
 import SaveNowModal from "./SaveNowModal";
 import SpendingOverTimeSection from "./SpendingOverTimeSection";
+import { getCategoryLabel, getCategoryIcon } from "../../utils/categories";
 
 const COLORS = [
   "#22C55E", "#3B82F6", "#F59E0B", "#EF4444",
@@ -240,7 +241,12 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
         { name: "Paid", value: data.paidThisMonth },
         { name: "Due", value: data.dueThisMonth }
       ];
-      case "Categories": return Object.entries(data.categories || {}).map(([name, value]) => ({ name, value }));
+      case "Categories": return Object.entries(data.categories).map(([key, value]) => ({
+        key,
+        name: getCategoryLabel(key, t),
+        icon: getCategoryIcon(key),
+        value
+      }));
       case "Frequency": return Object.entries(data.frequencies || {}).map(([name, value]) => ({ name, value }));
       case "Payment Methods": return Object.entries(data.methods || {}).map(([name, value]) => ({ name, value }));
       case "Forecast": return [...data.trends, { label: t("forecast.next_predicted"), total: spendingData.at(-1)?.value ?? data.forecast }];
@@ -289,7 +295,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           activeTab={activeTab}
           onChange={setActiveTab}
         />
-
 
         <div className="w-full min-h-[260px]">
           <ResponsiveContainer width="100%" aspect={1.6}>
