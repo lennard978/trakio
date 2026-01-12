@@ -65,7 +65,7 @@ export default function OverviewStatsGrid({
       variants={cardContainer}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"
+      className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm"
     >
       {[
         {

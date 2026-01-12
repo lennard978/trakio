@@ -27,7 +27,7 @@ export default function Card({
         backdrop-blur-xl
         transition-all duration-300 ease-out
 
-        ${compact ? "p-4" : "p-6"}
+        ${compact ? "p-4" : "p-4"}
 
         ${transparent
           ? "bg-transparent"

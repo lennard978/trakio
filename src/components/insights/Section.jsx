@@ -31,7 +31,7 @@ export default function Section({ title, children }) {
         shadow-md dark:shadow-inner dark:shadow-[#141824]
         transition-all duration-300
         hover:shadow-[#ed7014]/20 hover:border-[#ed7014]/60
-        p-4 mb-4
+        p-4 mb-2
       "
     >
       {title && (

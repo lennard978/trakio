@@ -263,7 +263,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Overview */}
       <Section title={t("sections.overview")}>
         <OverviewStatsGrid

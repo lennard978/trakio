@@ -103,23 +103,6 @@ export default function DashboardFilterUI({
         })}
       </select>
 
-      {/* Payment Method */}
-      <select
-        value={paymentMethod || ""}
-        onChange={(e) => onChange("paymentMethod", e.target.value)}
-        className={baseSelect}
-        aria-label={t("filter_payment_method") || "Payment Method"}
-      >
-        <option value="">
-          {t("filter_all_payment_methods") || "All Payment Methods"}
-        </option>
-        {paymentOptions.map((m) => (
-          <option key={m.value} value={m.value}>
-            {m.labelKey ? t(m.labelKey) : m.label}
-          </option>
-        ))}
-      </select>
-
       {/* Currency */}
       <select
         value={currency || ""}
@@ -133,6 +116,23 @@ export default function DashboardFilterUI({
         {currencyOptions.map((c) => (
           <option key={c} value={c}>
             {c}
+          </option>
+        ))}
+      </select>
+
+      {/* Payment Method */}
+      <select
+        value={paymentMethod || ""}
+        onChange={(e) => onChange("paymentMethod", e.target.value)}
+        className={baseSelect}
+        aria-label={t("filter_payment_method") || "Payment Method"}
+      >
+        <option value="">
+          {t("filter_all_payment_methods") || "All Payment Methods"}
+        </option>
+        {paymentOptions.map((m) => (
+          <option key={m.value} value={m.value}>
+            {m.labelKey ? t(m.labelKey) : m.label}
           </option>
         ))}
       </select>
