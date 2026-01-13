@@ -94,7 +94,7 @@ export default function SubscriptionForm() {
   /* ---------- Render ---------- */
 
   return (
-    <div className="max-w-2xl mx-auto pb-2">
+    <div className="max-w-2xl mx-auto pb-2 px-2 md:mb-14">
       <motion.div
         key={form.color || "default"}
         initial={{ opacity: 0.6 }}

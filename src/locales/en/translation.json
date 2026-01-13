@@ -649,5 +649,18 @@
 	"no_forgotten_subs": "No forgoten Subscription",
 	"form_price_placeholder": "Ammount...",
 	"category_ai_tools": "AI Tools",
-	"ai_tools": "AI Tools"
+	"ai_tools": "AI Tools",
+	"payment_visa": "Visa",
+	"payment_mastercard": "Mastercard",
+	"payment_amex": "American Express",
+	"payment_paypal": "PayPal",
+	"payment_apple_pay": "Apple Pay",
+	"payment_google_pay": "Google Pay",
+	"payment_sepa": "SEPA Transfer",
+	"payment_klarna": "Klarna",
+	"payment_sofort": "Sofort",
+	"payment_giropay": "Giropay",
+	"payment_bank_transfer": "Bank Transfer",
+	"payment_cash": "Cash",
+	"payment_crypto": "Cryptocurrency"
 }

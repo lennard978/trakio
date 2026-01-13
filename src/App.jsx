@@ -113,7 +113,7 @@ export default function App() {
       <Analytics />
       <InstallBanner />
       {/* MAIN */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-3 pb-24 md:pb-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-0 pt-3 pb-24 md:pb-6">
         <AnimatePresence mode="wait">
           <HardErrorBoundary>
             <Suspense fallback={<DashboardLoading />}>

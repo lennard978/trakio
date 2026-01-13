@@ -76,7 +76,7 @@ export const PAYMENT_METHODS = Object.freeze([
     value: "sofort",
     label: "payment_sofort",
     icon: "🏦",
-    logo: "/icons/sofort.svg"
+    logo: null
   },
   {
     value: "giropay",

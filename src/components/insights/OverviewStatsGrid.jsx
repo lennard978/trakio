@@ -68,7 +68,7 @@ export default function OverviewStatsGrid({
       variants={cardContainer}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm"
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 text-sm"
     >
       {[
         {
@@ -197,7 +197,7 @@ export default function OverviewStatsGrid({
             bg-gradient-to-b from-white to-gray-100 dark:from-[#1a1f2a] dark:to-[#0e1420]
             border border-gray-300 dark:border-gray-800/70 hover:border-[#ed7014]/60
             shadow-sm dark:shadow-inner dark:shadow-[#141824]
-            transition-all duration-300 min-h-[88px]"
+            transition-all duration-300 min-h-[88px] lg:min-h-[96px]"
         >
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-400">
             {item.icon}

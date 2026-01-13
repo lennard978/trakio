@@ -447,9 +447,9 @@ export default function Settings({ setActiveSheet }) {
   /* -------------------- Render -------------------- */
 
   return (
-    <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2">
+    <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2 px-2">
       {/* TITLE */}
-      <h1 className="text-2xl font-bold text-gray-600 dark:text-gray-250">
+      <h1 className="text-2xl font-bold text-gray-600 pl-2 dark:text-gray-250">
         {t("settings_title") || "Settings"}
       </h1>
 

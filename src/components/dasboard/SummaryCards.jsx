@@ -14,7 +14,7 @@ export default function SummaryCards({ currency, totalMonthly, annualCost, month
     }).format(Number(value) || 0);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 mt-2 mb-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 mt-2 mb-2">
       {/* Monthly Total */}
       <div
         className="
@@ -38,7 +38,7 @@ export default function SummaryCards({ currency, totalMonthly, annualCost, month
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white"
+          className="text-xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white"
         >
           {formatCurrency(totalMonthly)}
         </motion.div>
@@ -46,8 +46,8 @@ export default function SummaryCards({ currency, totalMonthly, annualCost, month
         {typeof monthlyChange === "number" && (
           <div
             className={`absolute top-2 right-2 text-xs font-medium px-2 py-1 rounded-full ${monthlyChange >= 0
-                ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300"
-                : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300"
+              ? "bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300"
+              : "bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300"
               }`}
           >
             {monthlyChange >= 0 ? "+" : ""}
@@ -79,7 +79,7 @@ export default function SummaryCards({ currency, totalMonthly, annualCost, month
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="text-2xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white"
+          className="text-xl font-bold tabular-nums mt-1 text-gray-900 dark:text-white"
         >
           {formatCurrency(annualCost)}
         </motion.div>

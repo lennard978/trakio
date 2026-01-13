@@ -39,8 +39,14 @@ export default function SpendingOverTimeSection({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between mb-3"
-      >
+        className="
+  flex flex-col 
+  lg:flex-row 
+  lg:items-center 
+  lg:justify-between 
+  gap-3 
+  mb-4
+"      >
         <div>
           <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {t("projection.title", { range: activeRange })}
@@ -58,7 +64,7 @@ export default function SpendingOverTimeSection({
         />
       </motion.div>
 
-      <div className="relative w-full h-[200px] overflow-hidden">
+      <div className="relative w-full h-[180px] md:h-[220px] lg:h-[260px]">
         {/* Trend pulse */}
         <motion.div
           key={`pulse-${activeRange}`}

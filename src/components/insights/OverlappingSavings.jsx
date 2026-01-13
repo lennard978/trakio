@@ -29,7 +29,7 @@ export default function OverlappingSavings({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {overlaps.map((group) => {
         // 🔹 Pick most expensive subscription to cancel
         const cancelTarget =

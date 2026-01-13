@@ -269,7 +269,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
   }, []);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Overview */}
       <Section title={t("sections.overview")}>
         <OverviewStatsGrid
@@ -296,8 +296,8 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
           onChange={setActiveTab}
         />
 
-        <div className="w-full min-h-[260px]">
-          <ResponsiveContainer width="100%" aspect={1.6}>
+        <div className="w-full h-[220px] md:h-[260px] lg:h-[320px] xl:h-[360px]">
+          <ResponsiveContainer width="100%" height="100%">
             {activeTab === "Forecast" ? (
               <LineChart data={chartData}>
                 <XAxis dataKey="label" stroke="#aaa" />
@@ -356,7 +356,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
 
         {activeTab === "General" && (
           <motion.div
-            className="space-y-1 mt-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -395,22 +395,33 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
       <Section title={t("overlaps.title", "Overlapping Services & Savings")}>
         {/* === Total Savings Summary === */}
         {hasPremiumAccess && (totalAnnualSavings > 0 || totalMonthlySavings > 0) && (
-          <div className="mb-2 rounded-lg border border-orange-500/40 
-                  bg-orange-50 dark:bg-[#0e1420]
-                  p-2 text-center space-y-1">
+          <div className="
+  mb-3
+  rounded-lg
+  border border-orange-500/40
+  bg-orange-50 dark:bg-[#0e1420]
+  px-4 py-2
+  flex flex-col sm:flex-row
+  sm:items-center sm:justify-between
+  gap-2
+">
+
 
             <div className="text-sm text-green-700 dark:text-green-400">
               {t("overlaps.total_savings", "Your potential savings")}
             </div>
 
-            <div className="text-lg font-semibold text-orange-800 dark:text-orange-300">
-              {totalMonthlySavings.toFixed(2)} {overlapCurrency} / month
+            <div className="flex items-center gap-4">
+              <div className="text-lg font-semibold text-orange-800 dark:text-orange-300">
+                {totalMonthlySavings.toFixed(2)} {overlapCurrency} / month
+              </div>
+
+              <div className="text-sm text-green-700 dark:text-green-400">
+                {totalAnnualSavings.toFixed(2)} {overlapCurrency} / year
+              </div>
             </div>
 
-            <div className="text-sm text-green-700 dark:text-green-400">
-              {totalAnnualSavings.toFixed(2)} {overlapCurrency} / year
-            </div>
-            {hasPremiumAccess && savingsChartData.length > 0 && (
+            {/* {hasPremiumAccess && savingsChartData.length > 0 && (
               <div className="mb-6 h-52">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={savingsChartData}>
@@ -423,7 +434,7 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            )}
+            )} */}
 
           </div>
         )}

@@ -22,7 +22,7 @@ import PropTypes from "prop-types";
  */
 export default function InsightsTabs({ tabs, activeTab, onChange }) {
   return (
-    <div className="flex flex-wrap justify-center mb-3 space-x-2">
+    <div className="flex flex-wrap justify-center lg:justify-start mb-4 gap-2">
       {tabs.map((tab) => (
         <button
           key={tab.key}
