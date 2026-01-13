@@ -11,8 +11,6 @@ import {
   ResponsiveContainer,
   Cell,
   Label,
-  BarChart,
-  Bar,
 } from "recharts";
 import PropTypes from "prop-types";
 import {
@@ -32,16 +30,13 @@ import SmartForecastCard from "./SmartForecastCard";
 import SubscriptionOptimizer from "./SubscriptionOptimizer";
 import { getAnnualCost } from '../../utils/annualCost';
 import { usePremium } from "../../hooks/usePremium";
-// import { createPortal } from "react-dom";
 import OverlappingSavings from "./OverlappingSavings";
 import Stat from "./Stat";
 import Section from "./Section";
 import PieCenterLabel from "./PieCenterLabel";
-// import AnimatedNumber from "./AnimatedNumber";
 import BudgetUsageBar from "./BudgetUsageBar";
 import InsightsTabs from "./InsightsTabs";
 import OverviewStatsGrid from "./OverviewStatsGrid";
-// import SpendingRangeSelector from "./SpendingRangeSelector";
 import useOverlapsInsights from "./hooks/useOverlapsInsights";
 import SaveNowModal from "./SaveNowModal";
 import SpendingOverTimeSection from "./SpendingOverTimeSection";
@@ -77,7 +72,6 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     overlapsLoading,
     totalMonthlySavings,
     totalAnnualSavings,
-    savingsChartData,
     overlapCurrency,
   } = useOverlapsInsights({ subscriptions });
 

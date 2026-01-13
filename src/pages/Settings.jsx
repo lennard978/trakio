@@ -31,6 +31,7 @@ import languages from "../utils/languages";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 import { loadSubscriptionsLocal } from "../utils/mainDB";
 import { toast } from "react-hot-toast";
+import PageLayout from "../components/layout/PageLayout";
 
 import { CURRENCY_LABELS } from "../utils/currencyLabels";
 import {
@@ -447,307 +448,308 @@ export default function Settings({ setActiveSheet }) {
   /* -------------------- Render -------------------- */
 
   return (
-    <div className="max-w-lg mx-auto mt-2 space-y-4 pb-2 px-2">
-      {/* TITLE */}
-      <h1 className="text-2xl font-bold text-gray-600 pl-2 dark:text-gray-250">
-        {t("settings_title") || "Settings"}
-      </h1>
+    <PageLayout maxWidth="max-w-2xl">
+      <Card>
+        {/* TITLE */}
+        <h1 className="text-2xl mb-2 font-bold text-gray-600 dark:text-gray-250">
+          {t("settings_title") || "Settings"}
+        </h1>
 
-      {/* PREMIUM STATUS */}
-      <section>
-        <SubscriptionStatusCard />
-      </section>
+        {/* PREMIUM STATUS */}
+        <section className="mb-3">
+          <SubscriptionStatusCard />
+        </section>
 
-      {/* ACCOUNT INFO */}
-      <section>
-        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          {t("settings_section_account_info") || "Account Information"}
-        </h2>
-        <Card className="space-y-1">
-          <SettingsRow
-            icon={<UserCircleIcon className="w-6 h-6" />}
-            title={t("settings_account") || "Account"}
-            description={user?.email}
-            accent="indigo"
-            glow
-          />
-        </Card>
-      </section>
+        {/* ACCOUNT INFO */}
+        <section className="mb-3">
+          <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+            {t("settings_section_account_info") || "Account Information"}
+          </h2>
+          <Card className="space-y-1">
+            <SettingsRow
+              icon={<UserCircleIcon className="w-6 h-6" />}
+              title={t("settings_account") || "Account"}
+              description={user?.email}
+              accent="indigo"
+              glow
+            />
+          </Card>
+        </section>
 
-      {/* ===================== PREFERENCES ===================== */}
-      <section>
-        <SectionHeader
-          title={t("settings_section_preferences") || "Preferences"}
-          subtitle={
-            t("settings_section_preferences_desc") || "Customize your experience"
-          }
-        />
-        <Card className="space-y-1">
-          <SettingsRow
-            icon={<GlobeAltIcon className="w-6 h-6" />}
-            title={t("settings_currency") || "Currency"}
-            glow
-            description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"
-              }`}
-            onClick={() => {
-              startTransition(() => {
-                setActiveSheet("currency");
-              });
-            }}
-          />
-
-          {/* Appearance */}
-          <SettingsRow
-            icon={<MoonIcon className="w-6 h-6" />}
-            title={t("settings_appearance") || "Appearance"}
-            glow
-            description={t(isDark ? "theme.dark" : "theme.light")}
-            right={<ThemeSwitch checked={isDark} onChange={toggleTheme} />}
-            accent="orange"
-          />
-
-          {/* Language */}
-          <SettingsRow
-            icon={<LanguageIcon className="w-6 h-6" />}
-            title={t("settings_language") || "Language"}
-            glow
-            description={
-              currentLang ? `${currentLang.emoji} ${currentLang.label}` : i18n.language
-            }
-            onClick={() => {
-              startTransition(() => {
-                setActiveSheet("language");
-              });
-            }}
-          />
-        </Card>
-      </section>
-
-      {/* ===================== DATA MANAGEMENT ===================== */}
-      <section>
-        <SectionHeader
-          title={t("settings_section_data_management") || "Data Management"}
-          subtitle={
-            t("settings_section_data_management_desc") ||
-            "You can export or delete your data at any time."
-          }
-        />
-        <Card className="space-y-1">
-          <SettingsRow
-            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title={t("settings_export_subs") || "Download subscriptions"}
-            glow
-            description={t("settings_export_subs_desc") || "Export all subscriptions as CSV"}
-            onClick={() => {
-              if (!subscriptions.length) {
-                alert(t("no_data_to_export") || "No subscriptions to export.");
-                return;
-              }
-              exportSubscriptionsCSV(subscriptions);
-            }}
-            accent="blue"
-          />
-
-          <SettingsRow
-            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title={t("settings_export_history") || "Download payment history"}
-            description={t("settings_export_history_desc") || "Export all past payments as CSV"}
-            glow
-            accent="blue"
-            onClick={() => {
-              if (!subscriptions.length) {
-                alert(t("no_data_to_export") || "No payment history to export.");
-                return;
-              }
-              exportPaymentHistoryCSV(subscriptions);
-            }}
-          />
-
-          <SettingsRow
-            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title={t("settings_export_summary") || "Download annual summary"}
-            description={t("settings_export_summary_desc") || "Yearly totals per subscription"}
-            glow
-            accent="blue"
-            onClick={() => {
-              if (!subscriptions.length) {
-                alert(t("no_data_to_export") || "No annual history to export.");
-                return;
-              }
-              exportAnnualSummaryCSV(subscriptions);
-            }}
-          />
-
-          <SettingsRow
-            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title={t("settings_export_all") || "Download full data"}
-            accent="blue"
-            glow
-            description={
-              t("settings_export_all_desc") ||
-              "All your subscriptions, payments and settings as JSON"
-            }
-            onClick={() =>
-              exportFullJSON({
-                user,
-                subscriptions,
-                settings: {
-                  currency,
-                  theme,
-                  language: i18n.language,
-                },
-              })
+        {/* ===================== PREFERENCES ===================== */}
+        <section className="mb-3">
+          <SectionHeader
+            title={t("settings_section_preferences") || "Preferences"}
+            subtitle={
+              t("settings_section_preferences_desc") || "Customize your experience"
             }
           />
-
-          <SettingsRow
-            icon={<ArrowDownTrayIcon className="w-6 h-6" />}
-            title={t("settings_import_subs") || "Import subscriptions"}
-            description={t("settings_import_subs_desc") || "Upload CSV with subscriptions"}
-            glow
-            accent="blue"
-            onClick={() => fileInputRef.current?.click()}
-          />
-
-          <input
-            type="file"
-            accept=".csv"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={(e) => handleImportCSV(e.target.files?.[0])}
-          />
-
-          <SettingsRow
-            icon={<TrashIcon className="w-6 h-6" />}
-            title={t("settings_delete_all_subs") || "Delete all subscriptions"}
-            description={
-              t("settings_delete_all_subs_desc") ||
-              "Permanently delete all your subscriptions"
-            }
-            accent="red"
-            glow
-            onClick={handleDeleteAllSubscriptions}
-          />
-        </Card>
-      </section>
-
-      {/* ===================== PRIVACY & SECURITY ===================== */}
-      <section>
-        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          {t("settings_section_privacy") || "Privacy & Security"}
-        </h2>
-
-        <Card className="space-y-1">
-          <SettingsRow
-            icon={<ShieldCheckIcon className="w-6 h-6" />}
-            title={t("settings_privacy_policy") || "Privacy Policy"}
-            glow
-            description={
-              t("settings_privacy_desc") ||
-              "How we collect, process and protect your data (GDPR)"
-            }
-            to="/datenschutz"
-            accent="green"
-          />
-
-          <SettingsRow
-            icon={<BuildingOfficeIcon className="w-6 h-6" />}
-            title={t("settings_impressum") || "Legal Notice (Impressum)"}
-            description={t("settings_impressum_desc") || "Company information and legal disclosure"}
-            to="/impressum"
-            glow
-            accent="green"
-          />
-
-          <SettingsRow
-            icon={<DocumentTextIcon className="w-6 h-6" />}
-            title={t("settings_terms") || "Terms & Conditions (AGB)"}
-            description={t("settings_terms_desc") || "Legal terms for using Trakio"}
-            to="/agb"
-            glow
-            accent="green"
-          />
-
-          <SettingsRow
-            icon={<DocumentTextIcon className="w-6 h-6" />}
-            title={t("withdrawal.title")}
-            description={t("withdrawal.description")}
-            to="/widerruf"
-            glow
-            accent="green"
-          />
-
-          <SettingsRow
-            icon={<TrashIcon className="w-6 h-6 text-red-500" />}
-            title={t("settings_delete_account") || "Delete account permanently"}
-            description={
-              t("settings_delete_account_desc") ||
-              "This will permanently delete your account and all associated data."
-            }
-            accent="red"
-            glow
-            onClick={async () => {
-              const confirmed = window.confirm(
-                "This will permanently delete your Trakio account and all personal data.\n\n" +
-                "Active subscriptions will be cancelled.\n" +
-                "This action is irreversible.\n\n" +
-                "Do you want to proceed?"
-              );
-
-              if (!confirmed) return;
-
-              try {
-                const token = safeGetToken();
-
-                const res = await fetch("/api/user", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ action: "delete-account" }),
+          <Card className="space-y-1">
+            <SettingsRow
+              icon={<GlobeAltIcon className="w-6 h-6" />}
+              title={t("settings_currency") || "Currency"}
+              glow
+              description={`${currency} – ${CURRENCY_LABELS[currency] ?? "Unknown currency"
+                }`}
+              onClick={() => {
+                startTransition(() => {
+                  setActiveSheet("currency");
                 });
+              }}
+            />
 
-                if (!res.ok) {
-                  toast.error("Failed to delete account. Please contact support.");
+            {/* Appearance */}
+            <SettingsRow
+              icon={<MoonIcon className="w-6 h-6" />}
+              title={t("settings_appearance") || "Appearance"}
+              glow
+              description={t(isDark ? "theme.dark" : "theme.light")}
+              right={<ThemeSwitch checked={isDark} onChange={toggleTheme} />}
+              accent="orange"
+            />
+
+            {/* Language */}
+            <SettingsRow
+              icon={<LanguageIcon className="w-6 h-6" />}
+              title={t("settings_language") || "Language"}
+              glow
+              description={
+                currentLang ? `${currentLang.emoji} ${currentLang.label}` : i18n.language
+              }
+              onClick={() => {
+                startTransition(() => {
+                  setActiveSheet("language");
+                });
+              }}
+            />
+          </Card>
+        </section>
+
+        {/* ===================== DATA MANAGEMENT ===================== */}
+        <section className="mb-3">
+          <SectionHeader
+            title={t("settings_section_data_management") || "Data Management"}
+            subtitle={
+              t("settings_section_data_management_desc") ||
+              "You can export or delete your data at any time."
+            }
+          />
+          <Card className="space-y-1">
+            <SettingsRow
+              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+              title={t("settings_export_subs") || "Download subscriptions"}
+              glow
+              description={t("settings_export_subs_desc") || "Export all subscriptions as CSV"}
+              onClick={() => {
+                if (!subscriptions.length) {
+                  alert(t("no_data_to_export") || "No subscriptions to export.");
                   return;
                 }
+                exportSubscriptionsCSV(subscriptions);
+              }}
+              accent="blue"
+            />
 
-                await clearAllLocalData();
-                toast.success("Account deleted successfully");
-
-                if (isBrowser()) {
-                  window.location.replace("/account-deleted");
+            <SettingsRow
+              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+              title={t("settings_export_history") || "Download payment history"}
+              description={t("settings_export_history_desc") || "Export all past payments as CSV"}
+              glow
+              accent="blue"
+              onClick={() => {
+                if (!subscriptions.length) {
+                  alert(t("no_data_to_export") || "No payment history to export.");
+                  return;
                 }
-              } catch {
-                toast.error("Unexpected error. Please try again.");
+                exportPaymentHistoryCSV(subscriptions);
+              }}
+            />
+
+            <SettingsRow
+              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+              title={t("settings_export_summary") || "Download annual summary"}
+              description={t("settings_export_summary_desc") || "Yearly totals per subscription"}
+              glow
+              accent="blue"
+              onClick={() => {
+                if (!subscriptions.length) {
+                  alert(t("no_data_to_export") || "No annual history to export.");
+                  return;
+                }
+                exportAnnualSummaryCSV(subscriptions);
+              }}
+            />
+
+            <SettingsRow
+              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+              title={t("settings_export_all") || "Download full data"}
+              accent="blue"
+              glow
+              description={
+                t("settings_export_all_desc") ||
+                "All your subscriptions, payments and settings as JSON"
               }
-            }}
-          />
-        </Card>
-      </section>
+              onClick={() =>
+                exportFullJSON({
+                  user,
+                  subscriptions,
+                  settings: {
+                    currency,
+                    theme,
+                    language: i18n.language,
+                  },
+                })
+              }
+            />
 
-      {/* ===================== HELP & SUPPORT ===================== */}
-      <section>
-        <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
-          {t("settings_section_support") || "Help & Support"}
-        </h2>
+            <SettingsRow
+              icon={<ArrowDownTrayIcon className="w-6 h-6" />}
+              title={t("settings_import_subs") || "Import subscriptions"}
+              description={t("settings_import_subs_desc") || "Upload CSV with subscriptions"}
+              glow
+              accent="blue"
+              onClick={() => fileInputRef.current?.click()}
+            />
 
-        <Card className="space-y-1">
-          <SettingsRow
-            icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
-            title={t("settings_section_support") || "Help & Support"}
-            description={t("settings_help_desc") || "FAQs and contact support"}
-            accent="purple"
-            glow
-            onClick={() => {
-              startTransition(() => {
-                setActiveSheet("help");
-              });
-            }}
-          />
+            <input
+              type="file"
+              accept=".csv"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={(e) => handleImportCSV(e.target.files?.[0])}
+            />
 
-          {/*
+            <SettingsRow
+              icon={<TrashIcon className="w-6 h-6" />}
+              title={t("settings_delete_all_subs") || "Delete all subscriptions"}
+              description={
+                t("settings_delete_all_subs_desc") ||
+                "Permanently delete all your subscriptions"
+              }
+              accent="red"
+              glow
+              onClick={handleDeleteAllSubscriptions}
+            />
+          </Card>
+        </section>
+
+        {/* ===================== PRIVACY & SECURITY ===================== */}
+        <section className="mb-3">
+          <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+            {t("settings_section_privacy") || "Privacy & Security"}
+          </h2>
+
+          <Card className="space-y-1">
+            <SettingsRow
+              icon={<ShieldCheckIcon className="w-6 h-6" />}
+              title={t("settings_privacy_policy") || "Privacy Policy"}
+              glow
+              description={
+                t("settings_privacy_desc") ||
+                "How we collect, process and protect your data (GDPR)"
+              }
+              to="/datenschutz"
+              accent="green"
+            />
+
+            <SettingsRow
+              icon={<BuildingOfficeIcon className="w-6 h-6" />}
+              title={t("settings_impressum") || "Legal Notice (Impressum)"}
+              description={t("settings_impressum_desc") || "Company information and legal disclosure"}
+              to="/impressum"
+              glow
+              accent="green"
+            />
+
+            <SettingsRow
+              icon={<DocumentTextIcon className="w-6 h-6" />}
+              title={t("settings_terms") || "Terms & Conditions (AGB)"}
+              description={t("settings_terms_desc") || "Legal terms for using Trakio"}
+              to="/agb"
+              glow
+              accent="green"
+            />
+
+            <SettingsRow
+              icon={<DocumentTextIcon className="w-6 h-6" />}
+              title={t("withdrawal.title")}
+              description={t("withdrawal.description")}
+              to="/widerruf"
+              glow
+              accent="green"
+            />
+
+            <SettingsRow
+              icon={<TrashIcon className="w-6 h-6 text-red-500" />}
+              title={t("settings_delete_account") || "Delete account permanently"}
+              description={
+                t("settings_delete_account_desc") ||
+                "This will permanently delete your account and all associated data."
+              }
+              accent="red"
+              glow
+              onClick={async () => {
+                const confirmed = window.confirm(
+                  "This will permanently delete your Trakio account and all personal data.\n\n" +
+                  "Active subscriptions will be cancelled.\n" +
+                  "This action is irreversible.\n\n" +
+                  "Do you want to proceed?"
+                );
+
+                if (!confirmed) return;
+
+                try {
+                  const token = safeGetToken();
+
+                  const res = await fetch("/api/user", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ action: "delete-account" }),
+                  });
+
+                  if (!res.ok) {
+                    toast.error("Failed to delete account. Please contact support.");
+                    return;
+                  }
+
+                  await clearAllLocalData();
+                  toast.success("Account deleted successfully");
+
+                  if (isBrowser()) {
+                    window.location.replace("/account-deleted");
+                  }
+                } catch {
+                  toast.error("Unexpected error. Please try again.");
+                }
+              }}
+            />
+          </Card>
+        </section>
+
+        {/* ===================== HELP & SUPPORT ===================== */}
+        <section className="mb-3">
+          <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2 px-2">
+            {t("settings_section_support") || "Help & Support"}
+          </h2>
+
+          <Card className="space-y-1">
+            <SettingsRow
+              icon={<QuestionMarkCircleIcon className="w-6 h-6" />}
+              title={t("settings_section_support") || "Help & Support"}
+              description={t("settings_help_desc") || "FAQs and contact support"}
+              accent="purple"
+              glow
+              onClick={() => {
+                startTransition(() => {
+                  setActiveSheet("help");
+                });
+              }}
+            />
+
+            {/*
           <SettingsRow
             icon={<StarIcon className="w-6 h-6" />}
             title={t("settings_rate") || "Rate Trakio"}
@@ -758,102 +760,103 @@ export default function Settings({ setActiveSheet }) {
           />
           */}
 
-          <SettingsRow
-            icon={<ShareIcon className="w-6 h-6" />}
-            title={t("settings_share") || "Share Trakio"}
-            description={t("settings_share_desc") || "Share Trakio with friends and family"}
-            onClick={handleShare}
-            accent="purple"
-            glow
-          />
+            <SettingsRow
+              icon={<ShareIcon className="w-6 h-6" />}
+              title={t("settings_share") || "Share Trakio"}
+              description={t("settings_share_desc") || "Share Trakio with friends and family"}
+              onClick={handleShare}
+              accent="purple"
+              glow
+            />
+          </Card>
+        </section>
+
+        {/* LOGOUT */}
+        <Card>
+          <div className="flex flex-col gap-3">
+            <SettingButton variant="danger" onClick={logout}>
+              {t("settings_logout") || "Log Out"}
+            </SettingButton>
+          </div>
         </Card>
-      </section>
 
-      {/* LOGOUT */}
-      <Card>
-        <div className="flex flex-col gap-3">
-          <SettingButton variant="danger" onClick={logout}>
-            {t("settings_logout") || "Log Out"}
-          </SettingButton>
-        </div>
-      </Card>
+        {/* -------------------- Import Preview Modal -------------------- */}
+        {importPreview && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
+              <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
+                {t("import_preview_title") || "Import Preview"}
+              </h3>
 
-      {/* -------------------- Import Preview Modal -------------------- */}
-      {importPreview && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-5 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
-              {t("import_preview_title") || "Import Preview"}
-            </h3>
-
-            <div className="text-sm space-y-1 mb-3 text-gray-700 dark:text-gray-300">
-              <div>
-                {t("import_preview_subscriptions") || "Subscriptions"}:{" "}
-                <b>{importPreview.subscriptions}</b>
-              </div>
-              <div>
-                {t("import_preview_payments") || "Payments"}:{" "}
-                <b>{importPreview.payments}</b>
-              </div>
-              {importPreview.duplicates > 0 && (
-                <div className="text-orange-600 dark:text-orange-400">
-                  {t("import_preview_duplicates") || "Duplicates"}:{" "}
-                  <b>{importPreview.duplicates}</b>
+              <div className="text-sm space-y-1 mb-3 text-gray-700 dark:text-gray-300">
+                <div>
+                  {t("import_preview_subscriptions") || "Subscriptions"}:{" "}
+                  <b>{importPreview.subscriptions}</b>
                 </div>
-              )}
-            </div>
+                <div>
+                  {t("import_preview_payments") || "Payments"}:{" "}
+                  <b>{importPreview.payments}</b>
+                </div>
+                {importPreview.duplicates > 0 && (
+                  <div className="text-orange-600 dark:text-orange-400">
+                    {t("import_preview_duplicates") || "Duplicates"}:{" "}
+                    <b>{importPreview.duplicates}</b>
+                  </div>
+                )}
+              </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setImportPreview(null);
-                  setImportFile(null);
-                }}
-                className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
-              >
-                {t("cancel") || "Cancel"}
-              </button>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setImportPreview(null);
+                    setImportFile(null);
+                  }}
+                  className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                >
+                  {t("cancel") || "Cancel"}
+                </button>
 
-              <button
-                onClick={async () => {
-                  const token = safeGetToken();
+                <button
+                  onClick={async () => {
+                    const token = safeGetToken();
 
-                  try {
-                    // Merge current subs + imported file
-                    const next = [
-                      ...(Array.isArray(subscriptions) ? subscriptions : []),
-                      ...(Array.isArray(importFile) ? importFile : []),
-                    ];
+                    try {
+                      // Merge current subs + imported file
+                      const next = [
+                        ...(Array.isArray(subscriptions) ? subscriptions : []),
+                        ...(Array.isArray(importFile) ? importFile : []),
+                      ];
 
-                    await persistSubscriptions({
-                      email: user.email,
-                      token,
-                      subscriptions: next,
-                    });
+                      await persistSubscriptions({
+                        email: user.email,
+                        token,
+                        subscriptions: next,
+                      });
 
-                    setSubscriptions(next);
+                      setSubscriptions(next);
 
-                    alert(
-                      t("import_success_message") === "import_success_message"
-                        ? "Import successful!"
-                        : t("import_success_message")
-                    );
-                  } catch {
-                    alert(t("import_failed_message") || "Import failed. Please try again.");
-                  }
+                      alert(
+                        t("import_success_message") === "import_success_message"
+                          ? "Import successful!"
+                          : t("import_success_message")
+                      );
+                    } catch {
+                      alert(t("import_failed_message") || "Import failed. Please try again.");
+                    }
 
-                  setImportPreview(null);
-                  setImportFile(null);
-                }}
-                className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                {t("confirm_import") || "Confirm Import"}
-              </button>
+                    setImportPreview(null);
+                    setImportFile(null);
+                  }}
+                  className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  {t("confirm_import") || "Confirm Import"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </Card>
+    </PageLayout>
   );
 }
 

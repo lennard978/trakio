@@ -16,9 +16,9 @@ import BudgetOverviewChart from "../components/insights/BudgetOverviewChart";
 import PremiumGuard from "../components/premium/PremiumGuard";
 import PaymentAccordion from "../components/insights/PaymentAccordion";
 
-// import { getCurrentMonthSpending } from "../utils/budget";
 import { persistSubscriptions } from "../utils/persistSubscriptions";
 import { loadSubscriptionsLocal, saveSubscriptionsLocal } from "../utils/mainDB";
+import PageLayout from "../components/layout/PageLayout";
 
 export default function InsightsPage() {
   const { t } = useTranslation();
@@ -36,13 +36,6 @@ export default function InsightsPage() {
   /* ------------------------------------------------------------------ */
   /* FX Rates                                                           */
   /* ------------------------------------------------------------------ */
-
-  useEffect(() => {
-    if (!premium.loaded || premium.loading) return;
-    if (!premium.isPremium) {
-      navigate("/dashboard");
-    }
-  }, [premium.loaded, premium.loading, premium.isPremium, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,16 +144,6 @@ export default function InsightsPage() {
     return d;
   }, []);
 
-  // const actualSpent = useMemo(() => {
-  //   if (!rates) return 0;
-  //   return getCurrentMonthSpending(
-  //     subscriptions,
-  //     currency,
-  //     rates,
-  //     convert
-  //   );
-  // }, [subscriptions, currency, rates]);
-
   const forecast30 = useMemo(() => {
     if (!rates) return null;
     return forecastSpend({
@@ -187,30 +170,42 @@ export default function InsightsPage() {
   /* Render                                                             */
   /* ------------------------------------------------------------------ */
 
-  return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 space-y-5">
-      <PremiumGuard>
-        {/* <Card interactive> */}
-        <BudgetOverviewChart
-          subscriptions={subscriptions}
-          rates={rates}
-        />
-        {/* </Card> */}
-      </PremiumGuard>
-
-      <Card interactive>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          {t("insights_payment_history")}
-        </h2>
-
-        <PaymentAccordion
-          subscriptions={subscriptions}
-          currency={currency}
-          rates={rates}
-          convert={convert}
-          onDeletePayment={deletePayment}
-        />
+  if (!subscriptions.length) {
+    return (
+      <Card>
+        <p className="text-sm text-gray-500">
+          {t("insights.no_data_yet", "Add subscriptions to see insights.")}
+        </p>
       </Card>
-    </div>
+    );
+  }
+
+  return (
+    <PageLayout maxWidth="max-w-2xl">
+      <Card>
+        <PremiumGuard>
+          {/* <Card interactive> */}
+          <BudgetOverviewChart
+            subscriptions={subscriptions}
+            rates={rates}
+          />
+          {/* </Card> */}
+        </PremiumGuard>
+
+        <Card interactive>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            {t("insights_payment_history")}
+          </h2>
+
+          <PaymentAccordion
+            subscriptions={subscriptions}
+            currency={currency}
+            rates={rates}
+            convert={convert}
+            onDeletePayment={deletePayment}
+          />
+        </Card>
+      </Card>
+    </PageLayout>
   );
 }

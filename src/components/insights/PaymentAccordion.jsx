@@ -77,7 +77,7 @@ export default function PaymentAccordion({
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="p-3 pt-0 text-xs text-gray-700 dark:text-gray-300 space-y-1">
+                  <div className="p-3 pt-1 text-xs text-gray-700 dark:text-gray-300 space-y-1">
                     {payments.map((p) => (
                       <div
                         key={p.id}

@@ -95,7 +95,7 @@ export default function SwipeToDeleteWrapper({
 
 
   return (
-    <div className="relative mb-3 select-none" style={style}>
+    <div className="relative mb-2 select-none" style={style}>
       {/* Background (delete state color) */}
       <motion.div
         className="absolute inset-0 rounded-2xl bg-red-500 dark:bg-red-700"

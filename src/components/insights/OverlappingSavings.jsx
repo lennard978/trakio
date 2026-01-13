@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { explainOverlap } from "../../utils/overlapExplanation";
 import SubscriptionComparisonBars from "./SubscriptionComparisonBars";
 import PriceChangeSummary from "./PriceChangeSummary";
-
 /**
  * Props:
  * - overlaps: array from /api/overlaps
@@ -29,7 +28,7 @@ export default function OverlappingSavings({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
       {overlaps.map((group) => {
         // 🔹 Pick most expensive subscription to cancel
         const cancelTarget =

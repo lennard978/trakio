@@ -164,7 +164,7 @@ export default function SubscriptionItem({
             style={gradientStyle}
           />
           <div className="relative z-10 p-5 backdrop-blur-xl">
-            <div className="flex mb-1">
+            <div className="flex mb-2">
               <div className="flex flex-grow">
                 <div className="flex flex-col items-center">
                   <HealthBadge {...subscriptionHealth(item)} />

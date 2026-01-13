@@ -17,8 +17,9 @@ import SummaryCards from "../components/dasboard/SummaryCards";
 import DashboardLoading from "../components/dasboard/DashboardLoading.jsx";
 import OfflineNotice from "../components/dasboard/OfflineNotice";
 import DashboardFilterUI from "../components/DashboardFilterUI";
-
+import PageLayout from "../components/layout/PageLayout";
 import { computeNextRenewal } from "../utils/renewal";
+import Card from "../components/ui/Card.jsx";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -205,57 +206,60 @@ export default function Dashboard() {
   /* ---------------- Render ---------------- */
 
   return (
-    <div className="max-w-2xl mx-auto px-4 md:mb-20">
-      <TrialBanner />
+    <PageLayout maxWidth="max-w-2xl">
+      <Card>
+        <TrialBanner />
 
-      {loading &&
-        typeof navigator !== "undefined" &&
-        !navigator.onLine && <OfflineNotice />}
+        {loading &&
+          typeof navigator !== "undefined" &&
+          !navigator.onLine && <OfflineNotice />}
 
-      {loading ? (
-        <DashboardLoading />
-      ) : hasSubscriptions ? (
-        <>
-          <SummaryCards {...summaryProps} />
+        {loading ? (
+          <DashboardLoading />
+        ) : hasSubscriptions ? (
+          <>
+            <SummaryCards {...summaryProps} />
 
-          <UpcomingPayments
-            subscriptions={filteredSubscriptions}
-            currency={preferredCurrency}
-          />
-
-          <MonthlyBudget
-            subscriptions={filteredSubscriptions}
-            currency={preferredCurrency}
-          />
-
-          {premium.isPremium && (
-            <ForgottenSubscriptions
+            <UpcomingPayments
               subscriptions={filteredSubscriptions}
+              currency={preferredCurrency}
             />
-          )}
 
-          {/* ✅ FILTERS – placed before filtered content */}
-          <DashboardFilterUI
-            {...filters}
-            onChange={handleFilterChange}
-          />
+            <MonthlyBudget
+              subscriptions={filteredSubscriptions}
+              currency={preferredCurrency}
+            />
 
-          <div className="space-y-2">
-            {filteredSubscriptions.map((sub) => (
-              <SubscriptionItem
-                key={sub.id}
-                item={sub}
-                theme={theme}
-                currency={preferredCurrency}
-                onDelete={handleDelete}
-                onMarkPaid={handleMarkPaid}
+            {premium.isPremium && (
+              <ForgottenSubscriptions
+                subscriptions={filteredSubscriptions}
               />
-            ))}
-          </div>
-        </>
-      ) : (
-        <EmptyDashboardState />
-      )}
-    </div>
+            )}
+
+            {/* ✅ FILTERS – placed before filtered content */}
+            <DashboardFilterUI
+              {...filters}
+              onChange={handleFilterChange}
+            />
+
+            <div className="space-y-3">
+              {filteredSubscriptions.map((sub) => (
+                <SubscriptionItem
+                  key={sub.id}
+                  item={sub}
+                  theme={theme}
+                  currency={preferredCurrency}
+                  onDelete={handleDelete}
+                  onMarkPaid={handleMarkPaid}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyDashboardState />
+        )}
+      </Card>
+    </PageLayout>
+
   );
 }
