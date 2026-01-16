@@ -24,7 +24,7 @@ export default function ForgottenSubscriptions({ subscriptions }) {
       className="
         bg-yellow-500/5 dark:bg-yellow-500/10
         border border-yellow-500/20
-        rounded-xl p-4 my-4
+        rounded-xl p-4 my-2
       "
       aria-label={t("forgoten_subs")}
     >

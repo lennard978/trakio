@@ -10,7 +10,7 @@ import SettingButton from "../../ui/SettingButton";
  */
 export default function FormActions({
   isEdit,
-  hasUndo,
+  hasUndo = false,
   onSubmit,
   onCancel,
   onDelete,
@@ -58,17 +58,11 @@ export default function FormActions({
 FormActions.propTypes = {
   isEdit: PropTypes.bool.isRequired,
   hasUndo: PropTypes.bool,
-
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   onDelete: PropTypes.func,
   onUndo: PropTypes.func,
-
   t: PropTypes.func.isRequired
 };
 
-FormActions.defaultProps = {
-  hasUndo: false,
-  onDelete: undefined,
-  onUndo: undefined
-};
+

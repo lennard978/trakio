@@ -47,7 +47,7 @@ const COLORS = [
   "#8B5CF6", "#10B981", "#F43F5E"
 ];
 
-export default function BudgetOverviewChart({ subscriptions, rates }) {
+export default function BudgetOverviewChart({ subscriptions, rates = {} }) {
   const [activeTab, setActiveTab] = useState("General");
   const [activeRange, setActiveRange] = useState("6M");
   const [saveNowOpen, setSaveNowOpen] = useState(false);
@@ -331,13 +331,15 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
                   animationEasing="ease-out"
                 >
                   <Label
-                    content={
+                    content={(props) => (
                       <PieCenterLabel
+                        {...props}
                         title={t("stats.total_this_month")}
                         value={`${currency} ${(data.totalThisMonth ?? 0).toFixed(2)}`}
                       />
-                    }
+                    )}
                   />
+
                   {chartData.map((entry, index) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -515,11 +517,10 @@ export default function BudgetOverviewChart({ subscriptions, rates }) {
     </div>
   );
 }
-BudgetOverviewChart.propTypes = {
-  // List of subscriptions (typically fetched from an API or context)
-  subscriptions: PropTypes.array.isRequired,
 
-  // Exchange rates (used for currency conversion)
-  rates: PropTypes.object.isRequired,
+BudgetOverviewChart.propTypes = {
+  subscriptions: PropTypes.array.isRequired,
+  rates: PropTypes.object, // ← no longer required
 };
+
 

@@ -11,9 +11,9 @@ import PropTypes from "prop-types";
  * No side effects, no data fetching
  */
 export default function NameField({
-  name,
+  name = "",
   setName,
-  suggestions,
+  suggestions = [],
   showSuggestions,
   setShowSuggestions,
   setIcon,
@@ -96,25 +96,11 @@ export default function NameField({
 NameField.propTypes = {
   name: PropTypes.string,
   setName: PropTypes.func.isRequired,
-
-  suggestions: PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      icon: PropTypes.string.isRequired,
-      category: PropTypes.string
-    })
-  ),
-
+  suggestions: PropTypes.array,
   showSuggestions: PropTypes.bool.isRequired,
   setShowSuggestions: PropTypes.func.isRequired,
-
   setIcon: PropTypes.func.isRequired,
   setCategory: PropTypes.func.isRequired,
-
   t: PropTypes.func.isRequired
 };
 
-NameField.defaultProps = {
-  name: "",
-  suggestions: []
-};

@@ -14,7 +14,7 @@ import { CATEGORY_INTENSITY_DEFAULT } from "../constants";
 export default function CategoryField({
   category,
   setCategory,
-  setGradientIntensity,
+  setGradientIntensity = undefined,
   t,
 }) {
   const handleChange = (newValue) => {
@@ -54,13 +54,7 @@ export default function CategoryField({
 CategoryField.propTypes = {
   category: PropTypes.string.isRequired,
   setCategory: PropTypes.func.isRequired,
-
-  /** Optional: sync visual intensity with category */
   setGradientIntensity: PropTypes.func,
-
-  t: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired
 };
 
-CategoryField.defaultProps = {
-  setGradientIntensity: undefined,
-};

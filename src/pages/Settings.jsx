@@ -383,42 +383,6 @@ export default function Settings({ setActiveSheet }) {
     }
   }, [monthlyBudget, budgetAlertsEnabled]);
 
-  /* ------------------------------------------------------------------
-   * Stripe Customer Portal (kept)
-   * ------------------------------------------------------------------ */
-
-  // const handleManageSubscription = async () => {
-  //   const token = safeGetToken();
-
-  //   if (!token) {
-  //     alert("Please log in again.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const res = await fetch("/api/stripe", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({ action: "portal" }),
-  //     });
-
-  //     const data = await res.json();
-
-  //     if (!res.ok) {
-  //       throw new Error(data?.error || "Failed to open customer portal");
-  //     }
-
-  //     if (data?.url && isBrowser()) {
-  //       window.location.href = data.url;
-  //     }
-  //   } catch {
-  //     alert("Unable to open customer portal.");
-  //   }
-  // };
-
   /* -------------------- Delete all subscriptions (FIXED) -------------------- */
 
   const handleDeleteAllSubscriptions = async () => {

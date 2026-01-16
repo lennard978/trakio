@@ -7,7 +7,7 @@ import PropTypes from "prop-types";
  *
  * PURE UI COMPONENT
  */
-export default function DatePaidField({ datePaid, setDatePaid, t }) {
+export default function DatePaidField({ datePaid = "", setDatePaid, t }) {
   const today = new Date().toISOString().split("T")[0];
 
   return (
@@ -37,6 +37,3 @@ DatePaidField.propTypes = {
   t: PropTypes.func.isRequired
 };
 
-DatePaidField.defaultProps = {
-  datePaid: ""
-};

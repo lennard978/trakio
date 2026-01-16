@@ -662,5 +662,6 @@
 	"payment_giropay": "Giropay",
 	"payment_bank_transfer": "Bank Transfer",
 	"payment_cash": "Cash",
-	"payment_crypto": "Cryptocurrency"
+	"payment_crypto": "Cryptocurrency",
+	"no_color_selected": "No color selected"
 }

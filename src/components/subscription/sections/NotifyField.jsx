@@ -7,7 +7,7 @@ import PropTypes from "prop-types";
  *
  * PURE UI COMPONENT
  */
-export default function NotifyField({ notify, setNotify, t }) {
+export default function NotifyField({ notify = false, setNotify, t }) {
   return (
     <div className="flex items-center gap-2">
       <input
@@ -27,8 +27,4 @@ NotifyField.propTypes = {
   notify: PropTypes.bool,
   setNotify: PropTypes.func.isRequired,
   t: PropTypes.func.isRequired
-};
-
-NotifyField.defaultProps = {
-  notify: false
 };

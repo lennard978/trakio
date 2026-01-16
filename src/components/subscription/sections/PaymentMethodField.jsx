@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function PaymentMethodField({
   setMethod,
   methods,
-  selectedMethod,
+  selectedMethod = null,
   methodOpen,
   setMethodOpen,
   t,
@@ -179,37 +179,10 @@ export default function PaymentMethodField({
    ✅ PropTypes
 ------------------------------------ */
 PaymentMethodField.propTypes = {
-  /** Setter for selected payment method value */
   setMethod: PropTypes.func.isRequired,
-
-  /** List of available payment methods */
-  methods: PropTypes.arrayOf(
-    PropTypes.shape({
-      value: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired, // i18n key
-      icon: PropTypes.string,
-      logo: PropTypes.string,
-    })
-  ).isRequired,
-
-  /** Currently selected method object */
-  selectedMethod: PropTypes.shape({
-    value: PropTypes.string,
-    label: PropTypes.string,
-    icon: PropTypes.string,
-    logo: PropTypes.string,
-  }),
-
-  /** Whether the dropdown is open */
+  methods: PropTypes.array.isRequired,
+  selectedMethod: PropTypes.object,
   methodOpen: PropTypes.bool.isRequired,
-
-  /** Setter for dropdown visibility */
   setMethodOpen: PropTypes.func.isRequired,
-
-  /** Translation function */
-  t: PropTypes.func.isRequired,
-};
-
-PaymentMethodField.defaultProps = {
-  selectedMethod: null,
+  t: PropTypes.func.isRequired
 };

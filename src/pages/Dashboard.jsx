@@ -209,7 +209,6 @@ export default function Dashboard() {
     <PageLayout maxWidth="max-w-2xl">
       <Card>
         <TrialBanner />
-
         {loading &&
           typeof navigator !== "undefined" &&
           !navigator.onLine && <OfflineNotice />}
